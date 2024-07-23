@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Descargador de Imágenes</title>
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Lato', sans-serif;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #fff; /* Fondo blanco */
+        }
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+        .leftMenu, .rightMenu {
+            width: 320px;
+            min-width: 320px; /* Mínimo ancho de las columnas fijas */
+            background-color: #fff; /* Fondo blanco */
+            overflow-y: auto;
+            position: relative;
+        }
+        .leftMenu {
+            border-right: 1px solid #eeeeee;
+        }
+        .rightMenu {
+            border-left: 1px solid #eeeeee;
+        }
+        .leftMenu .intro, .rightMenu .intro {
+            font-size: 12px;
+            padding: 20px 20px 0;
+        }
+        .leftMenu textarea, .rightMenu .error-list {
+            width: calc(100% - 40px);
+            border: 1px solid #eee;
+            margin: 20px;
+        }
+        .leftMenu textarea {
+            height: calc(100% - 250px); /* Ajustar altura para dejar espacio para errores */
+        }
+        .leftMenu button, .rightMenu button {
+            width: calc(100% - 40px);
+            border: none;
+            margin: 0 20px 20px;
+            background-color: #8fca00; /* Color del botón */
+            height: 50px;
+            line-height: 50px;
+            padding: 0;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            letter-spacing: .075em;
+            cursor: pointer;
+        }
+        .error-list {
+            height: calc(100% - 100px);
+            padding: 20px;
+            margin: 20px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        .error-list button {
+            display: block;
+            margin-bottom: 10px;
+            background-color: #ccc; /* Color gris */
+            border: none;
+            color: white;
+            padding: 3px 5px; /* Reducir tamaño del botón */
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 10px; /* Reducir tamaño de la fuente */
+        }
+        .error-list button:hover {
+            background-color: #bbb; /* Color gris oscuro al pasar el ratón */
+        }
+        .error-list button.copied {
+            background-color: #8fca00; /* Color verde al copiar */
+        }
+        .error-list button.copied:hover {
+            background-color: #76a700; /* Color verde oscuro al pasar el ratón */
+        }
+        .error-list div {
+            margin-bottom: 5px;
+            color: red;
+        }
+        .rightContainer {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background-color: #fff; /* Fondo blanco */
+        }
+        .imgContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px; /* Espacio entre miniaturas */
+        }
+        .imgContainer .imgWrapper {
+            width: 200px; /* Ancho fijo para miniaturas */
+            height: 200px; /* Altura fija para miniaturas */
+            position: relative;
+            display: block;
+            overflow: hidden;
+            border: 1px solid #eeeeee;
+        }
+        .imgContainer .imgWrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Ajusta la imagen para cubrir el contenedor */
+        }
+        .imgContainer .imgWrapper a {
+            display: block;
+            height: 100%;
+            width: 100%;
+        }
+        .imgContainer .imgWrapper a img {
+            height: 100%;
+            width: 100%;
+            object-fit: cover; /* Ajusta la imagen para cubrir el contenedor */
+        }
+        .setBar {
+            background-color: #fff; /* Fondo blanco */
+            padding: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .setBar button {
+            padding: 0;
+            background-color: #8fca00; /* Color del botón */
+            border: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            line-height: 30px; /* Altura del botón */
+            height: 30px; /* Altura del botón */
+            padding: 0 15px;
+            color: white;
+            font-weight: 700;
+            letter-spacing: .075em;
+            cursor: pointer;
+            border-radius: 5px; /* Redondeo del botón */
+            margin: 0;
+        }
+        .setBar button:hover {
+            background-color: #8fca00; /* Hover color igual al botón */
+            color: white;
+        }
+        .pais.seleccionado {
+            font-weight: 700;
+            text-decoration: underline;
+            color: #333;
+        }
+        .pais {
+            display: inline-block;
+            padding-right: 10px;
+            cursor: pointer;
+            color: #bbbbbb;
+        }
+        .error {
+            color: red;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            width: calc(100% - 40px);
+            border: 1px solid #eee;
+            margin: 20px;
+            height: 20px;
+            background-color: #f3f3f3;
+        }
+        #progress {
+            height: 100%;
+            width: 0;
+            background-color: #8fca00;
+            text-align: center;
+            color: white;
+            line-height: 20px; /* Para centrar verticalmente el texto */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="leftMenu">
+            <div class="intro paises">
+                <div>Descargar imágenes desde:</div><br>
+                <div class="pais seleccionado" data-pais="CL">Chile</div>
+                <div class="pais" data-pais="CO">Colombia</div>
+                <div class="pais" data-pais="PE">Perú</div>
+            </div>
+            <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
+            <button id="buscar">BUSCAR</button>
+            <div class="error" id="error"></div>
+            <div class="progress-bar">
+                <div id="progress">0%</div>
+            </div>
+        </div>
+        <div class="rightContainer">
+            <div class="setBar">
+                <button id="descargartodo">DESCARGAR TODO</button>
+            </div>
+            <div class="imgContainer"></div>
+        </div>
+        <div class="rightMenu">
+            <div class="intro">No tiene foto:</div>
+            <div class="error-list" id="errorList">
+                <button id="copyErrors">Copiar</button>
+                <!-- Errores 404 aparecerán aquí -->
+            </div>
+        </div>
+    </div>
+    <script>
+        var pais = "CL";  // Por defecto, Chile
+
+        $('.pais').click(function() {
+            pais = $(this).data('pais');
+            $('.pais').removeClass('seleccionado');
+            $(this).addClass('seleccionado');
+        });
+
+        $('#buscar').click(function() {
+            $('.imgContainer').empty();
+            $('#error').text('');
+            $('#errorList').empty(); // Limpiar lista de errores
+            $('#errorList').append('<button id="copyErrors">Copiar</button>');
+            var skus = $('#skus').val().split('\n');
+            var promises = [];
+
+            skus.forEach(function(sku) {
+                sku = sku.trim();
+                if (sku !== "") {
+                    promises.push(loadImage(sku));
+                }
+            });
+
+            Promise.all(promises).then(function(images) {
+                images.forEach(function(image) {
+                    if (image && !image.error) {
+                        $('.imgContainer').append(image.element);
+                    }
+                    if (image && image.error) {
+                        $('#errorList').append('<div>' + image.sku + '</div>');
+                    }
+                });
+                updateProgress(100);
+            });
+        });
+
+        $('#descargartodo').click(function() {
+            var zip = new JSZip();
+            var count = 0;
+            var zipFilename = getFormattedDate() + ".zip"; // Nombre del ZIP con la fecha y hora
+            var urls = [];
+            var skuNames = [];
+            $(".imgContainer .imgWrapper img").each(function() {
+                urls.push($(this).attr('data-download-src'));
+                skuNames.push($(this).attr('alt'));
+            });
+
+            urls.forEach(function(url, index) {
+                var filename = skuNames[index] + ".jpg"; // Use SKU name for the filename
+                JSZipUtils.getBinaryContent(url, function (err, data) {
+                    if (err) {
+                        throw err; // or handle the error
+                    }
+                    zip.file(filename, data, { binary: true });
+                    count++;
+                    if (count === urls.length) {
+                        zip.generateAsync({ type: 'blob' }).then(function (content) {
+                            saveAs(content, zipFilename);
+                        });
+                    }
+                });
+            });
+        });
+
+        function loadImage(sku) {
+            return new Promise(function(resolve, reject) {
+                var primaryUrl = 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' + pais + '/' + sku + '_01/public';
+                var downloadUrl = 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' + pais + '/' + sku + '_01/w=1500,h=1500';
+                var alternateUrl = 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' + pais + '/inpage_media/' + sku + '/public';
+
+                console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
+                var img = new Image();
+                img.src = primaryUrl;
+                img.alt = sku; // Set the alt attribute to the SKU for later use
+                img.setAttribute('data-download-src', downloadUrl); // Store the download URL
+
+                img.onload = function() {
+                    var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
+                    wrapper.find('a').append(img);
+                    resolve({ element: wrapper, sku: sku });
+                };
+
+                img.onerror = function() {
+                    if (sku.includes('-')) {
+                        console.log("Trying alternate URL for SKU: " + sku);
+                        img.src = alternateUrl;
+                        img.setAttribute('data-download-src', alternateUrl); // Store the alternate download URL
+                        img.onload = function() {
+                            var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
+                            wrapper.find('a').append(img);
+                            resolve({ element: wrapper, sku: sku });
+                        };
+                        img.onerror = function() {
+                            console.log("Error loading image for SKU: " + sku);
+                            resolve({ error: true, sku: sku });
+                        };
+                    } else {
+                        console.log("Error loading image for SKU: " + sku);
+                        resolve({ error: true, sku: sku });
+                    }
+                };
+            });
+        }
+
+        function updateProgress(percent) {
+            $('#progress').css('width', percent + '%').text(percent + '%');
+        }
+
+        function getFormattedDate() {
+            var date = new Date();
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            var hours = String(date.getHours()).padStart(2, '0');
+            var minutes = String(date.getMinutes()).padStart(2, '0');
+            return day + '/' + month + '_' + hours + minutes;
+        }
+
+        $(document).on('click', '#copyErrors', function() {
+            var errors = [];
+            $('#errorList div').each(function() {
+                errors.push($(this).text());
+            });
+            var tempInput = $('<textarea>');
+            $('body').append(tempInput);
+            tempInput.val(errors.join('\n')).select();
+            document.execCommand('copy');
+            tempInput.remove();
+            $(this).text('Copiado').addClass('copied');
+            setTimeout(function() {
+                $('#copyErrors').text('Copiar').removeClass('copied');
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
