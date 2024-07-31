@@ -49,7 +49,7 @@
             width: calc(100% - 40px);
             border: 1px solid #eee;
             margin: 20px;
-            height: 200px; /* Ajustar altura para dejar espacio para errores */
+            height: 400px; /* Ajustar altura */
         }
         .leftMenu button, .rightMenu button {
             width: calc(100% - 40px);
@@ -242,7 +242,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            margin: 20px 20px 0;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: calc(100% - 40px);
         }
         .toggle-switch span {
             font-size: 12px;
@@ -303,16 +306,16 @@
                 <div class="pais" data-pais="PE">Perú</div>
             </div>
             <div class="skus-container">
-                <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
+                <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
                 <button id="buscar">BUSCAR</button>
-                <div class="toggle-switch">
-                    <span>Vista</span>
-                    <label class="switch">
-                        <input type="checkbox" id="viewToggle">
-                        <span class="slider"></span>
-                    </label>
-                    <span>SKU</span>
-                </div>
+            </div>
+            <div class="toggle-switch">
+                <span>Vista</span>
+                <label class="switch">
+                    <input type="checkbox" id="viewToggle">
+                    <span class="slider"></span>
+                </label>
+                <span>SKU</span>
             </div>
             <div class="error" id="error"></div>
         </div>
@@ -442,7 +445,7 @@
                         $('#thumbnailContainer').append('<div class="divider"></div>');
                     }
                     $('#thumbnailContainer').append(row);
-                    var variants = ['', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03'];
+                    var variants = ['', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01'];
                     displayThumbnailsInOrder(sku, variants, row);
                 }
             });
