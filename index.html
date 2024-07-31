@@ -173,21 +173,6 @@
             font-size: 12px;
             margin-top: 10px;
         }
-        .progress-bar {
-            width: calc(100% - 40px);
-            border: 1px solid #eee;
-            margin: 20px;
-            height: 20px;
-            background-color: #f3f3f3;
-        }
-        #progress {
-            height: 100%;
-            width: 0;
-            background-color: #8fca00;
-            text-align: center;
-            color: white;
-            line-height: 20px; /* Para centrar verticalmente el texto */
-        }
         .icon-switch {
             display: flex;
             align-items: center;
@@ -253,6 +238,55 @@
             background-color: #ccc;
             margin: 20px 0;
         }
+        .toggle-switch {
+            display: flex;
+            align-items: center;
+            margin: 20px;
+            justify-content: space-between;
+        }
+        .toggle-switch span {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #8fca00;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
        </style>
 </head>
 <body>
@@ -271,9 +305,13 @@
             <div class="skus-container">
                 <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
                 <button id="buscar">BUSCAR</button>
-                <div class="icon-switch">
-                    <img src="https://via.placeholder.com/40?text=Vista" id="vistaIcon" class="active">
-                    <img src="https://via.placeholder.com/40?text=SKU" id="skuIcon" class="inactive">
+                <div class="toggle-switch">
+                    <span>Vista</span>
+                    <label class="switch">
+                        <input type="checkbox" id="viewToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>SKU</span>
                 </div>
             </div>
             <div class="error" id="error"></div>
@@ -347,20 +385,15 @@
             actualizarPaises();
         });
 
-        $('#vistaIcon').click(function() {
-            viewMode = "vista";
-            $('#vistaIcon').removeClass('inactive').addClass('active');
-            $('#skuIcon').removeClass('active').addClass('inactive');
-            $('.imgContainer').show();
-            $('#thumbnailContainer').hide();
-        });
-
-        $('#skuIcon').click(function() {
-            viewMode = "sku";
-            $('#skuIcon').removeClass('inactive').addClass('active');
-            $('#vistaIcon').removeClass('active').addClass('inactive');
-            $('.imgContainer').hide();
-            $('#thumbnailContainer').show();
+        $('#viewToggle').change(function() {
+            viewMode = $(this).is(':checked') ? 'sku' : 'vista';
+            if (viewMode === 'vista') {
+                $('.imgContainer').show();
+                $('#thumbnailContainer').hide();
+            } else {
+                $('.imgContainer').hide();
+                $('#thumbnailContainer').show();
+            }
         });
 
         $('#buscar').click(function() {
@@ -423,7 +456,8 @@
 
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
-                let url = 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/' + sku + '/w=1500,h=1500,fit=pad';
+                var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
+                let url = baseUrl + pais + '/' + sku + '/w=1500,h=1500,fit=pad';
                 var img = new Image();
                 img.src = url;
                 img.alt = sku;
@@ -515,3 +549,4 @@
     </script>
 </body>
 </html>
+
