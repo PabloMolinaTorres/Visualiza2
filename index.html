@@ -190,18 +190,35 @@
             color: white;
             line-height: 20px; /* Para centrar verticalmente el texto */
         }
-    </style>
+        .icon-switch {
+            display: flex;
+            align-items: center;
+            margin: 20px;
+        }
+        .icon-switch img {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        .icon-switch img.inactive {
+            filter: grayscale(100%);
+        }
+       </style>
 </head>
 <body>
     <div class="container">
         <div class="leftMenu">
+            <div class="icon-switch">
+                <img src="https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/falabella.png" id="falabellaIcon" class="active">
+                <img src="https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/sodimac-bn.png" id="sodimacIcon" class="inactive">
+            </div>
             <div class="intro paises">
                 <div>Descargar imágenes desde:</div><br>
                 <div class="pais seleccionado" data-pais="CL">Chile</div>
                 <div class="pais" data-pais="CO">Colombia</div>
                 <div class="pais" data-pais="PE">Perú</div>
             </div>
-            <button id="switchLogic">Cambiar a Sodimac</button>
             <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
             <button id="buscar">BUSCAR</button>
             <div class="error" id="error"></div>
@@ -233,10 +250,16 @@
             $(this).addClass('seleccionado');
         });
 
-        $('#switchLogic').click(function() {
-            useFalabella = !useFalabella;  // Alternar el estado
-            var buttonText = useFalabella ? "Cambiar a Sodimac" : "Cambiar a Falabella";
-            $('#switchLogic').text(buttonText);
+        $('#falabellaIcon').click(function() {
+            useFalabella = true;
+            $('#falabellaIcon').removeClass('inactive').attr('src', 'https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/falabella.png');
+            $('#sodimacIcon').addClass('inactive').attr('src', 'https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/sodimac-bn.png');
+        });
+
+        $('#sodimacIcon').click(function() {
+            useFalabella = false;
+            $('#sodimacIcon').removeClass('inactive').attr('src', 'https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/sodimac.png');
+            $('#falabellaIcon').addClass('inactive').attr('src', 'https://github.com/PabloMolinaTorres/Visualiza2/blob/5cbcf0866bdde209e861c6ef28adaaf7e2217550/falabella-bn.png');
         });
 
         $('#buscar').click(function() {
