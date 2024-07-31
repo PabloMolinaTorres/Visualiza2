@@ -205,6 +205,54 @@
         .skus-container {
             padding: 20px;
         }
+        .thumbnail-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .thumbnail {
+            display: inline-block;
+            width: 120px;
+            height: 140px;
+            margin: 5px;
+            position: relative;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+        .thumbnail img {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+        }
+        .thumbnail .sku {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            text-align: center;
+            font-size: 12px;
+            padding: 2px;
+        }
+        .thumbnail .no-image {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 100px;
+            background-color: #e0e0e0;
+            color: #888;
+            font-size: 14px;
+            text-align: center;
+        }
+        .divider {
+            width: 100%;
+            height: 1px;
+            background-color: #ccc;
+            margin: 20px 0;
+        }
        </style>
 </head>
 <body>
@@ -223,17 +271,21 @@
             <div class="skus-container">
                 <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
                 <button id="buscar">BUSCAR</button>
+                <div class="icon-switch">
+                    <img src="https://via.placeholder.com/40?text=Vista" id="vistaIcon" class="active">
+                    <img src="https://via.placeholder.com/40?text=SKU" id="skuIcon" class="inactive">
+                </div>
             </div>
             <div class="error" id="error"></div>
-            <div class="progress-bar">
-                <div id="progress">0%</div>
-            </div>
         </div>
         <div class="rightContainer">
             <div class="setBar">
                 <button id="descargartodo">DESCARGAR TODO</button>
             </div>
             <div class="imgContainer"></div>
+            <div id="thumbnailContainer" style="display:none;">
+                <!-- Thumbnails will be displayed here -->
+            </div>
         </div>
         <div class="rightMenu">
             <div class="intro">No tiene foto:</div>
@@ -246,6 +298,7 @@
     <script>
         var pais = "CL";  // Por defecto, Chile
         var useFalabella = true;  // Estado inicial: usar Falabella
+        var viewMode = "vista";  // Estado inicial: por vista
 
         const paisesFalabella = [
             { nombre: 'Chile', codigo: 'CL' },
@@ -294,7 +347,31 @@
             actualizarPaises();
         });
 
+        $('#vistaIcon').click(function() {
+            viewMode = "vista";
+            $('#vistaIcon').removeClass('inactive').addClass('active');
+            $('#skuIcon').removeClass('active').addClass('inactive');
+            $('.imgContainer').show();
+            $('#thumbnailContainer').hide();
+        });
+
+        $('#skuIcon').click(function() {
+            viewMode = "sku";
+            $('#skuIcon').removeClass('inactive').addClass('active');
+            $('#vistaIcon').removeClass('active').addClass('inactive');
+            $('.imgContainer').hide();
+            $('#thumbnailContainer').show();
+        });
+
         $('#buscar').click(function() {
+            if (viewMode === "vista") {
+                buscarPorVista();
+            } else {
+                buscarPorSKU();
+            }
+        });
+
+        function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
             $('#errorList').empty(); // Limpiar lista de errores
@@ -318,37 +395,54 @@
                         $('#errorList').append('<div>' + image.sku + '</div>');
                     }
                 });
-                updateProgress(100);
             });
-        });
+        }
 
-        $('#descargartodo').click(function() {
-            var zip = new JSZip();
-            var count = 0;
-            var zipFilename = getFormattedDate() + ".zip"; // Nombre del ZIP con la fecha y hora
-            var urls = [];
-            var skuNames = [];
-            $(".imgContainer .imgWrapper img").each(function() {
-                urls.push($(this).attr('data-download-src'));
-                skuNames.push($(this).attr('alt'));
+        function buscarPorSKU() {
+            $('#thumbnailContainer').empty();
+            var skus = $('#skus').val().split('\n');
+            skus.forEach(function(sku, index) {
+                sku = sku.trim();
+                if (sku !== "") {
+                    var row = $('<div class="thumbnail-row"></div>');
+                    if (index > 0) {
+                        $('#thumbnailContainer').append('<div class="divider"></div>');
+                    }
+                    $('#thumbnailContainer').append(row);
+                    var variants = ['', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03'];
+                    displayThumbnailsInOrder(sku, variants, row);
+                }
             });
+        }
 
-            urls.forEach(function(url, index) {
-                var filename = skuNames[index] + ".jpg"; // Use SKU name for the filename
-                JSZipUtils.getBinaryContent(url, function (err, data) {
-                    if (err) {
-                        throw err; // or handle the error
-                    }
-                    zip.file(filename, data, { binary: true });
-                    count++;
-                    if (count === urls.length) {
-                        zip.generateAsync({ type: 'blob' }).then(function (content) {
-                            saveAs(content, zipFilename);
-                        });
-                    }
-                });
+        async function displayThumbnailsInOrder(sku, variants, row) {
+            for (const variant of variants) {
+                await createThumbnail(sku + variant, row);
+            }
+        }
+
+        function createThumbnail(sku, row) {
+            return new Promise((resolve) => {
+                let url = 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/' + sku + '/w=1500,h=1500,fit=pad';
+                var img = new Image();
+                img.src = url;
+                img.alt = sku;
+                img.onload = function() {
+                    var thumbnail = $('<div class="thumbnail"></div>');
+                    var link = $('<a href="' + url + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
+                    link.append(img);
+                    thumbnail.append(link);
+                    thumbnail.append('<div class="sku">' + sku + '</div>');
+                    row.append(thumbnail);
+                    resolve();
+                };
+                img.onerror = function() {
+                    var thumbnail = $('<div class="thumbnail"><div class="no-image">No disponible</div><div class="sku">' + sku + '</div></div>');
+                    row.append(thumbnail);
+                    resolve();
+                };
             });
-        });
+        }
 
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
@@ -391,10 +485,6 @@
             });
         }
 
-        function updateProgress(percent) {
-            $('#progress').css('width', percent + '%').text(percent + '%');
-        }
-
         function getFormattedDate() {
             var date = new Date();
             var day = String(date.getDate()).padStart(2, '0');
@@ -420,7 +510,7 @@
             }, 2000);
         });
 
-        // Inicializar países
+        // Inicializar países y lógica de vista
         actualizarPaises();
     </script>
 </body>
