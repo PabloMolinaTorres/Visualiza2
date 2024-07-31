@@ -49,7 +49,7 @@
             width: calc(100% - 40px);
             border: 1px solid #eee;
             margin: 20px;
-            height: 150px; /* Ajustar altura para dejar espacio para errores */
+            height: 200px; /* Ajustar altura para dejar espacio para errores */
         }
         .leftMenu button, .rightMenu button {
             width: calc(100% - 40px);
@@ -241,18 +241,18 @@
         .toggle-switch {
             display: flex;
             align-items: center;
-            margin: 20px;
             justify-content: space-between;
+            margin: 20px 20px 0;
         }
         .toggle-switch span {
-            font-size: 14px;
+            font-size: 12px;
             font-weight: 700;
         }
         .switch {
             position: relative;
             display: inline-block;
-            width: 60px;
-            height: 34px;
+            width: 50px;
+            height: 24px;
         }
         .switch input {
             opacity: 0;
@@ -268,15 +268,15 @@
             bottom: 0;
             background-color: #ccc;
             transition: .4s;
-            border-radius: 34px;
+            border-radius: 24px;
         }
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
@@ -303,7 +303,7 @@
                 <div class="pais" data-pais="PE">Perú</div>
             </div>
             <div class="skus-container">
-                <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
+                <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
                 <button id="buscar">BUSCAR</button>
                 <div class="toggle-switch">
                     <span>Vista</span>
@@ -549,4 +549,3 @@
     </script>
 </body>
 </html>
-
