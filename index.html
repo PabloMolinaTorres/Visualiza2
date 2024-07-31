@@ -522,6 +522,34 @@
             });
         }
 
+        $('#descargartodo').click(function() {
+            var zip = new JSZip();
+            var count = 0;
+            var zipFilename = getFormattedDate() + ".zip"; // Nombre del ZIP con la fecha y hora
+            var urls = [];
+            var skuNames = [];
+            $(".imgWrapper img").each(function() {
+                urls.push($(this).attr('data-download-src'));
+                skuNames.push($(this).attr('alt'));
+            });
+
+            urls.forEach(function(url, index) {
+                var filename = skuNames[index] + ".jpg"; // Use SKU name for the filename
+                JSZipUtils.getBinaryContent(url, function (err, data) {
+                    if (err) {
+                        throw err; // or handle the error
+                    }
+                    zip.file(filename, data, { binary: true });
+                    count++;
+                    if (count === urls.length) {
+                        zip.generateAsync({ type: 'blob' }).then(function (content) {
+                            saveAs(content, zipFilename);
+                        });
+                    }
+                });
+            });
+        });
+
         function getFormattedDate() {
             var date = new Date();
             var day = String(date.getDate()).padStart(2, '0');
