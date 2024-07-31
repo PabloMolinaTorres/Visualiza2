@@ -51,7 +51,7 @@
             margin: 20px;
         }
         .leftMenu textarea {
-            height: calc(100% - 250px); /* Ajustar altura para dejar espacio para errores */
+            height: calc(100% - 210px); /* Ajustar altura para dejar espacio para errores */
         }
         .leftMenu button, .rightMenu button {
             width: calc(100% - 40px);
@@ -196,13 +196,16 @@
             margin: 20px;
         }
         .icon-switch img {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             cursor: pointer;
             margin-right: 10px;
         }
         .icon-switch img.inactive {
             filter: grayscale(100%);
+        }
+        .skus-container {
+            padding: 20px;
         }
        </style>
 </head>
@@ -213,18 +216,16 @@
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
             </div>
-            <div class="intro paises">
+            <div class="intro paises" id="paisesContainer">
                 <div>Descargar imágenes desde:</div><br>
                 <div class="pais seleccionado" data-pais="CL">Chile</div>
-                <div class="pais" data-pais="AR">Argentina</div>
                 <div class="pais" data-pais="CO">Colombia</div>
                 <div class="pais" data-pais="PE">Perú</div>
-                <div class="pais" data-pais="BR">Brasil</div>
-                <div class="pais" data-pais="MX">México</div>
-                <div class="pais" data-pais="UY">Uruguay</div>
             </div>
-            <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
-            <button id="buscar">BUSCAR</button>
+            <div class="skus-container">
+                <textarea name="skus" id="skus" cols="30" rows="10" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
+                <button id="buscar">BUSCAR</button>
+            </div>
             <div class="error" id="error"></div>
             <div class="progress-bar">
                 <div id="progress">0%</div>
@@ -248,22 +249,51 @@
         var pais = "CL";  // Por defecto, Chile
         var useFalabella = true;  // Estado inicial: usar Falabella
 
-        $('.pais').click(function() {
-            pais = $(this).data('pais');
-            $('.pais').removeClass('seleccionado');
-            $(this).addClass('seleccionado');
-        });
+        const paisesFalabella = [
+            { nombre: 'Chile', codigo: 'CL' },
+            { nombre: 'Colombia', codigo: 'CO' },
+            { nombre: 'Perú', codigo: 'PE' }
+        ];
+
+        const paisesSodimac = [
+            { nombre: 'Chile', codigo: 'CL' },
+            { nombre: 'Argentina', codigo: 'AR' },
+            { nombre: 'Colombia', codigo: 'CO' },
+            { nombre: 'Perú', codigo: 'PE' },
+            { nombre: 'Brasil', codigo: 'BR' },
+            { nombre: 'México', codigo: 'MX' },
+            { nombre: 'Uruguay', codigo: 'UY' }
+        ];
+
+        function actualizarPaises() {
+            const contenedor = $('#paisesContainer');
+            contenedor.empty();
+            contenedor.append('<div>Descargar imágenes desde:</div><br>');
+            const paises = useFalabella ? paisesFalabella : paisesSodimac;
+            paises.forEach(p => {
+                const div = $('<div>').addClass('pais').attr('data-pais', p.codigo).text(p.nombre);
+                if (p.codigo === pais) div.addClass('seleccionado');
+                contenedor.append(div);
+            });
+            $('.pais').click(function() {
+                pais = $(this).data('pais');
+                $('.pais').removeClass('seleccionado');
+                $(this).addClass('seleccionado');
+            });
+        }
 
         $('#falabellaIcon').click(function() {
             useFalabella = true;
             $('#falabellaIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png');
             $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
+            actualizarPaises();
         });
 
         $('#sodimacIcon').click(function() {
             useFalabella = false;
             $('#sodimacIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png');
             $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
+            actualizarPaises();
         });
 
         $('#buscar').click(function() {
@@ -391,6 +421,9 @@
                 $('#copyErrors').text('Copiar').removeClass('copied');
             }, 2000);
         });
+
+        // Inicializar países
+        actualizarPaises();
     </script>
 </body>
 </html>
