@@ -215,8 +215,8 @@
         .zoom {
             position: absolute;
             display: none;
-            width: 600px; /* Ajustar tamaño del zoom */
-            height: 600px; /* Ajustar tamaño del zoom */
+            width: 400px; /* Ajustar tamaño del zoom */
+            height: 400px; /* Ajustar tamaño del zoom */
             border: 2px solid #8fca00;
             background-repeat: no-repeat;
             z-index: 10;
@@ -485,7 +485,7 @@
                         var zoom = $('<div class="zoom"></div>');
                         zoom.css({
                             'background-image': 'url(' + url + ')',
-                            'background-size': '1200px 1200px' /* Ajustar tamaño del fondo */
+                            'background-size': '800px 800px' /* Ajustar tamaño del fondo */
                         });
                         $('body').append(zoom);
                         zoom.fadeIn(200);
@@ -496,7 +496,7 @@
                             zoom.css({
                                 'left': e.pageX + 10,
                                 'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 3 - zoom.width() / 2) + 'px -' + (posY * 3 - zoom.height() / 2) + 'px'
+                                'background-position': '-' + (posX * 2 - zoom.width() / 2) + 'px -' + (posY * 2 - zoom.height() / 2) + 'px'
                             });
                         });
                     });
