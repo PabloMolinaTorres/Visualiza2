@@ -11,8 +11,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/css/magnify.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/magnify/2.3.3/js/jquery.magnify.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -213,6 +211,15 @@
             height: 100px;
             object-fit: cover;
             cursor: zoom-in;
+        }
+        .zoom {
+            position: absolute;
+            display: none;
+            width: 200px;
+            height: 200px;
+            border: 2px solid #8fca00;
+            background-repeat: no-repeat;
+            z-index: 10;
         }
         .thumbnail .sku {
             position: absolute;
@@ -468,14 +475,38 @@
                 var img = new Image();
                 img.src = url;
                 img.alt = sku;
-                img.className = "magnify";
-                img.setAttribute("data-magnify-src", url);
                 img.onload = function() {
                     var thumbnail = $('<div class="thumbnail"></div>');
                     var link = $('<a href="' + url + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
                     link.append(img);
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
+                    thumbnail.mouseenter(function() {
+                        var zoom = $('<div class="zoom"></div>');
+                        zoom.css({
+                            'background-image': 'url(' + url + ')',
+                            'background-size': (img.width * 2) + 'px ' + (img.height * 2) + 'px'
+                        });
+                        thumbnail.append(zoom);
+                        zoom.fadeIn(200);
+                    });
+                    thumbnail.mousemove(function(e) {
+                        var zoom = $(this).find('.zoom');
+                        var offset = $(this).offset();
+                        var posX = e.pageX - offset.left;
+                        var posY = e.pageY - offset.top;
+                        zoom.css({
+                            'left': posX - zoom.width() / 2,
+                            'top': posY - zoom.height() / 2,
+                            'background-position': '-' + (posX * 2 - zoom.width() / 2) + 'px -' + (posY * 2 - zoom.height() / 2) + 'px'
+                        });
+                    });
+                    thumbnail.mouseleave(function() {
+                        var zoom = $(this).find('.zoom');
+                        zoom.fadeOut(200, function() {
+                            zoom.remove();
+                        });
+                    });
                     row.append(thumbnail);
                     resolve();
                 };
