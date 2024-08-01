@@ -471,7 +471,7 @@
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let url = baseUrl + pais + '/' + sku + '/w=3000,h=3000,fit=pad';
+                let url = baseUrl + pais + '/' + sku + '/w=1500,h=1500,fit=pad';
                 var img = new Image();
                 img.src = url;
                 img.alt = sku;
