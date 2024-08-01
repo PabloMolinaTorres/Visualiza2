@@ -11,6 +11,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -204,11 +206,16 @@
             background-color: #f0f0f0;
             border: 1px solid #ccc;
             text-align: center;
+            overflow: hidden; /* Asegurar que las imágenes no se desborden */
         }
         .thumbnail img {
             width: 100%;
             height: 100px;
             object-fit: cover;
+            transition: transform 0.3s ease; /* Añadir transición para el efecto de zoom */
+        }
+        .thumbnail:hover img {
+            transform: scale(1.5); /* Efecto de zoom al pasar el mouse */
         }
         .thumbnail .sku {
             position: absolute;
@@ -445,7 +452,7 @@
                         $('#thumbnailContainer').append('<div class="divider"></div>');
                     }
                     $('#thumbnailContainer').append(row);
-                    var variants = ['', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01'];
+                    var variants = ['', '_1', '_10', '_4', '_5', '_6', '_7', '_8', '_9', '_01'];
                     displayThumbnailsInOrder(sku, variants, row);
                 }
             });
@@ -528,10 +535,17 @@
             var zipFilename = getFormattedDate() + ".zip"; // Nombre del ZIP con la fecha y hora
             var urls = [];
             var skuNames = [];
-            $(".imgWrapper img").each(function() {
-                urls.push($(this).attr('data-download-src'));
-                skuNames.push($(this).attr('alt'));
-            });
+            if (viewMode === "vista") {
+                $(".imgWrapper img").each(function() {
+                    urls.push($(this).attr('data-download-src'));
+                    skuNames.push($(this).attr('alt'));
+                });
+            } else {
+                $(".thumbnail img").each(function() {
+                    urls.push($(this).attr('src'));
+                    skuNames.push($(this).attr('alt'));
+                });
+            }
 
             urls.forEach(function(url, index) {
                 var filename = skuNames[index] + ".jpg"; // Use SKU name for the filename
