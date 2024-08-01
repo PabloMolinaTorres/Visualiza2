@@ -215,8 +215,8 @@
         .zoom {
             position: absolute;
             display: none;
-            width: 400px; /* Ajustar tamaño del zoom */
-            height: 400px; /* Ajustar tamaño del zoom */
+            width: 500px; /* Ajustar tamaño del zoom */
+            height: 500px; /* Ajustar tamaño del zoom */
             border: 2px solid #8fca00;
             background-repeat: no-repeat;
             z-index: 10;
@@ -496,7 +496,7 @@
                             zoom.css({
                                 'left': e.pageX + 10,
                                 'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 1.25 - zoom.width() / 2) + 'px -' + (posY * 1.25 - zoom.height() / 2) + 'px'
+                                'background-position': '-' + (posX * 1 - zoom.width() / 2) + 'px -' + (posY * 1 - zoom.height() / 2) + 'px'
                             });
                         });
                     });
