@@ -215,8 +215,8 @@
         .zoom {
             position: absolute;
             display: none;
-            width: 200px;
-            height: 200px;
+            width: 400px;
+            height: 400px;
             border: 2px solid #8fca00;
             background-repeat: no-repeat;
             z-index: 10;
@@ -487,22 +487,21 @@
                             'background-image': 'url(' + url + ')',
                             'background-size': (img.width * 2) + 'px ' + (img.height * 2) + 'px'
                         });
-                        thumbnail.append(zoom);
+                        $('body').append(zoom);
                         zoom.fadeIn(200);
-                    });
-                    thumbnail.mousemove(function(e) {
-                        var zoom = $(this).find('.zoom');
-                        var offset = $(this).offset();
-                        var posX = e.pageX - offset.left;
-                        var posY = e.pageY - offset.top;
-                        zoom.css({
-                            'left': posX - zoom.width() / 2,
-                            'top': posY - zoom.height() / 2,
-                            'background-position': '-' + (posX * 2 - zoom.width() / 2) + 'px -' + (posY * 2 - zoom.height() / 2) + 'px'
+                        thumbnail.on('mousemove', function(e) {
+                            var offset = thumbnail.offset();
+                            var posX = e.pageX - offset.left;
+                            var posY = e.pageY - offset.top;
+                            zoom.css({
+                                'left': e.pageX + 10,
+                                'top': e.pageY + 10,
+                                'background-position': '-' + (posX * 2 - zoom.width() / 2) + 'px -' + (posY * 2 - zoom.height() / 2) + 'px'
+                            });
                         });
                     });
                     thumbnail.mouseleave(function() {
-                        var zoom = $(this).find('.zoom');
+                        var zoom = $('body').find('.zoom');
                         zoom.fadeOut(200, function() {
                             zoom.remove();
                         });
