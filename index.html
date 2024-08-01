@@ -471,7 +471,7 @@
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let url = baseUrl + pais + '/' + sku + '/w=1500,h=1500,fit=pad';
+                let url = baseUrl + pais + '/' + sku + '/w=3000,h=3000,fit=pad';
                 var img = new Image();
                 img.src = url;
                 img.alt = sku;
@@ -485,7 +485,7 @@
                         var zoom = $('<div class="zoom"></div>');
                         zoom.css({
                             'background-image': 'url(' + url + ')',
-                            'background-size': (img.width * 2) + 'px ' + (img.height * 2) + 'px'
+                            'background-size': (img.width * 1.5) + 'px ' + (img.height * 1.5) + 'px'
                         });
                         $('body').append(zoom);
                         zoom.fadeIn(200);
@@ -496,7 +496,7 @@
                             zoom.css({
                                 'left': e.pageX + 10,
                                 'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 2 - zoom.width() / 2) + 'px -' + (posY * 2 - zoom.height() / 2) + 'px'
+                                'background-position': '-' + (posX * 1.5 - zoom.width() / 2) + 'px -' + (posY * 1.5 - zoom.height() / 2) + 'px'
                             });
                         });
                     });
@@ -598,7 +598,7 @@
             var day = String(date.getDate()).padStart(2, '0');
             var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
             var hours = String(date.getHours()).padStart(2, '0');
-            var minutes = String(date.getMinutes()).padStart(2, '0');
+            var minutes = Stringdate.getMinutes()).padStart(2, '0');
             return day + '/' + month + '_' + hours + minutes;
         }
 
