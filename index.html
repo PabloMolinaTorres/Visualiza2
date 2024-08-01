@@ -568,7 +568,7 @@
             var day = String(date.getDate()).padStart(2, '0');
             var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
             var hours = String(date.getHours()).padStart(2, '0');
-            var minutes = String date.getMinutes()).padStart(2, '0');
+            var minutes = String(date.getMinutes()).padStart(2, '0');
             return day + '/' + month + '_' + hours + minutes;
         }
 
