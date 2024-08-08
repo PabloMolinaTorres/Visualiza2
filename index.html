@@ -449,6 +449,8 @@
         function buscarPorSKU() {
             $('#thumbnailContainer').empty();
             var skus = $('#skus').val().split('\n');
+            var promises = [];
+
             skus.forEach(function(sku, index) {
                 sku = sku.trim();
                 if (sku !== "") {
@@ -460,21 +462,22 @@
                     var variants = useFalabella 
                         ? ['_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01']
                         : ['_1', '_01', '_02', '_03', '_04', '_05', '_06', '_12', '_13', '_14', '_15', '_17', '_18', '_21', '_22', '_24', '_26', '_27'];
-                    displayThumbnailsInOrder(sku, variants, row);
+                    promises.push(displayThumbnailsInOrder(sku, variants, row));
                 }
             });
+
+            Promise.all(promises);
         }
 
         async function displayThumbnailsInOrder(sku, variants, row) {
-            for (const variant of variants) {
-                await createThumbnail(sku + variant, row);
-            }
+            const promises = variants.map(variant => createThumbnail(sku + variant, row));
+            await Promise.all(promises);
         }
 
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let url = baseUrl + pais + '/' + sku + '/w=1500,h=1500,fit=pad';
+                let url = baseUrl + pais + '/' + sku + '/w=200,h=200,fit=pad';
                 var img = new Image();
                 img.src = url;
                 img.alt = sku;
