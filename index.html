@@ -457,7 +457,9 @@
                         $('#thumbnailContainer').append('<div class="divider"></div>');
                     }
                     $('#thumbnailContainer').append(row);
-                    var variants = ['_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01'];
+                    var variants = useFalabella 
+                        ? ['_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01']
+                        : ['_1', '_01', '_02', '_03', '_04', '_05', '_06', '_12', '_13', '_14', '_15', '_17', '_18', '_21', '_22', '_24', '_26', '_27'];
                     displayThumbnailsInOrder(sku, variants, row);
                 }
             });
