@@ -513,9 +513,7 @@
                     resolve();
                 };
                 img.onerror = function() {
-                    var thumbnail = $('<div class="thumbnail"><div class="no-image">No disponible</div><div class="sku">' + sku + '</div></div>');
-                    row.append(thumbnail);
-                    resolve();
+                    resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
                 };
             });
         }
