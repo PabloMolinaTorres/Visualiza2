@@ -477,8 +477,8 @@
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let thumbnailUrl = baseUrl + pais + '/' + sku + '?w=400&h=400&fit=pad';
-                let originalUrl = baseUrl + pais + '/' + sku + '?w=1500&h=1500&fit=pad';
+                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=400,h=400,fit=pad`;
+                let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
                 var img = new Image();
                 img.src = thumbnailUrl;
                 img.alt = sku;
@@ -525,9 +525,9 @@
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                var primaryUrl = baseUrl + pais + '/' + sku + '/public';
-                var downloadUrl = baseUrl + pais + '/' + sku + '/w=1500,h=1500';
-                var alternateUrl = baseUrl + pais + '/inpage_media/' + sku + '/public';
+                var primaryUrl = `${baseUrl}${pais}/${sku}/public`;
+                var downloadUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500`;
+                var alternateUrl = `${baseUrl}${pais}/inpage_media/${sku}/public`;
 
                 console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
                 var img = new Image();
