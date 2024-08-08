@@ -477,20 +477,21 @@
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let url = baseUrl + pais + '/' + sku + '/w=200,h=200,fit=pad';
+                let thumbnailUrl = baseUrl + pais + '/' + sku + '/w=400,h=400,fit=pad';
+                let originalUrl = baseUrl + pais + '/' + sku + '/w=1500,h=1500,fit=pad';
                 var img = new Image();
-                img.src = url;
+                img.src = thumbnailUrl;
                 img.alt = sku;
                 img.onload = function() {
                     var thumbnail = $('<div class="thumbnail"></div>');
-                    var link = $('<a href="' + url + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
+                    var link = $('<a href="' + originalUrl + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
                     link.append(img);
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.mouseenter(function() {
                         var zoom = $('<div class="zoom"></div>');
                         zoom.css({
-                            'background-image': 'url(' + url + ')',
+                            'background-image': 'url(' + originalUrl + ')',
                             'background-size': '500px 500px' /* Ajustar tamaño del fondo */
                         });
                         $('body').append(zoom);
@@ -575,7 +576,8 @@
                 });
             } else {
                 $(".thumbnail img").each(function() {
-                    urls.push($(this).attr('src'));
+                    var originalUrl = $(this).parent().attr('href');
+                    urls.push(originalUrl);
                     skuNames.push($(this).attr('alt'));
                 });
             }
