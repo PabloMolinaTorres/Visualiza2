@@ -352,6 +352,7 @@
         var pais = "CL";  // Por defecto, Chile
         var useFalabella = true;  // Estado inicial: usar Falabella
         var viewMode = "vista";  // Estado inicial: por vista
+        var autoRefreshFlag = false;  // Bandera para evitar múltiples ejecuciones
 
         const paisesFalabella = [
             { nombre: 'Chile', codigo: 'CL' },
@@ -444,11 +445,6 @@
                     $('#errorList').append('<div>' + image.sku + '</div>');
                 }
             });
-
-            // Llamar a buscar automáticamente después de cargar las imágenes
-            setTimeout(() => {
-                $('#buscar').click();
-            }, 0);
         }
 
         function buscarPorSKU() {
@@ -472,9 +468,13 @@
             });
 
             Promise.all(promises).then(() => {
-                setTimeout(() => {
-                    $('#buscar').click();
-                }, 0);
+                // Aplicar el temporizador solo la primera vez
+                if (!autoRefreshFlag) {
+                    autoRefreshFlag = true;  // Marcar que ya se realizó la recarga automática
+                    setTimeout(() => {
+                        $('#buscar').click();
+                    }, 0);
+                }
             });
         }
 
