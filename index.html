@@ -419,31 +419,25 @@
             }
         });
 
-        function buscarPorVista() {
+        async function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
             $('#errorList').empty(); // Limpiar lista de errores
             $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
-            var promises = [];
 
-            skus.forEach(function(sku) {
+            for (let sku of skus) {
                 sku = sku.trim();
                 if (sku !== "") {
-                    promises.push(loadImage(sku));
-                }
-            });
-
-            Promise.all(promises).then(function(images) {
-                images.forEach(function(image) {
+                    let image = await loadImage(sku);
                     if (image && !image.error) {
                         $('.imgContainer').append(image.element);
                     }
                     if (image && image.error) {
                         $('#errorList').append('<div>' + image.sku + '</div>');
                     }
-                });
-            });
+                }
+            }
         }
 
         function buscarPorSKU() {
