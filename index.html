@@ -445,23 +445,10 @@
                 }
             });
 
-            // Ordenar las imágenes después de que todas han sido cargadas
-            ordenarImagenes();
-        }
-
-        function ordenarImagenes() {
-            const imgContainer = $('.imgContainer');
-            const imgWrappers = imgContainer.children('.imgWrapper').get();
-
-            imgWrappers.sort((a, b) => {
-                const skuA = $(a).find('img').attr('alt').toUpperCase();
-                const skuB = $(b).find('img').attr('alt').toUpperCase();
-                return skuA.localeCompare(skuB);
-            });
-
-            $.each(imgWrappers, (idx, item) => {
-                imgContainer.append(item);
-            });
+            // Llamar a buscar automáticamente después de cargar las imágenes
+            setTimeout(() => {
+                $('#buscar').click();
+            }, 0);
         }
 
         function buscarPorSKU() {
@@ -484,7 +471,11 @@
                 }
             });
 
-            Promise.all(promises);
+            Promise.all(promises).then(() => {
+                setTimeout(() => {
+                    $('#buscar').click();
+                }, 0);
+            });
         }
 
         async function displayThumbnailsInOrder(sku, variants, row) {
