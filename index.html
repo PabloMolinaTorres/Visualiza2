@@ -429,7 +429,7 @@
         });
 
         $('#ordenarVistas').click(function() {
-            $('#buscar').click();
+            $('#buscar').trigger('click');  // Hacer que el botón "Ordenar Vistas" dispare el evento click de "Buscar"
         });
 
         async function buscarPorVista() {
