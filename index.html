@@ -41,8 +41,13 @@
         }
         .rightMenu {
             border-left: 1px solid #eeeeee;
+            flex-shrink: 0; /* Asegura que la columna derecha no se reduzca */
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
         }
-        .leftMenu .intro, .rightMenu .intro {
+        .rightMenu .intro {
             font-size: 12px;
             padding: 20px 20px 0;
         }
