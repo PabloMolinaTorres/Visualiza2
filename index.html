@@ -52,7 +52,7 @@
             padding: 20px 20px 0;
         }
         .leftMenu .intro {
-            font-size: 12px; /* Ajuste del tamaño de la tipografía */
+            font-size: 12px;
             padding: 20px 20px 0;
         }
         .leftMenu textarea, .rightMenu .error-list {
@@ -84,16 +84,16 @@
             overflow-y: auto;
         }
         .rightMenu .error-list div {
-            color: red; /* Texto de SKU no encontrados en rojo */
+            color: red;
             margin-bottom: 5px;
         }
         .rightMenu .error-list button:disabled {
-            background-color: #cccccc; /* gris deshabilitado */
+            background-color: #cccccc;
             color: white;
             cursor: not-allowed;
         }
         .rightMenu .error-list button.copied {
-            background-color: #a3dca0; /* verde pastel para botón copiado */
+            background-color: #a3dca0;
             color: white;
         }
         .rightMenu .error-list button:hover:enabled {
@@ -127,12 +127,12 @@
             color: white;
         }
         .setBar #ordenarVistas {
-            background-color: #cccccc; /* gris deshabilitado */
+            background-color: #cccccc;
             color: white;
             cursor: not-allowed;
         }
         .setBar #ordenarVistas.enabled {
-            background-color: #8fca00; /* verde habilitado */
+            background-color: #8fca00;
             cursor: pointer;
         }
         .setBar button:hover {
@@ -149,7 +149,7 @@
             padding-right: 10px;
             cursor: pointer;
             color: #bbbbbb;
-            font-size: 12px; /* Ajuste del tamaño de la tipografía */
+            font-size: 12px;
         }
         .error {
             color: red;
@@ -180,8 +180,8 @@
         }
         .thumbnail {
             display: inline-block;
-            width: 120px;
-            height: 140px;
+            width: 80px; /* Ajuste de tamaño de miniatura */
+            height: 80px; /* Ajuste de tamaño de miniatura */
             margin: 5px;
             position: relative;
             background-color: #f0f0f0;
@@ -191,7 +191,7 @@
         }
         .thumbnail img {
             width: 100%;
-            height: 100px;
+            height: 80px; /* Ajuste de tamaño de miniatura */
             object-fit: cover;
             cursor: zoom-in;
         }
@@ -220,7 +220,7 @@
             justify-content: center;
             align-items: center;
             width: 100%;
-            height: 100px;
+            height: 80px;
             background-color: #e0e0e0;
             color: #888;
             font-size: 14px;
@@ -443,11 +443,13 @@
 
             const images = await Promise.all(promises);
 
+            const seenErrors = new Set();
+
             images.forEach(image => {
                 if (image && !image.error) {
                     $('.imgContainer').append(image.element);
-                }
-                if (image && image.error) {
+                } else if (image && image.error && !seenErrors.has(image.sku)) {
+                    seenErrors.add(image.sku);
                     $('#errorList').append('<div>' + image.sku + '</div>');
                 }
             });
@@ -499,7 +501,7 @@
         function createThumbnail(sku, row) {
             return new Promise((resolve) => {
                 var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=400,h=400,fit=pad`;
+                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=80,h=80,fit=pad`;
                 let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
                 var img = new Image();
                 img.src = thumbnailUrl;
@@ -539,7 +541,10 @@
                     resolve();
                 };
                 img.onerror = function() {
-                    $('#errorList').append('<div>' + sku + '</div>');
+                    if (viewMode === "sku") {
+                        $('#errorList').append('<div>' + sku + '</div>');
+                        updateCopyButtonState();
+                    }
                     resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
                 };
             });
@@ -576,12 +581,18 @@
                         };
                         img.onerror = function() {
                             console.log("Error loading image for SKU: " + sku);
-                            $('#errorList').append('<div>' + sku + '</div>');
+                            if (viewMode === "sku") {
+                                $('#errorList').append('<div>' + sku + '</div>');
+                                updateCopyButtonState();
+                            }
                             resolve({ error: true, sku: sku });
                         };
                     } else {
                         console.log("Error loading image for SKU: " + sku);
-                        $('#errorList').append('<div>' + sku + '</div>');
+                        if (viewMode === "sku") {
+                            $('#errorList').append('<div>' + sku + '</div>');
+                            updateCopyButtonState();
+                        }
                         resolve({ error: true, sku: sku });
                     }
                 };
