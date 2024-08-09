@@ -41,7 +41,7 @@
         }
         .rightMenu {
             border-left: 1px solid #eeeeee;
-            flex-shrink: 0; /* Asegura que la columna derecha no se reduzca */
+            flex-shrink: 0;
             position: absolute;
             right: 0;
             top: 0;
@@ -49,6 +49,10 @@
         }
         .rightMenu .intro {
             font-size: 12px;
+            padding: 20px 20px 0;
+        }
+        .leftMenu .intro {
+            font-size: 12px; /* Ajuste del tamaño de la tipografía */
             padding: 20px 20px 0;
         }
         .leftMenu textarea, .rightMenu .error-list {
@@ -70,6 +74,31 @@
             font-size: 12px;
             letter-spacing: .075em;
             cursor: pointer;
+        }
+        .rightMenu .error-list {
+            height: calc(100% - 100px);
+            padding: 20px;
+            margin: 20px;
+            border: 1px solid #eee;
+            background-color: #f9f9f9;
+            overflow-y: auto;
+        }
+        .rightMenu .error-list div {
+            color: red; /* Texto de SKU no encontrados en rojo */
+            margin-bottom: 5px;
+        }
+        .rightMenu .error-list button:disabled {
+            background-color: #cccccc; /* gris deshabilitado */
+            color: white;
+            cursor: not-allowed;
+        }
+        .rightMenu .error-list button.copied {
+            background-color: #a3dca0; /* verde pastel para botón copiado */
+            color: white;
+        }
+        .rightMenu .error-list button:hover:enabled {
+            background-color: #76a700;
+            color: white;
         }
         .setBar {
             background-color: #fff;
@@ -120,6 +149,7 @@
             padding-right: 10px;
             cursor: pointer;
             color: #bbbbbb;
+            font-size: 12px; /* Ajuste del tamaño de la tipografía */
         }
         .error {
             color: red;
@@ -296,7 +326,7 @@
         <div class="rightMenu">
             <div class="intro">No tiene foto:</div>
             <div class="error-list" id="errorList">
-                <button id="copyErrors">Copiar</button>
+                <button id="copyErrors" disabled>Copiar</button>
                 <!-- Errores 404 aparecerán aquí -->
             </div>
         </div>
@@ -366,6 +396,8 @@
 
         $('#buscar').click(function() {
             $('#ordenarVistas').attr('disabled', true).removeClass('enabled').addClass('disabled');  // Deshabilitar botón de ordenar
+            $('#errorList').empty();  // Limpiar la lista de errores
+            $('#errorList').append('<button id="copyErrors" disabled>Copiar</button>');  // Añadir botón copiar deshabilitado
             if (viewMode === "vista") {
                 buscarPorVista();
             } else {
@@ -379,11 +411,26 @@
             }
         });
 
+        $('#copyErrors').click(function() {
+            if ($(this).attr('disabled')) return;
+            var errors = [];
+            $('#errorList div').each(function() {
+                errors.push($(this).text());
+            });
+            var tempInput = $('<textarea>');
+            $('body').append(tempInput);
+            tempInput.val(errors.join('\n')).select();
+            document.execCommand('copy');
+            tempInput.remove();
+            $(this).text('Copiado').addClass('copied');
+            setTimeout(() => {
+                $('#copyErrors').text('Copiar').removeClass('copied');
+            }, 2000);
+        });
+
         async function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
-            $('#errorList').empty(); // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -404,6 +451,8 @@
                     $('#errorList').append('<div>' + image.sku + '</div>');
                 }
             });
+
+            updateCopyButtonState();
 
             $('#ordenarVistas').removeAttr('disabled').removeClass('disabled').addClass('enabled');  // Habilitar botón de ordenar
         }
@@ -429,8 +478,17 @@
             });
 
             Promise.all(promises).then(() => {
+                updateCopyButtonState();
                 $('#ordenarVistas').removeAttr('disabled').removeClass('disabled').addClass('enabled');  // Habilitar botón de ordenar
             });
+        }
+
+        function updateCopyButtonState() {
+            const hasErrors = $('#errorList div').length > 0;
+            $('#copyErrors').attr('disabled', !hasErrors);
+            if (hasErrors) {
+                $('#copyErrors').removeAttr('disabled').removeClass('copied').text('Copiar');
+            }
         }
 
         async function displayThumbnailsInOrder(sku, variants, row) {
@@ -481,6 +539,7 @@
                     resolve();
                 };
                 img.onerror = function() {
+                    $('#errorList').append('<div>' + sku + '</div>');
                     resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
                 };
             });
@@ -517,10 +576,12 @@
                         };
                         img.onerror = function() {
                             console.log("Error loading image for SKU: " + sku);
+                            $('#errorList').append('<div>' + sku + '</div>');
                             resolve({ error: true, sku: sku });
                         };
                     } else {
                         console.log("Error loading image for SKU: " + sku);
+                        $('#errorList').append('<div>' + sku + '</div>');
                         resolve({ error: true, sku: sku });
                     }
                 };
@@ -571,22 +632,6 @@
             var minutes = String(date.getMinutes()).padStart(2, '0');
             return day + '/' + month + '_' + hours + minutes;
         }
-
-        $(document).on('click', '#copyErrors', function() {
-            var errors = [];
-            $('#errorList div').each(function() {
-                errors.push($(this).text());
-            });
-            var tempInput = $('<textarea>');
-            $('body').append(tempInput);
-            tempInput.val(errors.join('\n')).select();
-            document.execCommand('copy');
-            tempInput.remove();
-            $(this).text('Copiado').addClass('copied');
-            setTimeout(function() {
-                $('#copyErrors').text('Copiar').removeClass('copied');
-            }, 2000);
-        });
 
         actualizarPaises();
     </script>
