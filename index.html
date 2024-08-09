@@ -22,7 +22,7 @@
             margin: 0;
             padding: 0;
             color: #333;
-            background-color: #fff; /* Fondo blanco */
+            background-color: #fff;
         }
         .container {
             display: flex;
@@ -31,8 +31,8 @@
         }
         .leftMenu, .rightMenu {
             width: 320px;
-            min-width: 320px; /* Mínimo ancho de las columnas fijas */
-            background-color: #fff; /* Fondo blanco */
+            min-width: 320px;
+            background-color: #fff;
             overflow-y: auto;
             position: relative;
         }
@@ -50,13 +50,13 @@
             width: calc(100% - 40px);
             border: 1px solid #eee;
             margin: 20px;
-            height: 400px; /* Ajustar altura */
+            height: 400px;
         }
         .leftMenu button, .rightMenu button {
             width: calc(100% - 40px);
             border: none;
             margin: 0 20px 20px;
-            background-color: #8fca00; /* Color del botón */
+            background-color: #8fca00;
             height: 50px;
             line-height: 50px;
             padding: 0;
@@ -77,22 +77,22 @@
         .error-list button {
             display: block;
             margin-bottom: 10px;
-            background-color: #ccc; /* Color gris */
+            background-color: #ccc;
             border: none;
             color: white;
-            padding: 3px 5px; /* Reducir tamaño del botón */
+            padding: 3px 5px;
             cursor: pointer;
             border-radius: 5px;
-            font-size: 10px; /* Reducir tamaño de la fuente */
+            font-size: 10px;
         }
         .error-list button:hover {
-            background-color: #bbb; /* Color gris oscuro al pasar el ratón */
+            background-color: #bbb;
         }
         .error-list button.copied {
-            background-color: #8fca00; /* Color verde al copiar */
+            background-color: #8fca00;
         }
         .error-list button.copied:hover {
-            background-color: #76a700; /* Color verde oscuro al pasar el ratón */
+            background-color: #76a700;
         }
         .error-list div {
             margin-bottom: 5px;
@@ -102,16 +102,16 @@
             flex-grow: 1;
             overflow-y: auto;
             padding: 20px;
-            background-color: #fff; /* Fondo blanco */
+            background-color: #fff;
         }
         .imgContainer {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px; /* Espacio entre miniaturas */
+            gap: 10px;
         }
         .imgContainer .imgWrapper {
-            width: 200px; /* Ancho fijo para miniaturas */
-            height: 200px; /* Altura fija para miniaturas */
+            width: 200px;
+            height: 200px;
             position: relative;
             display: block;
             overflow: hidden;
@@ -120,7 +120,7 @@
         .imgContainer .imgWrapper img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Ajusta la imagen para cubrir el contenedor */
+            object-fit: cover;
         }
         .imgContainer .imgWrapper a {
             display: block;
@@ -130,32 +130,32 @@
         .imgContainer .imgWrapper a img {
             height: 100%;
             width: 100%;
-            object-fit: cover; /* Ajusta la imagen para cubrir el contenedor */
+            object-fit: cover;
         }
         .setBar {
-            background-color: #fff; /* Fondo blanco */
+            background-color: #fff;
             padding: 20px;
             width: 100%;
             margin-bottom: 20px;
         }
         .setBar button {
             padding: 0;
-            background-color: #8fca00; /* Color del botón */
+            background-color: #8fca00;
             border: none;
             font-size: 12px;
             text-transform: uppercase;
-            line-height: 30px; /* Altura del botón */
-            height: 30px; /* Altura del botón */
+            line-height: 30px;
+            height: 30px;
             padding: 0 15px;
             color: white;
             font-weight: 700;
             letter-spacing: .075em;
             cursor: pointer;
-            border-radius: 5px; /* Redondeo del botón */
+            border-radius: 5px;
             margin: 0;
         }
         .setBar button:hover {
-            background-color: #8fca00; /* Hover color igual al botón */
+            background-color: #8fca00;
             color: white;
         }
         .pais.seleccionado {
@@ -205,7 +205,7 @@
             background-color: #f0f0f0;
             border: 1px solid #ccc;
             text-align: center;
-            overflow: hidden; /* Asegurar que las imágenes no se desborden */
+            overflow: hidden;
         }
         .thumbnail img {
             width: 100%;
@@ -216,8 +216,8 @@
         .zoom {
             position: absolute;
             display: none;
-            width: 500px; /* Ajustar tamaño del zoom */
-            height: 500px; /* Ajustar tamaño del zoom */
+            width: 500px;
+            height: 500px;
             border: 2px solid #8fca00;
             background-repeat: no-repeat;
             z-index: 10;
@@ -302,7 +302,7 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-       </style>
+    </style>
 </head>
 <body>
     <div class="container">
@@ -461,7 +461,7 @@
                     $('#thumbnailContainer').append(row);
                     var variants = useFalabella 
                         ? ['_01', '_02', '_03', '_1', '_10', '_11', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99']
-                        : ['1', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12', '_13', '_14', '_15', '_17', '_18', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30', '_31', '_32', '_33', '_EFI', '_SEC'];
+                        : ['_1', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_10', '_11', '_12', '_13', '_14', '_15', '_16', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30', '_31', '_32', '_33', '_34', '_35', '_EFI', '_SEC'];
                     promises.push(displayThumbnailsInOrder(sku, variants, row));
                 }
             });
@@ -492,7 +492,7 @@
                         var zoom = $('<div class="zoom"></div>');
                         zoom.css({
                             'background-image': 'url(' + originalUrl + ')',
-                            'background-size': '500px 500px' /* Ajustar tamaño del fondo */
+                            'background-size': '500px 500px'
                         });
                         $('body').append(zoom);
                         zoom.fadeIn(200);
@@ -532,8 +532,8 @@
                 console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
                 var img = new Image();
                 img.src = primaryUrl;
-                img.alt = sku; // Set the alt attribute to the SKU for later use
-                img.setAttribute('data-download-src', downloadUrl); // Store the download URL
+                img.alt = sku;
+                img.setAttribute('data-download-src', downloadUrl);
 
                 img.onload = function() {
                     var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
@@ -545,7 +545,7 @@
                     if (sku.includes('-')) {
                         console.log("Trying alternate URL for SKU: " + sku);
                         img.src = alternateUrl;
-                        img.setAttribute('data-download-src', alternateUrl); // Store the alternate download URL
+                        img.setAttribute('data-download-src', alternateUrl);
                         img.onload = function() {
                             var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
                             wrapper.find('a').append(img);
@@ -566,7 +566,7 @@
         $('#descargartodo').click(function() {
             var zip = new JSZip();
             var count = 0;
-            var zipFilename = getFormattedDate() + ".zip"; // Nombre del ZIP con la fecha y hora
+            var zipFilename = getFormattedDate() + ".zip";
             var urls = [];
             var skuNames = [];
             if (viewMode === "vista") {
@@ -583,10 +583,10 @@
             }
 
             urls.forEach(function(url, index) {
-                var filename = skuNames[index] + ".jpg"; // Use SKU name for the filename
+                var filename = skuNames[index] + ".jpg";
                 JSZipUtils.getBinaryContent(url, function (err, data) {
                     if (err) {
-                        throw err; // or handle the error
+                        throw err;
                     }
                     zip.file(filename, data, { binary: true });
                     count++;
@@ -602,7 +602,7 @@
         function getFormattedDate() {
             var date = new Date();
             var day = String(date.getDate()).padStart(2, '0');
-            var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            var month = String(date.getMonth() + 1).padStart(2, '0');
             var hours = String(date.getHours()).padStart(2, '0');
             var minutes = String(date.getMinutes()).padStart(2, '0');
             return day + '/' + month + '_' + hours + minutes;
@@ -624,7 +624,6 @@
             }, 2000);
         });
 
-        // Inicializar países y lógica de vista
         actualizarPaises();
     </script>
 </body>
