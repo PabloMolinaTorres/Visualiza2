@@ -1,650 +1,310 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Descargador de Imágenes</title>
-    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Last-Modified" content="0">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
-    <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Lato', sans-serif;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-color: #fff;
-        }
-        .container {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
-        .leftMenu, .rightMenu {
-            width: 320px;
-            min-width: 320px;
-            background-color: #fff;
-            overflow-y: auto;
-            position: relative;
-        }
-        .leftMenu {
-            border-right: 1px solid #eeeeee;
-        }
-        .rightMenu {
-            border-left: 1px solid #eeeeee;
-            flex-shrink: 0;
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 0;
-        }
-        .rightMenu .intro {
-            font-size: 12px;
-            padding: 20px 20px 0;
-        }
-        .leftMenu .intro {
-            font-size: 12px;
-            padding: 20px 20px 0;
-        }
-        .leftMenu textarea, .rightMenu .error-list {
-            width: calc(100% - 40px);
-            border: 1px solid #eee;
-            margin: 20px;
-            height: 400px;
-        }
-        .leftMenu button, .rightMenu button {
-            width: calc(100% - 40px);
-            border: none;
-            margin: 0 20px 20px;
-            background-color: #8fca00;
-            height: 50px;
-            line-height: 50px;
-            padding: 0;
-            border-radius: 5px;
-            color: white;
-            font-size: 12px;
-            letter-spacing: .075em;
-            cursor: pointer;
-        }
-        .rightMenu .error-list {
-            height: calc(100% - 100px);
-            padding: 20px;
-            margin: 20px;
-            border: 1px solid #eee;
-            background-color: #f9f9f9;
-            overflow-y: auto;
-        }
-        .rightMenu .error-list div {
-            color: red;
-            margin-bottom: 5px;
-        }
-        .rightMenu .error-list button:disabled {
-            background-color: #cccccc;
-            color: white;
-            cursor: not-allowed;
-        }
-        .rightMenu .error-list button.copied {
-            background-color: #a3dca0;
-            color: white;
-        }
-        .rightMenu .error-list button:hover:enabled {
-            background-color: #76a700;
-            color: white;
-        }
-        .setBar {
-            background-color: #fff;
-            padding: 20px;
-            width: 100%;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .setBar button {
-            padding: 0;
-            border: none;
-            font-size: 12px;
-            text-transform: uppercase;
-            line-height: 30px;
-            height: 30px;
-            padding: 0 15px;
-            font-weight: 700;
-            letter-spacing: .075em;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 0;
-        }
-        .setBar #descargartodo {
-            background-color: #8fca00;
-            color: white;
-        }
-        .setBar #ordenarVistas {
-            background-color: #cccccc;
-            color: white;
-            cursor: not-allowed;
-        }
-        .setBar #ordenarVistas.enabled {
-            background-color: #8fca00;
-            cursor: pointer;
-        }
-        .setBar button:hover {
-            background-color: #76a700;
-            color: white;
-        }
-        .pais.seleccionado {
-            font-weight: 700;
-            text-decoration: underline;
-            color: #333;
-        }
-        .pais {
-            display: inline-block;
-            padding-right: 10px;
-            cursor: pointer;
-            color: #bbbbbb;
-            font-size: 12px;
-        }
-        .error {
-            color: red;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .icon-switch {
-            display: flex;
-            align-items: center;
-            margin: 20px;
-        }
-        .icon-switch img {
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .icon-switch img.inactive {
-            filter: grayscale(100%);
-        }
-        .skus-container {
-            padding: 20px;
-        }
-        .thumbnail-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .thumbnail {
-            display: inline-block;
-            width: 80px; /* Ajuste de tamaño de miniatura */
-            height: 80px; /* Ajuste de tamaño de miniatura */
-            margin: 5px;
-            position: relative;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            text-align: center;
-            overflow: hidden;
-        }
-        .thumbnail img {
-            width: 100%;
-            height: 80px; /* Ajuste de tamaño de miniatura */
-            object-fit: cover;
-            cursor: zoom-in;
-        }
-        .zoom {
-            position: absolute;
-            display: none;
-            width: 500px;
-            height: 500px;
-            border: 2px solid #8fca00;
-            background-repeat: no-repeat;
-            z-index: 10;
-        }
-        .thumbnail .sku {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            text-align: center;
-            font-size: 12px;
-            padding: 2px;
-        }
-        .thumbnail .no-image {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 80px;
-            background-color: #e0e0e0;
-            color: #888;
-            font-size: 14px;
-            text-align: center;
-        }
-        .divider {
-            width: 100%;
-            height: 1px;
-            background-color: #ccc;
-            margin: 20px 0;
-        }
-        .toggle-switch {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: calc(100% - 40px);
-        }
-        .toggle-switch span {
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #8fca00;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="leftMenu">
-            <div class="icon-switch">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
-            </div>
-            <div class="intro paises" id="paisesContainer">
-                <div>Descargar imágenes desde:</div><br>
-                <div class="pais seleccionado" data-pais="CL">Chile</div>
-                <div class="pais" data-pais="CO">Colombia</div>
-                <div class="pais" data-pais="PE">Perú</div>
-            </div>
-            <div class="skus-container">
-                <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Ingresá los SKUs, uno debajo de otro sin comas"></textarea>
-                <button id="buscar">BUSCAR</button>
-            </div>
-            <div class="toggle-switch">
-                <span>Vista</span>
-                <label class="switch">
-                    <input type="checkbox" id="viewToggle">
-                    <span class="slider"></span>
-                </label>
-                <span>SKU</span>
-            </div>
-            <div class="error" id="error"></div>
-        </div>
-        <div class="rightContainer">
-            <div class="setBar">
-                <button id="descargartodo">DESCARGAR TODO</button>
-                <button id="ordenarVistas" class="disabled" disabled>ORDENAR VISTAS</button>
-            </div>
-            <div class="imgContainer"></div>
-            <div id="thumbnailContainer" style="display:none;">
-                <!-- Thumbnails will be displayed here -->
-            </div>
-        </div>
-        <div class="rightMenu">
-            <div class="intro">No tiene foto:</div>
-            <div class="error-list" id="errorList">
-                <button id="copyErrors" disabled>Copiar</button>
-                <!-- Errores 404 aparecerán aquí -->
-            </div>
-        </div>
-    </div>
-    <script>
-        var pais = "CL";  // Por defecto, Chile
-        var useFalabella = true;  // Estado inicial: usar Falabella
-        var viewMode = "vista";  // Estado inicial: por vista
+    const paisesFalabella = [
+        { nombre: 'Chile', codigo: 'CL' },
+        { nombre: 'Colombia', codigo: 'CO' },
+        { nombre: 'Perú', codigo: 'PE' }
+    ];
 
-        const paisesFalabella = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' }
-        ];
+    const paisesSodimac = [
+        { nombre: 'Chile', codigo: 'CL' },
+        { nombre: 'Argentina', codigo: 'AR' },
+        { nombre: 'Colombia', codigo: 'CO' },
+        { nombre: 'Perú', codigo: 'PE' },
+        { nombre: 'Brasil', codigo: 'BR' },
+        { nombre: 'México', codigo: 'MX' },
+        { nombre: 'Uruguay', codigo: 'UY' }
+    ];
 
-        const paisesSodimac = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Argentina', codigo: 'AR' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' },
-            { nombre: 'Brasil', codigo: 'BR' },
-            { nombre: 'México', codigo: 'MX' },
-            { nombre: 'Uruguay', codigo: 'UY' }
-        ];
-
-        function actualizarPaises() {
-            const contenedor = $('#paisesContainer');
-            contenedor.empty();
-            contenedor.append('<div>Descargar imágenes desde:</div><br>');
-            const paises = useFalabella ? paisesFalabella : paisesSodimac;
-            paises.forEach(p => {
-                const div = $('<div>').addClass('pais').attr('data-pais', p.codigo).text(p.nombre);
-                if (p.codigo === pais) div.addClass('seleccionado');
-                contenedor.append(div);
-            });
-            $('.pais').click(function() {
-                pais = $(this).data('pais');
-                $('.pais').removeClass('seleccionado');
-                $(this).addClass('seleccionado');
-            });
-        }
-
-        $('#falabellaIcon').click(function() {
-            useFalabella = true;
-            $('#falabellaIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png');
-            $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
-            actualizarPaises();
+    function actualizarPaises() {
+        const contenedor = $('#paisesContainer');
+        contenedor.empty();
+        contenedor.append('<div>Descargar imágenes desde:</div><br>');
+        const paises = useFalabella ? paisesFalabella : paisesSodimac;
+        paises.forEach(p => {
+            const div = $('<div>').addClass('pais').attr('data-pais', p.codigo).text(p.nombre);
+            if (p.codigo === pais) div.addClass('seleccionado');
+            contenedor.append(div);
         });
-
-        $('#sodimacIcon').click(function() {
-            useFalabella = false;
-            $('#sodimacIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png');
-            $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
-            actualizarPaises();
+        $('.pais').click(function() {
+            pais = $(this).data('pais');
+            $('.pais').removeClass('seleccionado');
+            $(this).addClass('seleccionado');
         });
+    }
 
-        $('#viewToggle').change(function() {
-            viewMode = $(this).is(':checked') ? 'sku' : 'vista';
-            if (viewMode === 'vista') {
-                $('.imgContainer').show();
-                $('#thumbnailContainer').hide();
-            } else {
-                $('.imgContainer').hide();
-                $('#thumbnailContainer').show();
+    $('#falabellaIcon').click(function() {
+        useFalabella = true;
+        $('#falabellaIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png');
+        $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
+        actualizarPaises();
+    });
+
+    $('#sodimacIcon').click(function() {
+        useFalabella = false;
+        $('#sodimacIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png');
+        $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
+        actualizarPaises();
+    });
+
+    $('#viewToggle').change(function() {
+        viewMode = $(this).is(':checked') ? 'sku' : 'vista';
+        if (viewMode === 'vista') {
+            $('.imgContainer').show();
+            $('#thumbnailContainer').hide();
+        } else {
+            $('.imgContainer').hide();
+            $('#thumbnailContainer').show();
+        }
+    });
+
+    $('#buscar').click(function() {
+        $('#ordenarVistas').attr('disabled', true).removeClass('enabled').addClass('disabled');  // Deshabilitar botón de ordenar
+        $('#errorList').empty();  // Limpiar la lista de errores
+        $('#errorList').append('<button id="copyErrors" disabled>Copiar</button>');  // Añadir botón copiar deshabilitado
+        if (viewMode === "vista") {
+            buscarPorVista();
+        } else {
+            buscarPorSKU();
+        }
+    });
+
+    $('#ordenarVistas').click(function() {
+        if (!$(this).attr('disabled')) {
+            $('#buscar').click();
+        }
+    });
+
+    $('#copyErrors').click(function() {
+        if ($(this).attr('disabled')) return;
+        var errors = [];
+        $('#errorList div').each(function() {
+            errors.push($(this).text());
+        });
+        var tempInput = $('<textarea>');
+        $('body').append(tempInput);
+        tempInput.val(errors.join('\n')).select();
+        document.execCommand('copy');
+        tempInput.remove();
+        $(this).text('Copiado').addClass('copied');
+        setTimeout(() => {
+            $('#copyErrors').text('Copiar').removeClass('copied');
+        }, 2000);
+    });
+
+    async function buscarPorVista() {
+        $('.imgContainer').empty();
+        $('#error').text('');
+        var skus = $('#skus').val().split('\n');
+        var promises = [];
+
+        for (let sku of skus) {
+            sku = sku.trim();
+            if (sku !== "") {
+                promises.push(loadImage(sku));
+            }
+        }
+
+        const images = await Promise.all(promises);
+
+        const seenErrors = new Set();
+
+        images.forEach(image => {
+            if (image && !image.error) {
+                $('.imgContainer').append(image.element);
+            } else if (image && image.error && !seenErrors.has(image.sku)) {
+                seenErrors.add(image.sku);
+                $('#errorList').append('<div>' + image.sku + '</div>');
             }
         });
 
-        $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true).removeClass('enabled').addClass('disabled');  // Deshabilitar botón de ordenar
-            $('#errorList').empty();  // Limpiar la lista de errores
-            $('#errorList').append('<button id="copyErrors" disabled>Copiar</button>');  // Añadir botón copiar deshabilitado
-            if (viewMode === "vista") {
-                buscarPorVista();
-            } else {
-                buscarPorSKU();
-            }
-        });
+        updateCopyButtonState();
 
-        $('#ordenarVistas').click(function() {
-            if (!$(this).attr('disabled')) {
-                $('#buscar').click();
-            }
-        });
+        $('#ordenarVistas').removeAttr('disabled').removeClass('disabled').addClass('enabled');  // Habilitar botón de ordenar
+    }
 
-        $('#copyErrors').click(function() {
-            if ($(this).attr('disabled')) return;
-            var errors = [];
-            $('#errorList div').each(function() {
-                errors.push($(this).text());
-            });
-            var tempInput = $('<textarea>');
-            $('body').append(tempInput);
-            tempInput.val(errors.join('\n')).select();
-            document.execCommand('copy');
-            tempInput.remove();
-            $(this).text('Copiado').addClass('copied');
-            setTimeout(() => {
-                $('#copyErrors').text('Copiar').removeClass('copied');
-            }, 2000);
-        });
+    function buscarPorSKU() {
+        $('#thumbnailContainer').empty();
+        var skus = $('#skus').val().split('\n');
+        var promises = [];
 
-        async function buscarPorVista() {
-            $('.imgContainer').empty();
-            $('#error').text('');
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
-
-            for (let sku of skus) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    promises.push(loadImage(sku));
+        skus.forEach(function(sku, index) {
+            sku = sku.trim();
+            if (sku !== "") {
+                var row = $('<div class="thumbnail-row"></div>');
+                if (index > 0) {
+                    $('#thumbnailContainer').append('<div class="divider"></div>');
                 }
+                $('#thumbnailContainer').append(row);
+                var variants = useFalabella 
+                    ? ['_01', '_02', '_03', '_1', '_10', '_11', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99']
+                    : ['_1', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_10', '_11', '_12', '_13', '_14', '_15', '_16', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30', '_31', '_32', '_33', '_34', '_35', '_EFI', '_SEC'];
+                promises.push(displayThumbnailsInOrder(sku, variants, row));
             }
+        });
 
-            const images = await Promise.all(promises);
-
-            const seenErrors = new Set();
-
-            images.forEach(image => {
-                if (image && !image.error) {
-                    $('.imgContainer').append(image.element);
-                } else if (image && image.error && !seenErrors.has(image.sku)) {
-                    seenErrors.add(image.sku);
-                    $('#errorList').append('<div>' + image.sku + '</div>');
-                }
-            });
-
+        Promise.all(promises).then(() => {
             updateCopyButtonState();
-
             $('#ordenarVistas').removeAttr('disabled').removeClass('disabled').addClass('enabled');  // Habilitar botón de ordenar
+        });
+    }
+
+    function updateCopyButtonState() {
+        const hasErrors = $('#errorList div').length > 0;
+        $('#copyErrors').attr('disabled', !hasErrors);
+        if (hasErrors) {
+            $('#copyErrors').removeAttr('disabled').removeClass('copied').text('Copiar');
         }
+    }
 
-        function buscarPorSKU() {
-            $('#thumbnailContainer').empty();
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
+    async function displayThumbnailsInOrder(sku, variants, row) {
+        const promises = variants.map(variant => createThumbnail(sku + variant, row));
+        await Promise.all(promises);
+    }
 
-            skus.forEach(function(sku, index) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    var row = $('<div class="thumbnail-row"></div>');
-                    if (index > 0) {
-                        $('#thumbnailContainer').append('<div class="divider"></div>');
-                    }
-                    $('#thumbnailContainer').append(row);
-                    var variants = useFalabella 
-                        ? ['_01', '_02', '_03', '_1', '_10', '_11', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99']
-                        : ['_1', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_10', '_11', '_12', '_13', '_14', '_15', '_16', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30', '_31', '_32', '_33', '_34', '_35', '_EFI', '_SEC'];
-                    promises.push(displayThumbnailsInOrder(sku, variants, row));
-                }
-            });
-
-            Promise.all(promises).then(() => {
-                updateCopyButtonState();
-                $('#ordenarVistas').removeAttr('disabled').removeClass('disabled').addClass('enabled');  // Habilitar botón de ordenar
-            });
-        }
-
-        function updateCopyButtonState() {
-            const hasErrors = $('#errorList div').length > 0;
-            $('#copyErrors').attr('disabled', !hasErrors);
-            if (hasErrors) {
-                $('#copyErrors').removeAttr('disabled').removeClass('copied').text('Copiar');
-            }
-        }
-
-        async function displayThumbnailsInOrder(sku, variants, row) {
-            const promises = variants.map(variant => createThumbnail(sku + variant, row));
-            await Promise.all(promises);
-        }
-
-        function createThumbnail(sku, row) {
-            return new Promise((resolve) => {
-                var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=80,h=80,fit=pad`;
-                let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
-                var img = new Image();
-                img.src = thumbnailUrl;
-                img.alt = sku;
-                img.onload = function() {
-                    var thumbnail = $('<div class="thumbnail"></div>');
-                    var link = $('<a href="' + originalUrl + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
-                    link.append(img);
-                    thumbnail.append(link);
-                    thumbnail.append('<div class="sku">' + sku + '</div>');
-                    thumbnail.mouseenter(function() {
-                        var zoom = $('<div class="zoom"></div>');
+    function createThumbnail(sku, row) {
+        return new Promise((resolve) => {
+            var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
+            let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=200,h=200,fit=pad`;
+            let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
+            var img = new Image();
+            img.src = thumbnailUrl;
+            img.alt = sku;
+            img.onload = function() {
+                var thumbnail = $('<div class="thumbnail"></div>');
+                var link = $('<a href="' + originalUrl + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
+                link.append(img);
+                thumbnail.append(link);
+                thumbnail.append('<div class="sku">' + sku + '</div>');
+                thumbnail.mouseenter(function() {
+                    var zoom = $('<div class="zoom"></div>');
+                    zoom.css({
+                        'background-image': 'url(' + originalUrl + ')',
+                        'background-size': '500px 500px'
+                    });
+                    $('body').append(zoom);
+                    zoom.fadeIn(200);
+                    thumbnail.on('mousemove', function(e) {
+                        var offset = thumbnail.offset();
+                        var posX = e.pageX - offset.left;
+                        var posY = e.pageY - offset.top;
                         zoom.css({
-                            'background-image': 'url(' + originalUrl + ')',
-                            'background-size': '500px 500px'
-                        });
-                        $('body').append(zoom);
-                        zoom.fadeIn(200);
-                        thumbnail.on('mousemove', function(e) {
-                            var offset = thumbnail.offset();
-                            var posX = e.pageX - offset.left;
-                            var posY = e.pageY - offset.top;
-                            zoom.css({
-                                'left': e.pageX + 10,
-                                'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 1 - zoom.width() / 2) + 'px -' + (posY * 1 - zoom.height() / 2) + 'px'
-                            });
+                            'left': e.pageX + 10,
+                            'top': e.pageY + 10,
+                            'background-position': '-' + (posX * 1 - zoom.width() / 2) + 'px -' + (posY * 1 - zoom.height() / 2) + 'px'
                         });
                     });
-                    thumbnail.mouseleave(function() {
-                        var zoom = $('body').find('.zoom');
-                        zoom.fadeOut(200, function() {
-                            zoom.remove();
-                        });
+                });
+                thumbnail.mouseleave(function() {
+                    var zoom = $('body').find('.zoom');
+                    zoom.fadeOut(200, function() {
+                        zoom.remove();
                     });
-                    row.append(thumbnail);
-                    resolve();
-                };
-                img.onerror = function() {
-                    if (viewMode === "sku") {
-                        $('#errorList').append('<div>' + sku + '</div>');
-                        updateCopyButtonState();
-                    }
-                    resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
-                };
-            });
-        }
+                });
+                row.append(thumbnail);
+                resolve();
+            };
+            img.onerror = function() {
+                if (viewMode === "sku") {
+                    $('#errorList').append('<div>' + sku + '</div>');
+                    updateCopyButtonState();
+                }
+                resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
+            };
+        });
+    }
 
-        function loadImage(sku) {
-            return new Promise(function(resolve, reject) {
-                var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
-                var primaryUrl = `${baseUrl}${pais}/${sku}/public`;
-                var downloadUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500`;
-                var alternateUrl = `${baseUrl}${pais}/inpage_media/${sku}/public`;
+    function loadImage(sku) {
+        return new Promise(function(resolve, reject) {
+            var baseUrl = useFalabella ? 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella' : 'https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac';
+            var primaryUrl = `${baseUrl}${pais}/${sku}/public`;
+            var downloadUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500`;
+            var alternateUrl = `${baseUrl}${pais}/inpage_media/${sku}/public`;
 
-                console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
-                var img = new Image();
-                img.src = primaryUrl;
-                img.alt = sku;
-                img.setAttribute('data-download-src', downloadUrl);
+            console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
+            var img = new Image();
+            img.src = primaryUrl;
+            img.alt = sku;
+            img.setAttribute('data-download-src', downloadUrl);
 
-                img.onload = function() {
-                    var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
-                    wrapper.find('a').append(img);
-                    resolve({ element: wrapper, sku: sku });
-                };
+            img.onload = function() {
+                var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
+                wrapper.find('a').append(img);
+                resolve({ element: wrapper, sku: sku });
+            };
 
-                img.onerror = function() {
-                    if (sku.includes('-')) {
-                        console.log("Trying alternate URL for SKU: " + sku);
-                        img.src = alternateUrl;
-                        img.setAttribute('data-download-src', alternateUrl);
-                        img.onload = function() {
-                            var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
-                            wrapper.find('a').append(img);
-                            resolve({ element: wrapper, sku: sku });
-                        };
-                        img.onerror = function() {
-                            console.log("Error loading image for SKU: " + sku);
-                            if (viewMode === "sku") {
-                                $('#errorList').append('<div>' + sku + '</div>');
-                                updateCopyButtonState();
-                            }
-                            resolve({ error: true, sku: sku });
-                        };
-                    } else {
+            img.onerror = function() {
+                if (sku.includes('-')) {
+                    console.log("Trying alternate URL for SKU: " + sku);
+                    img.src = alternateUrl;
+                    img.setAttribute('data-download-src', alternateUrl);
+                    img.onload = function() {
+                        var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
+                        wrapper.find('a').append(img);
+                        resolve({ element: wrapper, sku: sku });
+                    };
+                    img.onerror = function() {
                         console.log("Error loading image for SKU: " + sku);
                         if (viewMode === "sku") {
                             $('#errorList').append('<div>' + sku + '</div>');
                             updateCopyButtonState();
                         }
                         resolve({ error: true, sku: sku });
+                    };
+                } else {
+                    console.log("Error loading image for SKU: " + sku);
+                    if (viewMode === "sku") {
+                        $('#errorList').append('<div>' + sku + '</div>');
+                        updateCopyButtonState();
                     }
-                };
+                    resolve({ error: true, sku: sku });
+                }
+            };
+        });
+    }
+
+    $('#descargartodo').click(function() {
+        var zip = new JSZip();
+        var count = 0;
+        var zipFilename = getFormattedDate() + ".zip";
+        var urls = [];
+        var skuNames = [];
+        if (viewMode === "vista") {
+            $(".imgWrapper img").each(function() {
+                urls.push($(this).attr('data-download-src'));
+                skuNames.push($(this).attr('alt'));
+            });
+        } else {
+            $(".thumbnail img").each(function() {
+                var originalUrl = $(this).parent().attr('href');
+                urls.push(originalUrl);
+                skuNames.push($(this).attr('alt'));
             });
         }
 
-        $('#descargartodo').click(function() {
-            var zip = new JSZip();
-            var count = 0;
-            var zipFilename = getFormattedDate() + ".zip";
-            var urls = [];
-            var skuNames = [];
-            if (viewMode === "vista") {
-                $(".imgWrapper img").each(function() {
-                    urls.push($(this).attr('data-download-src'));
-                    skuNames.push($(this).attr('alt'));
-                });
-            } else {
-                $(".thumbnail img").each(function() {
-                    var originalUrl = $(this).parent().attr('href');
-                    urls.push(originalUrl);
-                    skuNames.push($(this).attr('alt'));
-                });
-            }
-
-            urls.forEach(function(url, index) {
-                var filename = skuNames[index] + ".jpg";
-                JSZipUtils.getBinaryContent(url, function (err, data) {
-                    if (err) {
-                        throw err;
-                    }
-                    zip.file(filename, data, { binary: true });
-                    count++;
-                    if (count === urls.length) {
-                        zip.generateAsync({ type: 'blob' }).then(function (content) {
-                            saveAs(content, zipFilename);
-                        });
-                    }
-                });
+        urls.forEach(function(url, index) {
+            var filename = skuNames[index] + ".jpg";
+            JSZipUtils.getBinaryContent(url, function (err, data) {
+                if (err) {
+                    throw err;
+                }
+                zip.file(filename, data, { binary: true });
+                count++;
+                if (count === urls.length) {
+                    zip.generateAsync({ type: 'blob' }).then(function (content) {
+                        saveAs(content, zipFilename);
+                    });
+                }
             });
         });
+    });
 
-        function getFormattedDate() {
-            var date = new Date();
-            var day = String(date.getDate()).padStart(2, '0');
-            var month = String(date.getMonth() + 1).padStart(2, '0');
-            var hours = String(date.getHours()).padStart(2, '0');
-            var minutes = String(date.getMinutes()).padStart(2, '0');
-            return day + '/' + month + '_' + hours + minutes;
-        }
+    function getFormattedDate() {
+        var date = new Date();
+        var day = String(date.getDate()).padStart(2, '0');
+        var month = String(date.getMonth() + 1).padStart(2, '0');
+        var hours = String(date.getHours()).padStart(2, '0');
+        var minutes = String(date.getMinutes()).padStart(2, '0');
+        return day + '/' + month + '_' + hours + minutes;
+    }
 
-        actualizarPaises();
-    </script>
-</body>
-</html>
+    actualizarPaises();
+</script>
