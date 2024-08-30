@@ -257,6 +257,16 @@
             background-color: #ccc;
             margin: 20px 0;
         }
+        .download-icon {
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+            opacity: 0.5;
+            cursor: pointer;
+        }
+        .download-icon:hover {
+            opacity: 0.9;
+        }
         .toggle-switch {
             display: flex;
             align-items: center;
@@ -548,8 +558,13 @@
                     var thumbnail = $('<div class="thumbnail"></div>');
                     var link = $('<a href="' + originalUrl + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
                     link.append(img);
+                    var downloadIcon = $('<img class="download-icon" src="https://img.icons8.com/ios-glyphs/30/000000/download--v1.png" alt="download">');
+                    downloadIcon.click(function() {
+                        downloadImage(originalUrl, sku);
+                    });
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
+                    thumbnail.append(downloadIcon);
                     thumbnail.mouseenter(function() {
                         var zoom = $('<div class="zoom"></div>');
                         zoom.css({
@@ -581,6 +596,15 @@
                 img.onerror = function() {
                     resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
                 };
+            });
+        }
+
+        function downloadImage(url, sku) {
+            JSZipUtils.getBinaryContent(url, function (err, data) {
+                if (err) {
+                    throw err;
+                }
+                saveAs(new Blob([data], { type: 'image/jpeg' }), sku + ".jpg");
             });
         }
 
