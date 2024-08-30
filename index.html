@@ -131,11 +131,11 @@
             position: absolute;
             top: 5px;
             right: 5px;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             opacity: 0.6;
             cursor: pointer;
-            background-image: url('https://img.icons8.com/ios-glyphs/30/000000/download--v1.png');
+            background-image: url('/mnt/data/image.png');
             background-size: cover;
         }
         .download-icon:hover {
@@ -243,17 +243,6 @@
             text-align: center;
             font-size: 12px;
             padding: 2px;
-        }
-        .thumbnail .no-image {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100px;
-            background-color: #e0e0e0;
-            color: #888;
-            font-size: 14px;
-            text-align: center;
         }
         .divider {
             width: 100%;
@@ -559,31 +548,6 @@
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.append(downloadIcon);
-                    thumbnail.mouseenter(function() {
-                        var zoom = $('<div class="zoom"></div>');
-                        zoom.css({
-                            'background-image': 'url(' + originalUrl + ')',
-                            'background-size': '500px 500px'
-                        });
-                        $('body').append(zoom);
-                        zoom.fadeIn(200);
-                        thumbnail.on('mousemove', function(e) {
-                            var offset = thumbnail.offset();
-                            var posX = e.pageX - offset.left;
-                            var posY = e.pageY - offset.top;
-                            zoom.css({
-                                'left': e.pageX + 10,
-                                'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 1 - zoom.width() / 2) + 'px -' + (posY * 1 - zoom.height() / 2) + 'px'
-                            });
-                        });
-                    });
-                    thumbnail.mouseleave(function() {
-                        var zoom = $('body').find('.zoom');
-                        zoom.fadeOut(200, function() {
-                            zoom.remove();
-                        });
-                    });
                     row.append(thumbnail);
                     resolve();
                 };
