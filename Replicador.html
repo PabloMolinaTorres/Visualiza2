@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Renombrador de Imágenes Falabella</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="Last-Modified" content="0">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Lato', sans-serif;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            background-color: #fff;
+        }
+        .container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+        .leftContainer, .rightContainer {
+            width: 50%;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        .leftContainer {
+            border-right: 1px solid #eeeeee;
+        }
+        textarea {
+            width: calc(100% - 40px);
+            margin: 20px 0;
+            padding: 10px;
+            height: 150px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            resize: none;
+        }
+        button {
+            width: calc(100% - 40px);
+            border: none;
+            margin: 20px 0;
+            background-color: #8fca00;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .imgContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .imgWrapper {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            display: block;
+            overflow: hidden;
+            border: 1px solid #eeeeee;
+            text-align: center;
+        }
+        .imgWrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .sku {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.5);
+            color: #fff;
+            text-align: center;
+            font-size: 10px;
+            padding: 2px;
+        }
+        .download-icon {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            width: 20px;
+            height: 20px;
+            opacity: 0.8;
+            cursor: pointer;
+            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/descarga.png');
+            background-size: cover;
+        }
+        .download-icon:hover {
+            opacity: 1;
+        }
+        .switch-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .switch-container span {
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #8fca00;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Estilos para el selector de país */
+        .country-selector {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .country-flag {
+            width: 32px;
+            height: 32px;
+            margin: 0 5px;
+            cursor: pointer;
+            filter: grayscale(100%);
+            transition: filter 0.3s;
+        }
+        .country-flag.active {
+            filter: grayscale(0%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="leftContainer">
+            <h3>Buscar Imágenes</h3>
+            <div class="switch-container">
+                <span>Vista</span>
+                <label class="switch">
+                    <input type="checkbox" id="viewToggle">
+                    <span class="slider"></span>
+                </label>
+                <span>SKU</span>
+            </div>
+            <div class="country-selector">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Flag_of_Chile.svg" id="flagCL" class="country-flag" alt="Chile">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/cf/Flag_of_Peru.svg" id="flagPE" class="country-flag" alt="Perú">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Colombia.svg" id="flagCO" class="country-flag" alt="Colombia">
+            </div>
+            <textarea id="skuInputLeft" placeholder="Ingrese SKUs, uno por línea"></textarea>
+            <div id="leftCount"></div>
+            <button id="buscar">Buscar</button>
+            <div class="imgContainer" id="imgContainer">
+                <!-- Imágenes aparecerán aquí -->
+            </div>
+        </div>
+        <div class="rightContainer">
+            <h3>Renombrar y Descargar</h3>
+            <textarea id="skuInputRight" placeholder="Ingrese los nombres para renombrar, uno por línea"></textarea>
+            <div id="rightCount"></div>
+            <button id="downloadAll">Descargar Todo</button>
+        </div>
+    </div>
+
+    <script>
+        var skuList = [];
+        var mode = "vista"; // Por defecto, modo vista
+        var country = "CL"; // Por defecto, Chile
+
+        function loadImage(sku, suffix = "") {
+            return new Promise(function(resolve, reject) {
+                var baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
+                var imgUrl = `${baseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
+                var img = new Image();
+                img.src = imgUrl;
+                img.alt = sku + suffix;
+
+                img.onload = function() {
+                    var wrapper = $('<div class="imgWrapper"><a href="' + imgUrl + '" target="_blank"></a></div>');
+                    wrapper.find('a').append(img);
+                    wrapper.append('<div class="sku">' + sku + suffix + '</div>');
+                    resolve(wrapper);
+                };
+
+                img.onerror = function() {
+                    resolve(null); // Resolviendo la promesa sin añadir la miniatura "No disponible"
+                };
+            });
+        }
+
+        $('#viewToggle').change(function() {
+            mode = $(this).is(':checked') ? 'sku' : 'vista';
+            $('#imgContainer').empty();
+            skuList = [];
+            updateCounts();
+        });
+
+        $('.country-flag').click(function() {
+            $('.country-flag').removeClass('active');
+            $(this).addClass('active');
+            country = $(this).attr('id').replace('flag', '');
+            $('#imgContainer').empty();
+            skuList = [];
+            updateCounts();
+        });
+
+        $('#buscar').click(function() {
+            $('#imgContainer').empty();
+            skuList = [];  // Resetear la lista
+            var skus = $('#skuInputLeft').val().trim().split('\n');
+
+            if (skus.length > 0) {
+                skus.forEach(function(sku) {
+                    sku = sku.trim();
+                    if (sku) {
+                        if (mode === "vista") {
+                            skuList.push(sku);
+                            loadImage(sku).then(function(imageElement) {
+                                if (imageElement) {
+                                    $('#imgContainer').append(imageElement);
+                                } else {
+                                    alert('Imagen no disponible para SKU: ' + sku);
+                                }
+                                updateCounts();
+                            });
+                        } else if (mode === "sku") {
+                            var suffixes = ['_01', '_10', '_11', '_02', '_03', '_04', '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
+                            suffixes.forEach(function(suffix) {
+                                loadImage(sku, suffix).then(function(imageElement) {
+                                    if (imageElement) {
+                                        skuList.push(sku + suffix);
+                                        $('#imgContainer').append(imageElement);
+                                    }
+                                    updateCounts();
+                                });
+                            });
+                        }
+                    }
+                });
+            } else {
+                alert('Por favor, ingrese SKUs.');
+            }
+        });
+
+        $('#downloadAll').click(function() {
+            var renameSkus = $('#skuInputRight').val().trim().split('\n');
+            var originalSkus = $('#skuInputLeft').val().trim().split('\n');
+            
+            if (renameSkus.length !== originalSkus.length) {
+                alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
+                return;
+            }
+
+            var zip = new JSZip();
+            var count = 0;
+            var zipFilename = getFormattedDate() + ".zip";
+            var urls = [];
+            var filenames = [];
+
+            skuList.forEach(function(sku) {
+                var baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
+                var imgUrl = `${baseUrl}${sku}/w=1500,h=1500,fit=pad`;
+
+                var originalSku = originalSkus.find(os => sku.startsWith(os));
+                var renameSku = renameSkus[originalSkus.indexOf(originalSku)];
+
+                if (renameSku) {
+                    var finalName = sku.replace(originalSku, renameSku);
+                    urls.push(imgUrl);
+                    filenames.push(finalName);
+                }
+            });
+
+            urls.forEach(function(url, index) {
+                var filename = filenames[index] + ".jpg";
+                JSZipUtils.getBinaryContent(url, function(err, data) {
+                    if (err) {
+                        console.error("Error al obtener contenido binario:", err);
+                        return;
+                    }
+                    zip.file(filename, data, { binary: true });
+                    count++;
+                    if (count === urls.length) {
+                        zip.generateAsync({ type: 'blob' }).then(function(content) {
+                            saveAs(content, zipFilename);
+                        });
+                    }
+                });
+            });
+        });
+
+        function getFormattedDate() {
+            var date = new Date();
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var hours = String(date.getHours()).padStart(2, '0');
+            var minutes = String(date.getMinutes()).padStart(2, '0');
+            return day + '-' + month + '_' + hours + minutes;
+        }
+
+        function updateCounts() {
+            $('#leftCount').text('Total SKUs/Vistas: ' + skuList.length);
+            $('#rightCount').text('Total Renombres: ' + $('#skuInputRight').val().trim().split('\n').length);
+        }
+
+        $('#skuInputLeft, #skuInputRight').on('input', updateCounts);
+
+        // Activar Chile por defecto
+        $('#flagCL').addClass('active');
+    </script>
+</body>
+</html>
