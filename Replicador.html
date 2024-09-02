@@ -155,8 +155,6 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-
-        /* Estilos para el selector de país */
         .country-selector {
             display: flex;
             justify-content: center;
@@ -173,9 +171,23 @@
         .country-flag.active {
             filter: grayscale(0%);
         }
+        /* Enlace a Visualizador */
+        .link-visualizador {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #8fca00;
+            padding: 5px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
+    <a href="index.html" class="link-visualizador">Visualizador</a> <!-- Enlace al Visualizador -->
     <div class="container">
         <div class="leftContainer">
             <h3>Buscar Imágenes</h3>
