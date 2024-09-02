@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Visualiza</title>
+    <title>Visualizador</title>
     <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" type="image/png">
     <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
@@ -29,6 +29,35 @@
             display: flex;
             height: 100%;
             width: 100%;
+            position: relative;
+        }
+        .link-container {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            z-index: 1000;
+        }
+        .link-button {
+            display: inline-flex;
+            align-items: center;
+            background-color: #8fca00;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: .075em;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .link-button:hover {
+            background-color: #76a700;
+        }
+        .link-button img {
+            margin-right: 8px;
+            width: 16px;
+            height: 16px;
         }
         .leftMenu, .rightMenu {
             width: 320px;
@@ -314,31 +343,18 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-        .nav-menu {
-            background-color: #f0f0f0;
-            padding: 10px;
-            text-align: center;
-            border-bottom: 1px solid #eeeeee;
-            margin-bottom: 20px;
-            width: 100%;
-        }
-        .nav-menu a {
-            margin: 0 15px;
-            text-decoration: none;
-            font-weight: 700;
-            color: #333;
-        }
-        .nav-menu a:hover {
-            color: #8fca00;
-        }
     </style>
 </head>
 <body>
-    <div class="nav-menu">
-        <a href="index.html">Visualiza</a>
-        <a href="Replicador.html">Replicador</a>
-    </div>
     <div class="container">
+        <!-- Link superior derecho -->
+        <div class="link-container">
+            <a href="Replicador.html" class="link-button">
+                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/descarga.png" alt="Icono Visualizador">
+                Visualizador
+            </a>
+        </div>
+
         <div class="leftMenu">
             <div class="icon-switch">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
