@@ -125,6 +125,14 @@
         .missing-sku {
             color: red;
         }
+        .replicatorContainer {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+        .replicatorButton {
+            background-color: #8fca00; /* Green color */
+        }
 
         /* Animación de resalto */
         .highlight {
@@ -143,6 +151,13 @@
     <h1>Renombrador</h1>
     
     <div class="container">
+        <!-- Botón para volver al replicador -->
+        <div class="replicatorContainer">
+            <a href="Replicador.html">
+                <button class="replicatorButton">Replicador</button>
+            </a>
+        </div>
+        
         <div class="leftContainer">
             <div class="message" id="message">
                 Primero, por favor cargue las imágenes.
@@ -220,6 +235,10 @@
                 }
             });
             renameButton.disabled = !allRenamed; // Habilitar solo si todos los SKUs tienen renombre
+
+            if (allRenamed) {
+                highlightStep(renameButton);  // Resaltar el botón de descarga si todo está bien
+            }
         }
 
         // Resaltar el siguiente paso
@@ -345,9 +364,8 @@
                     });
                 } else {
                     errorLog.style.display = 'none';
-                    highlightStep(renameButton); // Resaltar el paso de descarga si todo está bien
+                    checkDownloadButton(); // Verificar si se puede habilitar el botón de descarga
                 }
-                checkDownloadButton(); // Verificar si el botón puede habilitarse
             };
 
             reader.readAsArrayBuffer(file);
