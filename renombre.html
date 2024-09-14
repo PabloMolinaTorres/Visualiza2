@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Renombre Local</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.2/xlsx.full.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Lato', sans-serif;
+        }
+        body {
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-top: 20px;
+            font-size: 24px;
+        }
+        .container {
+            display: flex;
+            padding: 20px;
+        }
+        .leftContainer {
+            width: 25%;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-right: 1px solid #eeeeee;
+        }
+        .rightContainer {
+            width: 75%;
+            padding: 20px;
+        }
+        input[type="file"] {
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            width: 100%;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 20px;
+            font-size: 12px;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+        th {
+            background-color: #8fca00;
+            color: white;
+            padding: 10px;
+        }
+        td {
+            padding: 8px;
+            text-align: left;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 12px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #8fca00; /* Green color */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        #progressBarContainer {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        #progressBar {
+            width: 0;
+            height: 10px;
+            background-color: #8fca00;
+            border-radius: 5px;
+        }
+        .message {
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .excelContent {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error-log {
+            color: red;
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #ff0000;
+            background-color: #ffe6e6;
+            border-radius: 5px;
+        }
+        .missing-sku {
+            color: red;
+        }
+        .replicatorContainer {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+        }
+        .replicatorButton {
+            background-color: #8fca00; /* Green color */
+        }
+    </style>
+</head>
+<body>
+    <h1>Renombrador</h1>
+    
+    <div class="container">
+        <div class="replicatorContainer">
+            <a href="Replicador.html">
+                <button class="replicatorButton">Replicador</button>
+            </a>
+        </div>
+        <div class="leftContainer">
+            <div class="message" id="message">
+                Primero, por favor cargue las imágenes.
+            </div>
+            <input type="file" id="excelUpload" accept=".xlsx,.xls" disabled>
+            <button id="downloadTemplate">Descargar plantilla</button>
+            <div class="excelContent" id="excelContent"></div>
+            <div id="errorLog" class="error-log" style="display:none;">
+                <strong>Errores:</strong>
+                <ul id="errorList"></ul>
+            </div>
+        </div>
+        <div class="rightContainer">
+            <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png">
+            <table>
+                <thead>
+                    <tr>
+                        <th>SKU Original</th>
+                        <th>Nuevo Renombre</th>
+                    </tr>
+                </thead>
+                <tbody id="fileTable"></tbody>
+            </table>
+            <div id="progressBarContainer">
+                <div id="progressBar"></div>
+            </div>
+            <button id="renameButton" disabled>Descargar</button> <!-- Botón inicialmente deshabilitado -->
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        const fileUpload = document.getElementById('fileUpload');
+        const fileTable = document.getElementById('fileTable');
+        const renameButton = document.getElementById('renameButton');
+        const progressBarContainer = document.getElementById('progressBarContainer');
+        const progressBar = document.getElementById('progressBar');
+        const excelUpload = document.getElementById('excelUpload');
+        const excelContent = document.getElementById('excelContent');
+        const message = document.getElementById('message');
+        const errorLog = document.getElementById('errorLog');
+        const errorList = document.getElementById('errorList');
+        const downloadTemplate = document.getElementById('downloadTemplate');
+
+        let files = [];
+        let skus = {};
+        let errors = [];
+
+        // Descargar plantilla
+        downloadTemplate.addEventListener('click', function() {
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet([["original", "renombre"]]);
+            XLSX.utils.book_append_sheet(wb, ws, "Plantilla");
+            XLSX.writeFile(wb, "plantilla_sku.xlsx");
+        });
+
+        // Validar SKU
+        function validateSKU(fileName) {
+            const parts = fileName.split('_');
+            if (parts.length !== 2) return false;
+            const sku = parts[0];
+            const vista = parts[1];
+            if (vista.length > 3 || isNaN(vista) || Number(vista) < 1 || Number(vista) > 99) return false;
+            return true;
+        }
+
+        // Habilitar o deshabilitar el botón de descarga según el estado de los SKUs
+        function checkDownloadButton() {
+            const inputs = document.querySelectorAll('input[data-sku]');
+            let allRenamed = true;
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    allRenamed = false;
+                }
+            });
+            renameButton.disabled = !allRenamed; // Habilitar solo si todos los SKUs tienen renombre
+        }
+
+        // Subir imágenes
+        fileUpload.addEventListener('change', function(event) {
+            files = Array.from(event.target.files);
+            fileTable.innerHTML = '';
+            skus = {};
+
+            files.forEach((file, index) => {
+                const fileName = file.name.split('.')[0];
+                if (!validateSKU(fileName)) return;
+
+                const sku = fileName.split('_')[0];
+                if (!skus[sku]) {
+                    skus[sku] = [];
+                }
+                skus[sku].push(file);
+
+                if (!document.querySelector(`input[data-sku="${sku}"]`)) {
+                    const row = document.createElement('tr');
+                    const originalSkuCell = document.createElement('td');
+                    const newSkuCell = document.createElement('td');
+
+                    originalSkuCell.textContent = sku;
+
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.placeholder = `Nuevo SKU para ${sku}`;
+                    input.dataset.sku = sku;
+
+                    input.addEventListener('input', checkDownloadButton); // Verificar si el botón puede habilitarse
+                    newSkuCell.appendChild(input);
+                    row.appendChild(originalSkuCell);
+                    row.appendChild(newSkuCell);
+                    fileTable.appendChild(row);
+                }
+            });
+
+            if (files.length > 0) {
+                excelUpload.disabled = false;
+                message.textContent = "Ahora, por favor cargue el archivo Excel.";
+            }
+            checkDownloadButton();
+        });
+
+        // Subir Excel
+        excelUpload.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
+
+                if (sheet[0][0] !== 'original' || sheet[0][1] !== 'renombre') {
+                    alert("El archivo debe tener 'original' y 'renombre' como títulos de columna en A1 y B1.");
+                    return;
+                }
+
+                excelContent.innerHTML = '';
+                const table = document.createElement('table');
+                const tbody = document.createElement('tbody');
+                table.appendChild(tbody);
+
+                errors = [];
+                errorList.innerHTML = '';
+
+                sheet.forEach((row, index) => {
+                    if (index === 0) return;
+                    const originalSku = row[0];
+                    const newSku = row[1];
+
+                    if (!originalSku || !newSku) {
+                        errors.push(`Fila ${index + 1} tiene valores vacíos. Verifique los datos.`);
+                        return;
+                    }
+
+                    const tr = document.createElement('tr');
+                    const tdSku = document.createElement('td');
+                    const tdNewSku = document.createElement('td');
+
+                    tdSku.textContent = originalSku;
+                    tdNewSku.textContent = newSku;
+
+                    tr.appendChild(tdSku);
+                    tr.appendChild(tdNewSku);
+                    tbody.appendChild(tr);
+
+                    if (!skus[originalSku]) {
+                        tdSku.classList.add('missing-sku');
+                        errors.push(`El SKU "${originalSku}" del Excel no tiene una imagen correspondiente.`);
+                    } else {
+                        const input = document.querySelector(`input[data-sku="${originalSku}"]`);
+                        if (input) {
+                            input.value = newSku;
+                            input.dispatchEvent(new Event('input'));  // Verificar si el botón puede habilitarse
+                        }
+                    }
+                });
+
+                excelContent.appendChild(table);
+
+                if (errors.length > 0) {
+                    errorLog.style.display = 'block';
+                    errors.forEach(error => {
+                        const li = document.createElement('li');
+                        li.textContent = error;
+                        errorList.appendChild(li);
+                    });
+                } else {
+                    errorLog.style.display = 'none';
+                }
+                checkDownloadButton(); // Verificar si el botón puede habilitarse
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        renameButton.addEventListener('click', function() {
+            progressBarContainer.style.display = 'block';
+            progressBar.style.width = '0%';
+
+            const zip = new JSZip();
+            const date = new Date();
+            const timestamp = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`;
+
+            let processedFiles = 0;
+            const totalFiles = files.length;
+
+            Object.keys(skus).forEach(sku => {
+                const input = document.querySelector(`input[data-sku="${sku}"]`);
+                const newSku = input.value.trim();
+                if (newSku) {
+                    skus[sku].forEach(file => {
+                        const vista = file.name.split('_')[1]; // Extraer la vista
+                        const newFileName = `${newSku}_${vista}`;
+                        zip.file(newFileName, file);
+
+                        processedFiles++;
+                        progressBar.style.width = `${(processedFiles / totalFiles) * 100}%`;
+                    });
+                }
+            });
+
+            zip.generateAsync({ type: 'blob' }).then(function(content) {
+                saveAs(content, `${timestamp}.zip`);
+                progressBarContainer.style.display = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
