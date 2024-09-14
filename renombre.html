@@ -125,14 +125,6 @@
         .missing-sku {
             color: red;
         }
-        .replicatorContainer {
-            position: absolute;
-            top: 10px;
-            right: 20px;
-        }
-        .replicatorButton {
-            background-color: #8fca00; /* Green color */
-        }
 
         /* Animación de resalto */
         .highlight {
@@ -151,11 +143,6 @@
     <h1>Renombrador</h1>
     
     <div class="container">
-        <div class="replicatorContainer">
-            <a href="Replicador.html">
-                <button class="replicatorButton highlight" id="imageStep">Cargar Imágenes</button> <!-- Resaltado inicial para cargar imágenes -->
-            </a>
-        </div>
         <div class="leftContainer">
             <div class="message" id="message">
                 Primero, por favor cargue las imágenes.
@@ -169,7 +156,7 @@
             </div>
         </div>
         <div class="rightContainer">
-            <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png">
+            <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png" class="highlight">
             <table>
                 <thead>
                     <tr>
@@ -200,10 +187,6 @@
         const errorLog = document.getElementById('errorLog');
         const errorList = document.getElementById('errorList');
         const downloadTemplate = document.getElementById('downloadTemplate');
-
-        const imageStep = document.getElementById('imageStep');
-        const excelStep = document.getElementById('excelUpload');
-        const downloadStep = document.getElementById('renameButton');
 
         let files = [];
         let skus = {};
@@ -289,7 +272,7 @@
             if (files.length > 0) {
                 excelUpload.disabled = false;
                 message.textContent = "Ahora, por favor cargue el archivo Excel.";
-                highlightStep(excelStep); // Resaltar el paso de cargar el Excel
+                highlightStep(excelUpload); // Resaltar el paso de cargar el Excel
             }
             checkDownloadButton();
         });
@@ -362,7 +345,7 @@
                     });
                 } else {
                     errorLog.style.display = 'none';
-                    highlightStep(downloadStep); // Resaltar el paso de descarga si todo está bien
+                    highlightStep(renameButton); // Resaltar el paso de descarga si todo está bien
                 }
                 checkDownloadButton(); // Verificar si el botón puede habilitarse
             };
