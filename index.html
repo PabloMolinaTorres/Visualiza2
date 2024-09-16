@@ -409,6 +409,7 @@
 
         function actualizarPaises() {
             const contenedor = $('#paisesContainer');
+            $('#errorList').empty().append('<button id="copyErrors">Copiar</button>'); // Limpiar lista de errores al cambiar país
             contenedor.empty();
             contenedor.append('<div>Descargar imágenes desde:</div><br>');
             let paises;
@@ -424,17 +425,11 @@
                 if (p.codigo === pais) div.addClass('seleccionado');
                 contenedor.append(div);
             });
-
-            // Limpiar la lista de errores "No tiene foto" al cambiar de país
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>'); 
-
             $('.pais').click(function() {
                 pais = $(this).data('pais');
                 $('.pais').removeClass('seleccionado');
                 $(this).addClass('seleccionado');
-                $('#errorList').empty(); // Limpiar errores de la búsqueda anterior al cambiar de país
-                $('#errorList').append('<button id="copyErrors">Copiar</button>');
+                $('#errorList').empty().append('<button id="copyErrors">Copiar</button>'); // Limpiar lista de errores al cambiar país
             });
         }
 
@@ -496,7 +491,7 @@
             $('.imgContainer').empty();
             $('#error').text('');
             $('#errorList').empty(); // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
+            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Añadir botón "Copiar" nuevamente
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
