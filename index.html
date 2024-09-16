@@ -409,7 +409,6 @@
 
         function actualizarPaises() {
             const contenedor = $('#paisesContainer');
-            $('#errorList').empty().append('<button id="copyErrors">Copiar</button>'); // Limpiar lista de errores al cambiar país
             contenedor.empty();
             contenedor.append('<div>Descargar imágenes desde:</div><br>');
             let paises;
@@ -429,7 +428,9 @@
                 pais = $(this).data('pais');
                 $('.pais').removeClass('seleccionado');
                 $(this).addClass('seleccionado');
-                $('#errorList').empty().append('<button id="copyErrors">Copiar</button>'); // Limpiar lista de errores al cambiar país
+                // Limpiar la lista de "No tiene foto" al cambiar de país
+                $('#errorList').empty();
+                $('#errorList').append('<button id="copyErrors">Copiar</button>');
             });
         }
 
@@ -491,7 +492,7 @@
             $('.imgContainer').empty();
             $('#error').text('');
             $('#errorList').empty(); // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Añadir botón "Copiar" nuevamente
+            $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -518,6 +519,9 @@
 
         function buscarPorSKU() {
             $('#thumbnailContainer').empty();
+            $('#errorList').empty(); // Limpiar lista de errores
+            $('#errorList').append('<button id="copyErrors">Copiar</button>');
+
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -548,7 +552,11 @@
 
         async function displayThumbnailsInOrder(sku, variants, row) {
             const promises = variants.map(variant => createThumbnail(sku + variant, row));
-            await Promise.all(promises);
+            const results = await Promise.all(promises);
+            const hasImages = results.some(result => result !== null); // Verificar si se encontraron imágenes para el SKU
+            if (!hasImages) {
+                $('#errorList').append('<div>' + sku + '</div>'); // Agregar a la lista de errores si no hay imágenes
+            }
         }
 
         function createThumbnail(sku, row) {
@@ -606,7 +614,7 @@
                     resolve();
                 };
                 img.onerror = function() {
-                    resolve(); // Resolviendo la promesa sin añadir la miniatura "No disponible"
+                    resolve(null); // Resolver con null si no se puede cargar la miniatura
                 };
             });
         }
