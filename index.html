@@ -428,9 +428,6 @@
                 pais = $(this).data('pais');
                 $('.pais').removeClass('seleccionado');
                 $(this).addClass('seleccionado');
-                // Limpiar la lista de "No tiene foto" al cambiar de país
-                $('#errorList').empty();
-                $('#errorList').append('<button id="copyErrors">Copiar</button>');
             });
         }
 
@@ -518,22 +515,15 @@
         }
 
         function buscarPorSKU() {
-            $('#thumbnailContainer').empty();
-            $('#errorList').empty(); // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
-
+            $('#thumbnailContainer').empty(); // Limpiar el contenedor de miniaturas
+            $('#errorList').empty();  // Limpiar lista de errores
+            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Volver a agregar el botón de copiar
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
             skus.forEach(function(sku, index) {
                 sku = sku.trim();
                 if (sku !== "") {
-                    var row = $('<div class="thumbnail-row"></div>');
-                    if (index > 0) {
-                        $('#thumbnailContainer').append('<div class="divider"></div>');
-                    }
-                    $('#thumbnailContainer').append(row);
-
                     var variants;
                     if (useFalabella || useTottus) {
                         variants = ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
@@ -541,7 +531,7 @@
                         variants = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
                     }
 
-                    promises.push(displayThumbnailsInOrder(sku, variants, row));
+                    promises.push(displayThumbnailsInOrder(sku, variants, index));
                 }
             });
 
@@ -550,16 +540,26 @@
             });
         }
 
-        async function displayThumbnailsInOrder(sku, variants, row) {
-            const promises = variants.map(variant => createThumbnail(sku + variant, row));
+        async function displayThumbnailsInOrder(sku, variants, index) {
+            const promises = variants.map(variant => createThumbnail(sku + variant));
+
             const results = await Promise.all(promises);
-            const hasImages = results.some(result => result !== null); // Verificar si se encontraron imágenes para el SKU
-            if (!hasImages) {
-                $('#errorList').append('<div>' + sku + '</div>'); // Agregar a la lista de errores si no hay imágenes
+
+            const thumbnails = results.filter(result => result !== null); // Filtrar los que no tienen imagen
+
+            if (thumbnails.length > 0) {
+                var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
+                thumbnails.forEach(thumbnail => row.append(thumbnail)); // Añadir cada miniatura a la fila
+                $('#thumbnailContainer').append(row); // Añadir la fila al contenedor
+                if (index > 0) {
+                    $('#thumbnailContainer').append('<div class="divider"></div>'); // Añadir un divisor si no es el primer SKU
+                }
+            } else {
+                $('#errorList').append('<div>' + sku + '</div>'); // Si no se encuentra ninguna imagen, añadir SKU a la lista de errores
             }
         }
 
-        function createThumbnail(sku, row) {
+        function createThumbnail(sku) {
             return new Promise((resolve) => {
                 var baseUrl;
                 if (useFalabella) {
@@ -585,36 +585,10 @@
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.append(downloadIcon);
-                    thumbnail.mouseenter(function() {
-                        var zoom = $('<div class="zoom"></div>');
-                        zoom.css({
-                            'background-image': 'url(' + originalUrl + ')',
-                            'background-size': '500px 500px'
-                        });
-                        $('body').append(zoom);
-                        zoom.fadeIn(200);
-                        thumbnail.on('mousemove', function(e) {
-                            var offset = thumbnail.offset();
-                            var posX = e.pageX - offset.left;
-                            var posY = e.pageY - offset.top;
-                            zoom.css({
-                                'left': e.pageX + 10,
-                                'top': e.pageY + 10,
-                                'background-position': '-' + (posX * 1 - zoom.width() / 2) + 'px -' + (posY * 1 - zoom.height() / 2) + 'px'
-                            });
-                        });
-                    });
-                    thumbnail.mouseleave(function() {
-                        var zoom = $('body').find('.zoom');
-                        zoom.fadeOut(200, function() {
-                            zoom.remove();
-                        });
-                    });
-                    row.append(thumbnail);
-                    resolve();
+                    resolve(thumbnail); // Resolver la promesa con el elemento miniatura
                 };
                 img.onerror = function() {
-                    resolve(null); // Resolver con null si no se puede cargar la miniatura
+                    resolve(null); // Si no se encuentra la imagen, resolver con null
                 };
             });
         }
