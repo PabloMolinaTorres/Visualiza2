@@ -424,10 +424,17 @@
                 if (p.codigo === pais) div.addClass('seleccionado');
                 contenedor.append(div);
             });
+
+            // Limpiar la lista de errores "No tiene foto" al cambiar de país
+            $('#errorList').empty();
+            $('#errorList').append('<button id="copyErrors">Copiar</button>'); 
+
             $('.pais').click(function() {
                 pais = $(this).data('pais');
                 $('.pais').removeClass('seleccionado');
                 $(this).addClass('seleccionado');
+                $('#errorList').empty(); // Limpiar errores de la búsqueda anterior al cambiar de país
+                $('#errorList').append('<button id="copyErrors">Copiar</button>');
             });
         }
 
