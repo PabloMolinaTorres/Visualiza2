@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Comparar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background: #fafafa;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    .upload-box {
+      border: 2px dashed #8fca00;
+      border-radius: 10px;
+      background: white;
+      color: #444;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+    .pair {
+      display: flex;
+      gap: 0;
+      margin-bottom: 40px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .img-wrapper {
+      position: relative;
+      width: 50%;
+      padding: 10px;
+      box-sizing: border-box;
+      text-align: center;
+    }
+    .img-wrapper img {
+      max-width: 100%;
+      max-height: 400px;
+      border: 1px solid #ddd;
+      background: white;
+      cursor: zoom-in;
+    }
+    .img-label {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    .controls {
+      margin-top: 15px;
+    }
+    .controls label {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .controls input[type="text"] {
+      margin-top: 10px;
+      width: 80%;
+      padding: 5px;
+      font-size: 13px;
+      display: none;
+    }
+    #exportButton {
+      display: block;
+      margin: 40px auto 0;
+      padding: 12px 24px;
+      background-color: #8fca00;
+      border: none;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    input[type="file"] {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <h1>Comparador Visual</h1>
+  <div id="uploadBox" class="upload-box">
+    📁 Suelta tus imágenes aquí (drag & drop)
+  </div>
+  <input type="file" id="fileInput" multiple accept="image/*">
+  <div id="comparisonContainer"></div>
+  <button id="exportButton">Exportar reporte</button>
+
+  <script>
+    const uploadBox = document.getElementById('uploadBox');
+    const fileInput = document.getElementById('fileInput');
+    const container = document.getElementById('comparisonContainer');
+    const exportButton = document.getElementById('exportButton');
+    const resultados = {};
+
+    uploadBox.addEventListener('dragover', e => {
+      e.preventDefault();
+      uploadBox.style.background = '#eaffd0';
+    });
+
+    uploadBox.addEventListener('dragleave', () => {
+      uploadBox.style.background = 'white';
+    });
+
+    uploadBox.addEventListener('drop', e => {
+      e.preventDefault();
+      uploadBox.style.background = 'white';
+      handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(fileList) {
+      const files = Array.from(fileList);
+      container.innerHTML = '';
+
+      files.forEach(file => {
+        const match = file.name.match(/^(\d+)_\d+/);
+        if (!match) return;
+
+        const sku = match[1];
+        const remoteUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${sku}/public`;
+
+        const pairDiv = document.createElement('div');
+        pairDiv.className = 'pair';
+
+        const leftDiv = createZoomableImage(remoteUrl, `Imagen original SKU: ${sku}`);
+        const localURL = URL.createObjectURL(file);
+        const rightDiv = createZoomableImage(localURL, `Tu imagen: ${file.name}`, sku);
+
+        pairDiv.appendChild(leftDiv);
+        pairDiv.appendChild(rightDiv);
+        container.appendChild(pairDiv);
+      });
+    }
+
+    function createZoomableImage(src, label, sku = null) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'img-wrapper';
+
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = label;
+
+      const caption = document.createElement('div');
+      caption.className = 'img-label';
+      caption.textContent = label;
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(caption);
+
+      // Lupa dinámica solo al entrar
+      img.addEventListener('mouseenter', () => {
+        const magnifier = document.createElement('div');
+        magnifier.style.position = 'absolute';
+        magnifier.style.border = '2px solid #8fca00';
+        magnifier.style.width = '300px';
+        magnifier.style.height = '300px';
+        magnifier.style.pointerEvents = 'none';
+        magnifier.style.backgroundRepeat = 'no-repeat';
+        magnifier.style.backgroundSize = '250%';
+        magnifier.style.zIndex = '999';
+        magnifier.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+        wrapper.appendChild(magnifier);
+
+        wrapper.addEventListener('mousemove', e => moveMagnifier(e, img, magnifier));
+        wrapper.addEventListener('mouseleave', () => {
+          magnifier.remove();
+        });
+      });
+
+      if (sku) {
+        const controls = document.createElement('div');
+        controls.className = 'controls';
+
+        const approve = document.createElement('input');
+        approve.type = 'radio';
+        approve.name = `estado-${sku}`;
+        approve.value = 'Aprobado';
+        approve.id = `aprobado-${sku}`;
+
+        const approveLabel = document.createElement('label');
+        approveLabel.htmlFor = approve.id;
+        approveLabel.textContent = 'Aprobar';
+
+        const reject = document.createElement('input');
+        reject.type = 'radio';
+        reject.name = `estado-${sku}`;
+        reject.value = 'Rechazado';
+        reject.id = `rechazado-${sku}`;
+
+        const rejectLabel = document.createElement('label');
+        rejectLabel.htmlFor = reject.id;
+        rejectLabel.textContent = 'Rechazar';
+
+        const motivo = document.createElement('input');
+        motivo.type = 'text';
+        motivo.placeholder = 'Motivo del rechazo...';
+        motivo.id = `motivo-${sku}`;
+
+        approve.addEventListener('change', () => {
+          resultados[sku] = { estado: 'Aprobado', motivo: '' };
+          motivo.style.display = 'none';
+        });
+
+        reject.addEventListener('change', () => {
+          resultados[sku] = { estado: 'Rechazado', motivo: '' };
+          motivo.style.display = 'block';
+        });
+
+        motivo.addEventListener('input', () => {
+          if (resultados[sku]) {
+            resultados[sku].motivo = motivo.value;
+          }
+        });
+
+        controls.appendChild(approve);
+        controls.appendChild(approveLabel);
+        controls.appendChild(reject);
+        controls.appendChild(rejectLabel);
+        controls.appendChild(motivo);
+        wrapper.appendChild(controls);
+      }
+
+      return wrapper;
+    }
+
+    function moveMagnifier(e, img, magnifier) {
+      const rect = img.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const zoom = 2.5;
+      const size = 300;
+
+      let posX = x - size / 2;
+      let posY = y - size / 2;
+
+      magnifier.style.left = `${posX}px`;
+      magnifier.style.top = `${posY}px`;
+      magnifier.style.backgroundImage = `url('${img.src}')`;
+      magnifier.style.backgroundSize = `${img.width * zoom}px ${img.height * zoom}px`;
+      magnifier.style.backgroundPosition = `-${x * zoom - size / 2}px -${y * zoom - size / 2}px`;
+    }
+
+    exportButton.addEventListener('click', () => {
+      const data = [['SKU', 'Estado', 'Motivo']];
+      for (const sku in resultados) {
+        const r = resultados[sku];
+        data.push([sku, r.estado, r.motivo || '']);
+      }
+      const worksheet = XLSX.utils.aoa_to_sheet(data);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+      XLSX.writeFile(workbook, 'reporte_comparador.xlsx');
+    });
+  </script>
+</body>
+</html>
