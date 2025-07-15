@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Visualiza - Replicador</title>
-    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" type="image/png">
+    <title>Renombrador de Imágenes Falabella</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png">
     <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
     <meta http-equiv="Pragma" content="no-cache">
@@ -24,228 +25,53 @@
             padding: 0;
             color: #333;
             background-color: #fff;
-            overflow-x: hidden; /* Evita el scroll horizontal cuando el sidebar está oculto */
         }
         .container {
             display: flex;
             height: 100%;
             width: 100%;
         }
-        .leftMenu, .rightMenu {
-            width: 320px;
-            min-width: 320px;
-            background-color: #fff;
-            overflow-y: auto;
-            position: relative;
-        }
-        .leftMenu {
-            border-right: 1px solid #eeeeee;
-        }
-        .rightMenu {
-            border-left: 1px solid #eeeeee;
-        }
-        .leftMenu .intro, .rightMenu .intro {
-            font-size: 12px;
-            padding: 20px 20px 0;
-        }
-        .leftMenu textarea, .rightMenu .error-list {
-            width: calc(100% - 40px);
-            border: 1px solid #eee;
-            margin: 20px;
-            height: 400px;
-        }
-        .leftMenu button, .rightMenu button {
-            width: calc(100% - 40px);
-            border: none;
-            margin: 0 20px 20px;
-            background-color: #8fca00;
-            height: 50px;
-            line-height: 50px;
-            padding: 0;
-            border-radius: 5px;
-            color: white;
-            font-size: 12px;
-            letter-spacing: .075em;
-            cursor: pointer;
-        }
-        .rightMenu button[disabled] {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .error-list {
-            height: calc(100% - 100px);
+        .leftContainer {
+            width: 35%;
+            display: flex;
             padding: 20px;
-            margin: 20px;
-            border: 1px solid #eee;
-            background-color: #f9f9f9;
-            overflow-y: auto;
+            box-sizing: border-box;
+            flex-direction: column;
         }
-        .error-list button {
-            display: block;
-            margin-bottom: 10px;
-            background-color: #ccc;
-            border: none;
-            color: white;
-            padding: 3px 5px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 10px;
+        .columns {
+            display: flex;
+            justify-content: space-between;
         }
-        .error-list button:hover {
-            background-color: #bbb;
-        }
-        .error-list button.copied {
-            background-color: #8fca00;
-        }
-        .error-list button.copied:hover {
-            background-color: #76a700;
-        }
-        .error-list div {
-            margin-bottom: 5px;
-            color: red;
+        .column {
+            width: 48%;
         }
         .rightContainer {
-            flex-grow: 1;
-            overflow-y: auto;
+            width: 60%;
             padding: 20px;
-            background-color: #fff;
+            overflow-y: auto;
+            box-sizing: border-box;
         }
         .imgContainer {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            margin-top: 20px;
         }
-        .imgContainer .imgWrapper {
-            width: 200px;
-            height: 200px;
+        .imgWrapper {
+            width: 120px;
+            height: 120px;
             position: relative;
             display: block;
             overflow: hidden;
             border: 1px solid #eeeeee;
+            text-align: center;
         }
-        .imgContainer .imgWrapper img {
+        .imgWrapper img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-        .download-icon {
-            position: absolute;
-            top: 0px;
-            right: 0px;
-            width: 24px;
-            height: 24px;
-            opacity: 0.8;
-            cursor: pointer;
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/descarga.png');
-            background-size: cover;
-        }
-        .download-icon:hover {
-            opacity: 1;
-        }
-        .setBar {
-            background-color: #fff;
-            padding: 20px;
-            width: 100%;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .setBar button {
-            padding: 0;
-            background-color: #8fca00;
-            border: none;
-            font-size: 12px;
-            text-transform: uppercase;
-            line-height: 30px;
-            height: 30px;
-            padding: 0 15px;
-            color: white;
-            font-weight: 700;
-            letter-spacing: .075em;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 0;
-        }
-        .setBar button:hover {
-            background-color: #8fca00;
-            color: white;
-        }
-        .pais.seleccionado {
-            font-weight: 700;
-            text-decoration: underline;
-            color: #333;
-        }
-        .pais {
-            display: inline-block;
-            padding-right: 10px;
-            cursor: pointer;
-            color: #bbbbbb;
-        }
-        .error {
-            color: red;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .icon-switch {
-            display: flex;
-            align-items: center;
-            margin: 20px;
-            position: relative; /* Añadido para el posicionamiento del sidebar-toggle */
-        }
-        /* Ajuste para el primer elemento (sidebar-toggle) */
-        .icon-switch > *:first-child {
-            margin-left: 0; /* Elimina el margen izquierdo si lo tuviera */
-            margin-right: 10px; /* Espacio a la derecha del icono de menú */
-        }
-        .icon-switch img {
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            margin-right: 10px;
-            /* margin-left: 10px;  Comentado para que el Falabella tenga su propio ajuste */
-        }
-        /* Ajuste específico para Falabella (segundo hijo) */
-        .icon-switch img:nth-child(2) {
-            margin-left: 50px; /* Desplaza Falabella a la derecha */
-        }
-        .icon-switch img.inactive {
-            filter: grayscale(100%);
-        }
-        .skus-container {
-            padding: 20px;
-        }
-        .thumbnail-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .thumbnail {
-            display: inline-block;
-            width: 120px;
-            height: 140px;
-            margin: 5px;
-            position: relative;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            text-align: center;
-            overflow: hidden;
-        }
-        .thumbnail img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            cursor: zoom-in;
-        }
-        .zoom {
-            position: absolute;
-            display: none;
-            width: 500px;
-            height: 500px;
-            border: 2px solid #8fca00;
-            background-repeat: no-repeat;
-            z-index: 10;
-        }
-        .thumbnail .sku {
+        .sku {
             position: absolute;
             bottom: 0;
             left: 0;
@@ -255,37 +81,89 @@
             text-align: center;
             font-size: 10px;
             padding: 2px;
-            height: 18px;
         }
-        .thumbnail .no-image {
+        .visualizadorContainer {
+            width: 5%;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-end;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .visualizadorContainer a {
+            background-color: #8fca00;
+            padding: 5px 15px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: bold;
+            white-space: nowrap;
+            display: inline-block;
+            margin-bottom: 10px; /* Espacio entre botones */
+        }
+        textarea {
+            width: 100%;
+            margin: 20px 0;
+            padding: 10px;
+            height: 250px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Lato', sans-serif;
+            font-size: 14px;
+            resize: none;
+        }
+        button {
+            width: 100%;
+            border: none;
+            margin: 20px 0;
+            background-color: #8fca00;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 5px;
+            color: white;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+        .icon-selector {
             display: flex;
             justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100px;
-            background-color: #e0e0e0;
-            color: #888;
+            margin-bottom: 10px;
+        }
+        .icon-selector img {
+            width: 50px;
+            height: 50px;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        .icon-selector img.inactive {
+            filter: grayscale(100%);
+        }
+        .country-selector {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .country-link {
+            color: grey;
             font-size: 14px;
-            text-align: center;
+            margin-right: 10px;
+            cursor: pointer;
+            text-decoration: none;
         }
-        .divider {
-            width: 100%;
-            height: 1px;
-            background-color: #ccc;
-            margin: 20px 0;
+        .country-link.active {
+            color: #333;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 2px solid #8fca00;
         }
-        .toggle-switch {
+        .switch-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: calc(100% - 40px);
-        }
-        .toggle-switch span {
-            font-size: 12px;
-            font-weight: 700;
+            margin-top: 20px;
         }
         .switch {
             position: relative;
@@ -326,110 +204,58 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-
-        /* Estilos para el sidebar (panel lateral) */
-        .sidebar-toggle {
-            position: static; /* Para que esté dentro del flujo del flexbox */
-            margin-right: 10px; /* Espacio a la derecha del icono */
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
-            background-size: cover;
-            opacity: 0.8;
-            z-index: 1001;
-        }
-        .sidebar-toggle:hover {
-            opacity: 1;
-        }
-
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0; /* Aparece desde la izquierda */
-            background-color: #fff;
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
-        }
-
-        .sidebar.open {
-            width: 250px;
-        }
-
-        .sidebar a {
-            padding: 15px 25px;
-            text-decoration: none;
+        /* Títulos añadidos */
+        .title {
             font-size: 18px;
-            color: #333;
-            display: block;
-            transition: 0.3s;
-        }
-
-        .sidebar a:hover {
-            color: #8fca00;
-            background-color: #f1f1f1;
-        }
-
-        .sidebar .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            color: #aaa;
-            text-decoration: none;
-        }
-
-        .sidebar .closebtn:hover {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
             color: #333;
         }
 
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 999;
+        /* Estilo para el log de errores */
+        #errorLog {
             display: none;
+            background-color: #ffe6e6;
+            padding: 10px;
+            border: 1px solid #ff0000;
+            border-radius: 4px;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="overlay" id="overlay"></div>
-
-    <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
-        <a href="index.html">Visualizador</a>
-        <a href="Replicador.html">Replicador</a>
-        <a href="renombre.html">Renombrador</a>
-        <a href="Comparar.html">Comparador</a>
-    </div>
-
     <div class="container">
-        <div class="leftMenu">
-            <div class="icon-switch">
-                <div class="sidebar-toggle" id="sidebarToggle"></div>
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png" id="tottusIcon" class="inactive">
+        <!-- Left Container -->
+        <div class="leftContainer">
+            <!-- Título Renombre -->
+            <div class="title">Replicar</div>
+
+            <!-- Icon Selector -->
+            <div class="icon-selector">
+                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
+                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
+                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
             </div>
-            <div class="intro paises" id="paisesContainer">
-                <div>Descargar imágenes desde:</div><br>
-                <div class="pais seleccionado" data-pais="CL">Chile</div>
-                <div class="pais" data-pais="CO">Colombia</div>
-                <div class="pais" data-pais="PE">Perú</div>
+
+            <!-- Country Selector centered below the icons -->
+            <div class="country-selector" id="countrySelector">
+                <a href="#" class="country-link" id="linkCL">Chile</a>
+                <a href="#" class="country-link" id="linkPE">Perú</a>
+                <a href="#" class="country-link" id="linkCO">Colombia</a>
             </div>
-            <div class="skus-container">
-                <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Seleccione VISTA e ingrese SKU_VISTA, uno debajo del otro sin comas. Seleccione SKU e ingrese los SKUs uno debajo del otro sin comas"></textarea>
-                <button id="buscar">BUSCAR</button>
+
+            <div class="columns">
+                <div class="column">
+                    <textarea id="skuInputLeft" placeholder="Ingrese SKUs, uno por línea"></textarea>
+                    <button id="buscar">Buscar</button>
+                </div>
+                <div class="column">
+                    <textarea id="skuInputRight" placeholder="Ingrese los nombres para renombrar, uno por línea"></textarea>
+                    <button id="downloadAll">Descargar Todo</button>
+                </div>
             </div>
-            <div class="toggle-switch">
+            <div class="switch-container">
                 <span>Vista</span>
                 <label class="switch">
                     <input type="checkbox" id="viewToggle">
@@ -437,322 +263,265 @@
                 </label>
                 <span>SKU</span>
             </div>
-            <div class="error" id="error"></div>
-        </div>
-        <div class="rightContainer">
-            <div class="setBar">
-                <button id="descargartodo">DESCARGAR TODO</button>
-                <button id="ordenarVistas" disabled>ORDENAR VISTAS</button>
+
+            <!-- Log de errores -->
+            <div id="errorLog">
+                <strong>No encontrado:</strong>
+                <ul id="errorList"></ul>
             </div>
-            <div class="imgContainer"></div>
-            <div id="thumbnailContainer" style="display:none;">
-                </div>
         </div>
-        <div class="rightMenu">
-            <div class="intro">No tiene foto:</div>
-            <div class="error-list" id="errorList">
-                <button id="copyErrors">Copiar</button>
-                </div>
+
+        <!-- Right Container -->
+        <div class="rightContainer">
+            <!-- Título Previsualizar -->
+            <div class="title">Previsualizar</div>
+            
+            <div class="imgContainer" id="imgContainer"></div>
+        </div>
+
+        <!-- Visualizador Container -->
+        <div class="visualizadorContainer">
+            <a href="index.html">Visualizador</a>
+            <a href="renombre.html">Renombre local</a> <!-- Nuevo botón de Renombre local -->
         </div>
     </div>
+
     <script>
-        var pais = "CL";  // Por defecto, Chile
-        var useFalabella = true;  // Estado inicial: usar Falabella
-        var useSodimac = false;
-        var useTottus = false;
-        var viewMode = "vista";  // Estado inicial: por vista
-        const paisesFalabella = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' }
-        ];
+        var skuList = [];
+        var mode = "vista"; // Por defecto, modo vista
+        var country = "CL"; // Por defecto, Chile
+        var activeLogic = "falabella"; // Falabella activa por defecto
 
-        const paisesSodimac = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Argentina', codigo: 'AR' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' },
-            { nombre: 'Brasil', codigo: 'BR' },
-            { nombre: 'México', codigo: 'MX' },
-            { nombre: 'Uruguay', codigo: 'UY' }
-        ];
+        // Función para cargar la imagen basada en el SKU y el sufijo
+        function loadImage(sku, suffix = "") {
+            return new Promise(function(resolve, reject) {
+                var baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/`;
+                var imgUrl = `${baseUrl}${sku}${suffix}/w=120,h=120,fit=pad`; // Miniaturas de 120x120
+                var img = new Image();
+                img.src = imgUrl;
+                img.alt = sku + suffix;
 
-        const paisesTottus = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Perú', codigo: 'PE' }
-        ];
+                img.onload = function() {
+                    var wrapper = document.createElement('div');
+                    wrapper.classList.add('imgWrapper');
+                    var link = document.createElement('a');
+                    link.href = `${baseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`; // Enlace a la imagen completa
+                    link.target = '_blank';
+                    link.appendChild(img);
+                    var skuDiv = document.createElement('div');
+                    skuDiv.classList.add('sku');
+                    skuDiv.textContent = sku + suffix;
+                    wrapper.appendChild(link);
+                    wrapper.appendChild(skuDiv);
+                    resolve(wrapper);
+                };
 
-        function actualizarPaises() {
-            const contenedor = $('#paisesContainer');
-            contenedor.empty();
-            contenedor.append('<div>Descargar imágenes desde:</div><br>');
-            let paises;
-            if (useFalabella) {
-                paises = paisesFalabella;
-            } else if (useSodimac) {
-                paises = paisesSodimac;
-            } else {
-                paises = paisesTottus;
-            }
-            paises.forEach(p => {
-                const div = $('<div>').addClass('pais').attr('data-pais', p.codigo).text(p.nombre);
-                if (p.codigo === pais) div.addClass('seleccionado');
-                contenedor.append(div);
-            });
-            $('.pais').click(function() {
-                pais = $(this).data('pais');
-                $('.pais').removeClass('seleccionado');
-                $(this).addClass('seleccionado');
+                img.onerror = function() {
+                    resolve(null); // No mostrar imágenes 404 en modo SKU
+                };
             });
         }
 
+        // Manejar el cambio de modo (Vista o SKU)
+        $('#viewToggle').change(function() {
+            mode = $(this).is(':checked') ? 'sku' : 'vista';
+            $('#imgContainer').empty();
+            skuList = [];
+            updateCounts();
+        });
+
+        // Función para actualizar el subrayado y el cambio del país activo
+        function setActiveCountry(countryCode) {
+            $('.country-link').removeClass('active');
+            $(`#link${countryCode}`).addClass('active');
+            country = countryCode;
+            $('#imgContainer').empty();
+            skuList = [];
+            updateCounts();
+        }
+
+        // Manejar el cambio de país
+        $('.country-link').click(function() {
+            var selectedCountry = $(this).attr('id').replace('link', '');
+            setActiveCountry(selectedCountry);
+        });
+
+        // Función para actualizar el selector de países según la marca activa
+        function updateCountrySelector(countries) {
+            var countrySelector = $('#countrySelector');
+            countrySelector.empty();
+            countries.forEach(function(countryName) {
+                var countryCode;
+                
+                // Asignar códigos manualmente
+                if (countryName === "Uruguay") {
+                    countryCode = "UY";
+                } else if (countryName === "México") {
+                    countryCode = "MX";
+                } else if (countryName === "Perú") {
+                    countryCode = "PE";
+                } else if (countryName === "Argentina") {
+                    countryCode = "AR";
+                } else if (countryName === "Chile") {
+                    countryCode = "CL";
+                } else if (countryName === "Colombia") {
+                    countryCode = "CO";
+                } else if (countryName === "Brasil") {
+                    countryCode = "BR";
+                } else {
+                    countryCode = countryName.slice(0, 2).toUpperCase(); // Por defecto
+                }
+
+                var countryLink = $('<a href="#" class="country-link">' + countryName + '</a>');
+                countryLink.attr('id', `link${countryCode}`);
+                countryLink.click(function() {
+                    setActiveCountry(countryCode);
+                });
+                countrySelector.append(countryLink);
+            });
+            setActiveCountry("CL"); // Por defecto, seleccionamos Chile
+        }
+
+        // Lógica para manejar el cambio de marca
         $('#falabellaIcon').click(function() {
-            useFalabella = true;
-            useSodimac = false;
-            useTottus = false;
-            $('#falabellaIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png');
-            $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
-            $('#tottusIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png');
-            actualizarPaises();
+            activeLogic = "falabella";
+            $('#falabellaIcon').removeClass('inactive').addClass('active');
+            $('#sodimacIcon').addClass('inactive');
+            $('#tottusIcon').addClass('inactive');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
+            updateCountrySelector(["Chile", "Perú", "Colombia"]);
+            $('#imgContainer').empty();
         });
 
         $('#sodimacIcon').click(function() {
-            useFalabella = false;
-            useSodimac = true;
-            useTottus = false;
-            $('#sodimacIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png');
-            $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
-            $('#tottusIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png');
-            actualizarPaises();
+            activeLogic = "sodimac";
+            $('#falabellaIcon').addClass('inactive');
+            $('#sodimacIcon').removeClass('inactive').addClass('active');
+            $('#tottusIcon').addClass('inactive');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
+            updateCountrySelector(["Chile", "Argentina", "Colombia", "Perú", "Brasil", "México", "Uruguay"]);
+            $('#imgContainer').empty();
         });
 
         $('#tottusIcon').click(function() {
-            useFalabella = false;
-            useSodimac = false;
-            useTottus = true;
-            $('#tottusIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus.png');
-            $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
-            $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
-            actualizarPaises();
+            activeLogic = "tottus";
+            $('#falabellaIcon').addClass('inactive');
+            $('#sodimacIcon').addClass('inactive');
+            $('#tottusIcon').removeClass('inactive').addClass('active');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus.png');
+            updateCountrySelector(["Chile", "Perú"]);
+            $('#imgContainer').empty();
         });
 
-        $('#viewToggle').change(function() {
-            viewMode = $(this).is(':checked') ? 'sku' : 'vista';
-            if (viewMode === 'vista') {
-                $('.imgContainer').show();
-                $('#thumbnailContainer').hide();
-            } else {
-                $('.imgContainer').hide();
-                $('#thumbnailContainer').show();
-            }
-        });
+        // Función para registrar errores en el log
+        function logError(error) {
+            $('#errorLog').show();
+            $('#errorList').append('<li>' + error + '</li>');
+        }
 
+        // Función para eliminar SKU o vista no encontrada de la caja de texto
+        function removeNotFound(sku) {
+            var skus = $('#skuInputLeft').val().trim().split('\n');
+            skus = skus.filter(function(item) {
+                return item.trim() !== sku;
+            });
+            $('#skuInputLeft').val(skus.join('\n'));
+        }
+
+        // Búsqueda de SKUs o Vistas
         $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true);
-            if (viewMode === "vista") {
-                buscarPorVista();
+            $('#imgContainer').empty();
+            $('#errorLog').hide(); // Ocultar log de errores al iniciar nueva búsqueda
+            $('#errorList').empty(); // Limpiar lista de errores
+
+            skuList = [];
+            var skus = $('#skuInputLeft').val().trim().split('\n');
+            if (skus.length > 0) {
+                skus.forEach(function(sku) {
+                    sku = sku.trim();
+                    if (sku) {
+                        if (mode === "vista") {
+                            skuList.push(sku);
+                            loadImage(sku).then(function(imageElement) {
+                                if (imageElement) {
+                                    document.getElementById('imgContainer').appendChild(imageElement);
+                                } else {
+                                    logError(sku); // Solo el SKU que no se encontró
+                                    removeNotFound(sku); // Eliminar el SKU de la caja de texto
+                                }
+                                updateCounts();
+                            });
+                        } else if (mode === "sku") {
+                            var suffixes = getSuffixes(activeLogic);
+                            var found = false;
+                            suffixes.forEach(function(suffix) {
+                                loadImage(sku, suffix).then(function(imageElement) {
+                                    if (imageElement) {
+                                        found = true;
+                                        skuList.push(sku + suffix);
+                                        document.getElementById('imgContainer').appendChild(imageElement);
+                                    }
+                                    updateCounts();
+                                });
+                            });
+
+                            setTimeout(function() {
+                                if (!found) {
+                                    logError(sku); // Solo el SKU que no se encontró
+                                    removeNotFound(sku); // Eliminar el SKU de la caja de texto
+                                }
+                            }, 1000); // Esperar un poco para confirmar que no se encontró ninguna imagen
+                        }
+                    }
+                });
             } else {
-                buscarPorSKU();
+                alert('Por favor, ingrese SKUs.');
             }
         });
 
-        $('#ordenarVistas').click(function() {
-            $('#buscar').trigger('click');
-        });
-
-        async function buscarPorVista() {
-            $('.imgContainer').empty();
-            $('#error').text('');
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
-
-            for (let sku of skus) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    promises.push(loadImage(sku));
-                }
+        $('#downloadAll').click(function() {
+            var renameSkus = $('#skuInputRight').val().trim().split('\n');
+            var originalSkus = $('#skuInputLeft').val().trim().split('\n');
+            if (renameSkus.length !== originalSkus.length) {
+                alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
+                return;
             }
 
-            const images = await Promise.all(promises);
-
-            images.forEach(image => {
-                if (image && !image.error) {
-                    $('.imgContainer').append(image.element);
-                }
-                if (image && image.error) {
-                    $('#errorList').append('<div>' + image.sku + '</div>');
-                }
-            });
-
-            $('#ordenarVistas').removeAttr('disabled');
-        }
-
-        function buscarPorSKU() {
-            $('#thumbnailContainer').empty();
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
-
-            skus.forEach(function(sku, index) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    var variants;
-                    if (useFalabella || useTottus) {
-                        variants = ['_001', '_002', '_003', '_004', '_005', '_006', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_11', '_12', '_13', '_100', '_101', '_102', '_103', '_104', '_105', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
-                    } else if (useSodimac) {
-                        variants = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
-                    }
-
-                    promises.push(displayThumbnailsInOrder(sku, variants, index));
-                }
-            });
-
-            Promise.all(promises).then(() => {
-                $('#ordenarVistas').removeAttr('disabled');
-            });
-        }
-
-        async function displayThumbnailsInOrder(sku, variants, index) {
-            const promises = variants.map(variant => createThumbnail(sku + variant));
-
-            const results = await Promise.all(promises);
-
-            const thumbnails = results.filter(result => result !== null);
-            if (thumbnails.length > 0) {
-                var row = $('<div class="thumbnail-row"></div>');
-                thumbnails.forEach(thumbnail => row.append(thumbnail));
-                $('#thumbnailContainer').append(row);
-                if (index > 0) {
-                    $('#thumbnailContainer').append('<div class="divider"></div>');
-                }
-            } else {
-                $('#errorList').append('<div>' + sku + '</div>');
-            }
-        }
-
-        function createThumbnail(sku) {
-            return new Promise((resolve) => {
-                var baseUrl;
-                if (useFalabella) {
-                    baseUrl = 'https://media.falabella.com/falabella';
-                } else if (useSodimac) {
-                    baseUrl = 'https://media.falabella.com/falabella';
-                } else {
-                    baseUrl = 'https://media.falabella.com/tottus';
-                }
-                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=400,h=400,fit=pad`;
-                let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
-                var img = new Image();
-                img.src = thumbnailUrl;
-                img.alt = sku;
-                img.onload = function() {
-                    var thumbnail = $('<div class="thumbnail"></div>');
-                    var link = $('<a href="' + originalUrl + '" data-lightbox="image-gallery" data-title="' + sku + '"></a>');
-                    link.append(img);
-                    var downloadIcon = $('<div class="download-icon"></div>');
-                    downloadIcon.click(function() {
-                        downloadImage(originalUrl, sku);
-                    });
-                    thumbnail.append(link);
-                    thumbnail.append('<div class="sku">' + sku + '</div>');
-                    thumbnail.append(downloadIcon);
-                    resolve(thumbnail);
-                };
-                img.onerror = function() {
-                    resolve(null);
-                };
-            });
-        }
-
-        function downloadImage(url, sku) {
-            JSZipUtils.getBinaryContent(url, function (err, data) {
-                if (err) {
-                    throw err;
-                }
-                saveAs(new Blob([data], { type: 'image/jpeg' }), sku + ".jpg");
-            });
-        }
-
-        function loadImage(sku) {
-            return new Promise(function(resolve, reject) {
-                var baseUrl;
-                if (useFalabella) {
-                    baseUrl = 'https://media.falabella.com/falabella';
-                } else if (useSodimac) {
-                    baseUrl = 'https://media.falabella.com/falabella';
-                } else {
-                    baseUrl = 'https://media.falabella.com/tottus';
-                }
-                var primaryUrl = `${baseUrl}${pais}/${sku}/public`;
-                var downloadUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500`;
-                var alternateUrl = `${baseUrl}${pais}/inpage_media/${sku}/public`;
-
-                console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
-                var img = new Image();
-                img.src = primaryUrl;
-                img.alt = sku;
-                img.setAttribute('data-download-src', downloadUrl);
-
-                img.onload = function() {
-                    var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
-                    wrapper.find('a').append(img);
-                    resolve({ element: wrapper, sku: sku });
-                };
-
-                img.onerror = function() {
-                    if (sku.includes('-')) {
-                        console.log("Trying alternate URL for SKU: " + sku);
-                        img.src = alternateUrl;
-                        img.setAttribute('data-download-src', alternateUrl);
-                        img.onload = function() {
-                            var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
-                            wrapper.find('a').append(img);
-                            resolve({ element: wrapper, sku: sku });
-                        };
-                        img.onerror = function() {
-                            console.log("Error loading image for SKU: " + sku);
-                            resolve({ error: true, sku: sku });
-                        };
-                    } else {
-                        console.log("Error loading image for SKU: " + sku);
-                        resolve({ error: true, sku: sku });
-                    }
-                };
-            });
-        }
-
-        $('#descargartodo').click(function() {
             var zip = new JSZip();
             var count = 0;
             var zipFilename = getFormattedDate() + ".zip";
             var urls = [];
-            var skuNames = [];
-            if (viewMode === "vista") {
-                $(".imgWrapper img").each(function() {
-                    urls.push($(this).attr('data-download-src'));
-                    skuNames.push($(this).attr('alt'));
+            var filenames = [];
+
+            originalSkus.forEach(function(originalSku, index) {
+                skuList.forEach(function(sku) {
+                    if (sku.startsWith(originalSku)) {
+                        var renameSku = renameSkus[index];
+                        var finalName = sku.replace(originalSku, renameSku);
+                        var imgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/${sku}/w=1500,h=1500,fit=pad`;
+                        urls.push(imgUrl);
+                        filenames.push(finalName);
+                    }
                 });
-            } else {
-                $(".thumbnail img").each(function() {
-                    var originalUrl = $(this).parent().attr('href');
-                    urls.push(originalUrl);
-                    skuNames.push($(this).attr('alt'));
-                });
-            }
+            });
 
             urls.forEach(function(url, index) {
-                var filename = skuNames[index] + ".jpg";
-                JSZipUtils.getBinaryContent(url, function (err, data) {
+                var filename = filenames[index] + ".jpg";
+                JSZipUtils.getBinaryContent(url, function(err, data) {
                     if (err) {
-                        throw err;
+                        console.error("Error al obtener contenido binario:", err);
+                        return;
                     }
                     zip.file(filename, data, { binary: true });
                     count++;
                     if (count === urls.length) {
-                        zip.generateAsync({ type: 'blob' }).then(function (content) {
+                        zip.generateAsync({ type: 'blob' }).then(function(content) {
                             saveAs(content, zipFilename);
                         });
                     }
@@ -766,45 +535,25 @@
             var month = String(date.getMonth() + 1).padStart(2, '0');
             var hours = String(date.getHours()).padStart(2, '0');
             var minutes = String(date.getMinutes()).padStart(2, '0');
-            return day + '/' + month + '_' + hours + minutes;
+            return day + '-' + month + '_' + hours + minutes;
         }
 
-        $(document).on('click', '#copyErrors', function() {
-            var errors = [];
-            $('#errorList div').each(function() {
-                errors.push($(this).text());
-            });
-            var tempInput = $('<textarea>');
-            $('body').append(tempInput);
-            tempInput.val(errors.join('\n')).select();
-            document.execCommand('copy');
-            tempInput.remove();
-            $(this).text('Copiado').addClass('copied');
-            setTimeout(function() {
-                $('#copyErrors').text('Copiar').removeClass('copied');
-            }, 2000);
-        });
-
-        // Lógica para el sidebar
-        $('#sidebarToggle').click(function() {
-            openNav();
-        });
-
-        $('#closeSidebar, #overlay').click(function() {
-            closeNav();
-        });
-
-        function openNav() {
-            document.getElementById("mySidebar").classList.add('open');
-            document.getElementById("overlay").style.display = "block";
+        function updateCounts() {
+            $('#leftCount').text('Total SKUs/Vistas: ' + skuList.length);
+            $('#rightCount').text('Total Renombres: ' + $('#skuInputRight').val().trim().split('\n').length);
         }
 
-        function closeNav() {
-            document.getElementById("mySidebar").classList.remove('open');
-            document.getElementById("overlay").style.display = "none";
+        function getSuffixes(logic) {
+            if (logic === "falabella" || logic === "tottus") {
+                return ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
+            } else if (logic === "sodimac") {
+                return ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
+            }
         }
 
-        actualizarPaises();
+        $('#skuInputLeft, #skuInputRight').on('input', updateCounts);
+
+        setActiveCountry("CL"); // Inicializamos con Chile activo por defecto
     </script>
 </body>
 </html>
