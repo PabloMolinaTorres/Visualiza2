@@ -41,18 +41,26 @@
             box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
 
+        /* ESTILO CORREGIDO PARA LOS ENLACES DEL SIDEBAR (similar a botones) */
         .sidebar a {
-            padding: 8px 8px 8px 32px;
+            background-color: #8fca00; /* Fondo verde */
+            padding: 10px 15px; /* Espaciado */
+            border-radius: 5px; /* Bordes redondeados */
+            color: white; /* Texto blanco */
             text-decoration: none;
-            font-size: 16px; /* Ajuste para el sidebar */
-            color: #818181;
-            display: block;
+            font-size: 12px; /* Tamaño de fuente más pequeño para caber mejor */
+            font-weight: bold;
+            white-space: nowrap;
+            display: block; /* Cada enlace ocupa su propia línea */
+            margin: 10px auto; /* Centrado y con margen vertical */
+            text-align: center;
+            width: 80%; /* Ancho para que se vean como botones */
             transition: 0.3s;
         }
 
         .sidebar a:hover {
+            background-color: #7ab800; /* Un verde un poco más oscuro al pasar el ratón */
             color: #f1f1f1;
-            background-color: #8fca00; /* Color de fondo al pasar el ratón */
         }
 
         .sidebar .closebtn {
@@ -60,8 +68,8 @@
             top: 0;
             right: 25px; /* Ajuste para que la "X" siga en la esquina superior derecha del sidebar */
             font-size: 36px;
-            margin-left: 0; /* Eliminado */
-            color: #333; /* Color de la "X" */
+            margin-left: 0;
+            color: #333;
         }
 
         /* Estilos para el ícono de "hamburguesa" */
@@ -278,7 +286,8 @@
         <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
         <a href="index.html">Visualizador</a>
         <a href="renombre.html">Renombre local</a>
-        <a href="replicador.html">Replicador</a> </div>
+        <a href="replicador.html">Replicador</a>
+        <a href="comparar.html">Comparar</a> </div>
 
     <div class="sidebar-toggle" onclick="openNav()">
         <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/icon.png" alt="Abrir menú">
@@ -338,26 +347,24 @@
         function openNav() {
             document.getElementById("mySidebar").style.width = "200px";
             document.getElementById("main").style.marginLeft = "200px";
-            document.body.classList.add("sidebar-open"); // Añade una clase al body
+            document.body.classList.add("sidebar-open");
         }
 
         function closeNav() {
             document.getElementById("mySidebar").style.width = "0";
             document.getElementById("main").style.marginLeft= "0";
-            document.body.classList.remove("sidebar-open"); // Elimina la clase del body
+            document.body.classList.remove("sidebar-open");
         }
 
-        // --- TU CÓDIGO JS EXISTENTE CONTINÚA AQUÍ ---
         var skuList = [];
         var mode = "vista"; // Por defecto, modo vista
         var country = "CL"; // Por defecto, Chile
         var activeLogic = "falabella"; // Falabella activa por defecto
 
-        // Función para cargar la imagen basada en el SKU y el sufijo
         function loadImage(sku, suffix = "") {
             return new Promise(function(resolve, reject) {
                 var baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/`;
-                var imgUrl = `${baseUrl}${sku}${suffix}/w=120,h=120,fit=pad`; // Miniaturas de 120x120
+                var imgUrl = `${baseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
                 var img = new Image();
                 img.src = imgUrl;
                 img.alt = sku + suffix;
@@ -366,7 +373,7 @@
                     var wrapper = document.createElement('div');
                     wrapper.classList.add('imgWrapper');
                     var link = document.createElement('a');
-                    link.href = `${baseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`; // Enlace a la imagen completa
+                    link.href = `${baseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
                     link.target = '_blank';
                     link.appendChild(img);
                     var skuDiv = document.createElement('div');
@@ -378,12 +385,11 @@
                 };
 
                 img.onerror = function() {
-                    resolve(null); // No mostrar imágenes 404 en modo SKU
+                    resolve(null);
                 };
             });
         }
 
-        // Manejar el cambio de modo (Vista o SKU)
         $('#viewToggle').change(function() {
             mode = $(this).is(':checked') ? 'sku' : 'vista';
             $('#imgContainer').empty();
@@ -391,7 +397,6 @@
             updateCounts();
         });
 
-        // Función para actualizar el subrayado y el cambio del país activo
         function setActiveCountry(countryCode) {
             $('.country-link').removeClass('active');
             $(`#link${countryCode}`).addClass('active');
@@ -401,19 +406,16 @@
             updateCounts();
         }
 
-        // Manejar el cambio de país
         $('.country-link').click(function() {
             var selectedCountry = $(this).attr('id').replace('link', '');
             setActiveCountry(selectedCountry);
         });
 
-        // Función para actualizar el selector de países según la marca activa
         function updateCountrySelector(countries) {
             var countrySelector = $('#countrySelector');
             countrySelector.empty();
             countries.forEach(function(countryName) {
                 var countryCode;
-                // Asignar códigos manualmente
                 if (countryName === "Uruguay") {
                     countryCode = "UY";
                 } else if (countryName === "México") {
@@ -429,7 +431,7 @@
                 } else if (countryName === "Brasil") {
                     countryCode = "BR";
                 } else {
-                    countryCode = countryName.slice(0, 2).toUpperCase(); // Por defecto
+                    countryCode = countryName.slice(0, 2).toUpperCase();
                 }
 
                 var countryLink = $('<a href="#" class="country-link">' + countryName + '</a>');
@@ -439,10 +441,9 @@
                 });
                 countrySelector.append(countryLink);
             });
-            setActiveCountry("CL"); // Por defecto, seleccionamos Chile
+            setActiveCountry("CL");
         }
 
-        // Lógica para manejar el cambio de marca
         $('#falabellaIcon').click(function() {
             activeLogic = "falabella";
             $('#falabellaIcon').removeClass('inactive').addClass('active');
@@ -479,13 +480,11 @@
             $('#imgContainer').empty();
         });
 
-        // Función para registrar errores en el log
         function logError(error) {
             $('#errorLog').show();
             $('#errorList').append('<li>' + error + '</li>');
         }
 
-        // Función para eliminar SKU o vista no encontrada de la caja de texto
         function removeNotFound(sku) {
             var skus = $('#skuInputLeft').val().trim().split('\n');
             skus = skus.filter(function(item) {
@@ -494,11 +493,10 @@
             $('#skuInputLeft').val(skus.join('\n'));
         }
 
-        // Búsqueda de SKUs o Vistas
         $('#buscar').click(function() {
             $('#imgContainer').empty();
-            $('#errorLog').hide(); // Ocultar log de errores al iniciar nueva búsqueda
-            $('#errorList').empty(); // Limpiar lista de errores
+            $('#errorLog').hide();
+            $('#errorList').empty();
 
             skuList = [];
             var skus = $('#skuInputLeft').val().trim().split('\n');
@@ -512,8 +510,8 @@
                                 if (imageElement) {
                                     document.getElementById('imgContainer').appendChild(imageElement);
                                 } else {
-                                    logError(sku); // Solo el SKU que no se encontró
-                                    removeNotFound(sku); // Eliminar el SKU de la caja de texto
+                                    logError(sku);
+                                    removeNotFound(sku);
                                 }
                                 updateCounts();
                             });
@@ -533,10 +531,10 @@
 
                             setTimeout(function() {
                                 if (!found) {
-                                    logError(sku); // Solo el SKU que no se encontró
-                                    removeNotFound(sku); // Eliminar el SKU de la caja de texto
+                                    logError(sku);
+                                    removeNotFound(sku);
                                 }
-                            }, 1000); // Esperar un poco para confirmar que no se encontró ninguna imagen
+                            }, 1000);
                         }
                     }
                 });
@@ -608,7 +606,7 @@
         }
 
         function updateCounts() {
-            // Actualmente no se muestran los conteos en el HTML, esta función se mantiene por si se desean añadir.
+            // No se muestran los conteos en el HTML.
         }
 
         function getSuffixes(logic) {
@@ -621,7 +619,7 @@
 
         $('#skuInputLeft, #skuInputRight').on('input', updateCounts);
 
-        setActiveCountry("CL"); // Inicializamos con Chile activo por defecto
+        setActiveCountry("CL");
     </script>
 </body>
 </html>
