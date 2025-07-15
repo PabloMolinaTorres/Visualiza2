@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Visualiza</title>
+    <title>Visualiza - Replicador</title>
     <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" type="image/png">
     <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
@@ -24,6 +24,7 @@
             padding: 0;
             color: #333;
             background-color: #fff;
+            overflow-x: hidden; /* Evita el scroll horizontal cuando el sidebar está oculto */
         }
         .container {
             display: flex;
@@ -189,12 +190,23 @@
             display: flex;
             align-items: center;
             margin: 20px;
+            position: relative; /* Añadido para el posicionamiento del sidebar-toggle */
+        }
+        /* Ajuste para el primer elemento (sidebar-toggle) */
+        .icon-switch > *:first-child {
+            margin-left: 0; /* Elimina el margen izquierdo si lo tuviera */
+            margin-right: 10px; /* Espacio a la derecha del icono de menú */
         }
         .icon-switch img {
             width: 40px;
             height: 40px;
             cursor: pointer;
             margin-right: 10px;
+            /* margin-left: 10px;  Comentado para que el Falabella tenga su propio ajuste */
+        }
+        /* Ajuste específico para Falabella (segundo hijo) */
+        .icon-switch img:nth-child(2) {
+            margin-left: 50px; /* Desplaza Falabella a la derecha */
         }
         .icon-switch img.inactive {
             filter: grayscale(100%);
@@ -314,69 +326,95 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-        /* Estilos para el nuevo menú desplegable */
-        .dropdown {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-        }
-        .menu-icon {
+
+        /* Estilos para el sidebar (panel lateral) */
+        .sidebar-toggle {
+            position: static; /* Para que esté dentro del flujo del flexbox */
+            margin-right: 10px; /* Espacio a la derecha del icono */
             cursor: pointer;
-            width: 30px; /* Tamaño del icono */
-            height: 30px; /* Tamaño del icono */
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/menu-icon.png'); /* URL de tu icono de menú */
+            width: 40px;
+            height: 40px;
+            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
             background-size: cover;
             opacity: 0.8;
+            z-index: 1001;
         }
-        .menu-icon:hover {
+        .sidebar-toggle:hover {
             opacity: 1;
         }
-        .dropdown-content {
-            display: none;
-            position: absolute;
-            background-color: #f9f9f9;
-            min-width: 160px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            right: 0; /* Alinea el menú a la derecha del icono */
-            border-radius: 5px;
+
+        .sidebar {
+            height: 100%;
+            width: 0;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0; /* Aparece desde la izquierda */
+            background-color: #fff;
+            overflow-x: hidden;
+            transition: 0.5s;
+            padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
-        .dropdown-content a {
-            color: black;
-            padding: 12px 16px;
+
+        .sidebar.open {
+            width: 250px;
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
             text-decoration: none;
+            font-size: 18px;
+            color: #333;
             display: block;
-            font-size: 14px;
+            transition: 0.3s;
         }
-        .dropdown-content a:hover {
+
+        .sidebar a:hover {
+            color: #8fca00;
             background-color: #f1f1f1;
-            border-radius: 5px;
         }
-        .dropdown-content a:first-child {
-            border-top-left-radius: 5px;
-            border-top-right-radius: 5px;
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            color: #aaa;
+            text-decoration: none;
         }
-        .dropdown-content a:last-child {
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
+
+        .sidebar .closebtn:hover {
+            color: #333;
         }
-        .dropdown:hover .dropdown-content {
-            /* display: block; */ /* Descomentar para efecto hover */
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="dropdown">
-            <div class="menu-icon" id="menuIcon"></div>
-            <div class="dropdown-content" id="dropdownContent">
-                <a href="Replicador.html">Replica y Renombre</a>
-                <a href="NuevaPagina.html">Nueva Página</a> </div>
-        </div>
+    <div class="overlay" id="overlay"></div>
 
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
+        <a href="index.html">Visualizador</a>
+        <a href="Replicador.html">Replicador</a>
+        <a href="renombre.html">Renombrador</a>
+        <a href="Comparar.html">Comparador</a>
+    </div>
+
+    <div class="container">
         <div class="leftMenu">
             <div class="icon-switch">
+                <div class="sidebar-toggle" id="sidebarToggle"></div>
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png" id="tottusIcon" class="inactive">
@@ -510,7 +548,7 @@
         });
 
         $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true);  // Deshabilitar botón de ordenar
+            $('#ordenarVistas').attr('disabled', true);
             if (viewMode === "vista") {
                 buscarPorVista();
             } else {
@@ -519,13 +557,13 @@
         });
 
         $('#ordenarVistas').click(function() {
-            $('#buscar').trigger('click');  // Hacer que el botón "Ordenar Vistas" dispare el evento click de "Buscar"
+            $('#buscar').trigger('click');
         });
 
         async function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
-            $('#errorList').empty(); // Limpiar lista de errores
+            $('#errorList').empty();
             $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
@@ -548,13 +586,13 @@
                 }
             });
 
-            $('#ordenarVistas').removeAttr('disabled');  // Habilitar botón de ordenar
+            $('#ordenarVistas').removeAttr('disabled');
         }
 
         function buscarPorSKU() {
-            $('#thumbnailContainer').empty(); // Limpiar el contenedor de miniaturas
-            $('#errorList').empty();  // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Volver a agregar el botón de copiar
+            $('#thumbnailContainer').empty();
+            $('#errorList').empty();
+            $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -573,7 +611,7 @@
             });
 
             Promise.all(promises).then(() => {
-                $('#ordenarVistas').removeAttr('disabled');  // Habilitar botón de ordenar
+                $('#ordenarVistas').removeAttr('disabled');
             });
         }
 
@@ -582,16 +620,16 @@
 
             const results = await Promise.all(promises);
 
-            const thumbnails = results.filter(result => result !== null); // Filtrar los que no tienen imagen
+            const thumbnails = results.filter(result => result !== null);
             if (thumbnails.length > 0) {
-                var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
-                thumbnails.forEach(thumbnail => row.append(thumbnail)); // Añadir cada miniatura a la fila
-                $('#thumbnailContainer').append(row); // Añadir la fila al contenedor
+                var row = $('<div class="thumbnail-row"></div>');
+                thumbnails.forEach(thumbnail => row.append(thumbnail));
+                $('#thumbnailContainer').append(row);
                 if (index > 0) {
-                    $('#thumbnailContainer').append('<div class="divider"></div>'); // Añadir un divisor si no es el primer SKU
+                    $('#thumbnailContainer').append('<div class="divider"></div>');
                 }
             } else {
-                $('#errorList').append('<div>' + sku + '</div>'); // Si no se encuentra ninguna imagen, añadir SKU a la lista de errores
+                $('#errorList').append('<div>' + sku + '</div>');
             }
         }
 
@@ -621,10 +659,10 @@
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.append(downloadIcon);
-                    resolve(thumbnail); // Resolver la promesa con el elemento miniatura
+                    resolve(thumbnail);
                 };
                 img.onerror = function() {
-                    resolve(null); // Si no se encuentra la imagen, resolver con null
+                    resolve(null);
                 };
             });
         }
@@ -747,19 +785,24 @@
             }, 2000);
         });
 
-        // Lógica para el menú desplegable
-        $('#menuIcon').click(function() {
-            $('#dropdownContent').toggle(); // Muestra u oculta el menú al hacer clic
+        // Lógica para el sidebar
+        $('#sidebarToggle').click(function() {
+            openNav();
         });
 
-        // Oculta el menú si se hace clic fuera de él
-        $(document).click(function(event) {
-            if (!$(event.target).closest('.dropdown').length) {
-                if ($('#dropdownContent').is(':visible')) {
-                    $('#dropdownContent').hide();
-                }
-            }
+        $('#closeSidebar, #overlay').click(function() {
+            closeNav();
         });
+
+        function openNav() {
+            document.getElementById("mySidebar").classList.add('open');
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").classList.remove('open');
+            document.getElementById("overlay").style.display = "none";
+        }
 
         actualizarPaises();
     </script>
