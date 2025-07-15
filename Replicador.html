@@ -25,44 +25,82 @@
             color: #333;
             background-color: #fff;
         }
-        .main-wrapper { /* Contenedor principal para el sidebar y el resto del contenido */
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
+
+        /* Estilos para el sidebar colapsable */
         .sidebar {
-            width: 60px; /* Ancho fijo para el sidebar */
+            height: 100%;
+            width: 0; /* Ancho inicial: colapsado */
+            position: fixed;
+            z-index: 100; /* Asegura que esté por encima de otros elementos */
+            top: 0;
+            left: 0; /* Sale desde la izquierda */
             background-color: #f8f8f8;
-            padding: 10px 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            border-right: 1px solid #eee;
+            overflow-x: hidden;
+            transition: 0.5s; /* Transición suave al abrir/cerrar */
+            padding-top: 60px; /* Espacio para el botón de cerrar */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
-        .sidebar img.icon {
-            width: 40px;
-            height: 40px;
-            margin-bottom: 20px;
-            cursor: pointer;
-        }
+
         .sidebar a {
-            background-color: #8fca00;
-            padding: 5px 15px;
-            border-radius: 5px;
-            color: white;
+            padding: 8px 8px 8px 32px;
             text-decoration: none;
-            font-size: 10px; /* Ajustado para el sidebar */
-            font-weight: bold;
-            white-space: nowrap;
-            display: block; /* Para que cada enlace ocupe su propia línea */
-            margin-bottom: 10px;
-            text-align: center;
+            font-size: 16px; /* Ajuste para el sidebar */
+            color: #818181;
+            display: block;
+            transition: 0.3s;
         }
+
+        .sidebar a:hover {
+            color: #f1f1f1;
+            background-color: #8fca00; /* Color de fondo al pasar el ratón */
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px; /* Ajuste para que la "X" siga en la esquina superior derecha del sidebar */
+            font-size: 36px;
+            margin-left: 0; /* Eliminado */
+            color: #333; /* Color de la "X" */
+        }
+
+        /* Estilos para el ícono de "hamburguesa" */
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            z-index: 101; /* Para asegurar que esté sobre el contenido */
+            width: 40px; /* Tamaño del icono */
+            height: 40px; /* Tamaño del icono */
+        }
+
+        .sidebar-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Contenido principal */
+        #main {
+            transition: margin-left .5s; /* Transición para el empuje del contenido */
+            margin-left: 0; /* Sin margen inicial */
+            height: 100%;
+            display: flex; /* Mantiene el layout flex de los contenedores internos */
+            width: 100%; /* Ocupa todo el ancho inicialmente */
+        }
+
+        /* Ajustes para el contenido cuando el sidebar está abierto */
+        body.sidebar-open #main {
+            margin-left: 200px; /* Empuja el contenido a la derecha del sidebar abierto */
+        }
+
+        /* Tu CSS existente a continuación, con ajustes donde sea necesario */
         .container {
             display: flex;
-            flex-grow: 1; /* Permite que ocupe el espacio restante */
+            flex-grow: 1; /* Ocupa el espacio restante */
             height: 100%;
-            width: calc(100% - 60px); /* Ajusta el ancho para dejar espacio al sidebar */
+            /* El width lo maneja ahora #main, no es necesario aquí calc */
         }
         .leftContainer {
             width: 35%;
@@ -115,7 +153,6 @@
             font-size: 10px;
             padding: 2px;
         }
-        /* Eliminamos .visualizadorContainer ya que su contenido se mueve al sidebar */
         textarea {
             width: 100%;
             margin: 20px 0;
@@ -237,13 +274,17 @@
     </style>
 </head>
 <body>
-    <div class="main-wrapper">
-        <div class="sidebar">
-            <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/icon.png" alt="Icono" class="icon">
-            <a href="index.html">Visualizador</a>
-            <a href="renombre.html">Renombre local</a>
-            <a href="replicador.html">Replicador</a> </div>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html">Visualizador</a>
+        <a href="renombre.html">Renombre local</a>
+        <a href="replicador.html">Replicador</a> </div>
 
+    <div class="sidebar-toggle" onclick="openNav()">
+        <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/icon.png" alt="Abrir menú">
+    </div>
+
+    <div id="main">
         <div class="container">
             <div class="leftContainer">
                 <div class="title">Replicar</div>
@@ -293,6 +334,20 @@
     </div>
 
     <script>
+        // Funciones para abrir y cerrar el sidebar
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "200px";
+            document.getElementById("main").style.marginLeft = "200px";
+            document.body.classList.add("sidebar-open"); // Añade una clase al body
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+            document.body.classList.remove("sidebar-open"); // Elimina la clase del body
+        }
+
+        // --- TU CÓDIGO JS EXISTENTE CONTINÚA AQUÍ ---
         var skuList = [];
         var mode = "vista"; // Por defecto, modo vista
         var country = "CL"; // Por defecto, Chile
@@ -505,13 +560,11 @@
             var filenames = [];
 
             originalSkus.forEach(function(originalSku, index) {
-                // Filtramos skuList para solo incluir imágenes que coincidan con el originalSku base.
-                // Esto es importante para el modo "SKU" donde originalSku puede ser "123" y skuList contiene "123_01", "123_02".
                 skuList.filter(s => s.startsWith(originalSku.trim())).forEach(function(sku) {
                     var renameSkuBase = renameSkus[index].trim();
-                    var suffix = sku.substring(originalSku.trim().length); // Extrae el sufijo (ej: "_01")
+                    var suffix = sku.substring(originalSku.trim().length);
 
-                    var finalName = renameSkuBase + suffix; // Combina el nuevo nombre base con el sufijo original
+                    var finalName = renameSkuBase + suffix;
                     
                     var imgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/${sku}/w=1500,h=1500,fit=pad`;
                     urls.push(imgUrl);
@@ -529,7 +582,6 @@
                 JSZipUtils.getBinaryContent(url, function(err, data) {
                     if (err) {
                         console.error("Error al obtener contenido binario para", url, ":", err);
-                        // No es necesario un alert aquí, el error ya se ha registrado en la consola
                     } else {
                         zip.file(filename, data, { binary: true });
                     }
