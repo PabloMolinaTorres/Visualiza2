@@ -1,260 +1,401 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Comparar</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 40px;
-      background: #fafafa;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    .upload-box {
-      border: 2px dashed #8fca00;
-      border-radius: 10px;
-      background: white;
-      color: #444;
-      padding: 40px;
-      text-align: center;
-      cursor: pointer;
-      margin-bottom: 30px;
-    }
-    .pair {
-      display: flex;
-      gap: 0;
-      margin-bottom: 40px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .img-wrapper {
-      position: relative;
-      width: 50%;
-      padding: 10px;
-      box-sizing: border-box;
-      text-align: center;
-    }
-    .img-wrapper img {
-      max-width: 100%;
-      max-height: 400px;
-      border: 1px solid #ddd;
-      background: white;
-      cursor: zoom-in;
-    }
-    .img-label {
-      margin-top: 10px;
-      font-size: 14px;
-      color: #666;
-    }
-    .controls {
-      margin-top: 15px;
-    }
-    .controls label {
-      margin-right: 10px;
-      cursor: pointer;
-    }
-    .controls input[type="text"] {
-      margin-top: 10px;
-      width: 80%;
-      padding: 5px;
-      font-size: 13px;
-      display: none;
-    }
-    #exportButton {
-      display: block;
-      margin: 40px auto 0;
-      padding: 12px 24px;
-      background-color: #8fca00;
-      border: none;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    input[type="file"] {
-      display: none !important;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>Comparar</title>
+    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png"> <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet"> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script> <style>
+        /* Estilos generales (los tuyos) */
+        body {
+            font-family: sans-serif;
+            padding: 40px;
+            background: #fafafa;
+            margin: 0; /* Asegura que no haya márgenes por defecto */
+            padding-top: 60px; /* Espacio para el icono de hamburguesa */
+        }
+        h1 {
+            margin-bottom: 20px;
+            text-align: center; /* Centrar el título */
+        }
+        .upload-box {
+            border: 2px dashed #8fca00;
+            border-radius: 10px;
+            background: white;
+            color: #444;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+        .pair {
+            display: flex;
+            gap: 0;
+            margin-bottom: 40px;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .img-wrapper {
+            position: relative;
+            width: 50%;
+            padding: 10px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .img-wrapper img {
+            max-width: 100%;
+            max-height: 400px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: zoom-in;
+        }
+        .img-label {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+        .controls {
+            margin-top: 15px;
+        }
+        .controls label {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        .controls input[type="text"] {
+            margin-top: 10px;
+            width: 80%;
+            padding: 5px;
+            font-size: 13px;
+            display: none;
+        }
+        #exportButton {
+            display: block;
+            margin: 40px auto 0;
+            padding: 12px 24px;
+            background-color: #8fca00;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        input[type="file"] {
+            display: none !important;
+        }
+
+        /* Estilos para el sidebar colapsable */
+        .sidebar {
+            height: 100%;
+            width: 0; /* Ancho inicial: colapsado */
+            position: fixed;
+            z-index: 100; /* Asegura que esté por encima de otros elementos */
+            top: 0;
+            left: 0; /* Sale desde la izquierda */
+            background-color: #ffffff; /* FONDO BLANCO */
+            overflow-x: hidden;
+            transition: 0.5s; /* Transición suave al abrir/cerrar */
+            padding-top: 60px; /* Espacio para el botón de cerrar */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
+        }
+
+        /* ESTILO AJUSTADO PARA LOS ENLACES DEL SIDEBAR */
+        .sidebar a {
+            padding: 15px 8px 15px 32px; /* Aumentado el padding vertical para más espacio */
+            text-decoration: none;
+            font-size: 20px; /* Tamaño de fuente ligeramente más grande */
+            color: #333; /* Color de texto oscuro */
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #8fca00; /* Color verde al pasar el ratón */
+            background-color: #f1f1f1; /* Fondo ligeramente gris al pasar el ratón */
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 0;
+            color: #333;
+        }
+
+        /* Estilos para el ícono de "hamburguesa" */
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            z-index: 101; /* Para asegurar que esté sobre el contenido */
+            width: 40px; /* Tamaño del icono */
+            height: 40px; /* Tamaño del icono */
+        }
+
+        .sidebar-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Contenido principal */
+        #main {
+            transition: margin-left .5s, filter .5s; /* Transición también para el filtro */
+            margin-left: 0; /* Sin margen inicial */
+            height: 100%;
+            width: 100%;
+            padding: 0 20px; /* Añadido padding horizontal para centrar el contenido */
+            box-sizing: border-box; /* Incluye padding en el ancho */
+        }
+
+        /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
+        body.sidebar-open #main {
+            margin-left: 250px; /* Ancho del sidebar ajustado para dar más espacio */
+            filter: brightness(70%); /* Oscurece el contenido */
+            pointer-events: none; /* Deshabilita clics en el contenido principal */
+        }
+
+        /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
+        .overlay {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            z-index: 99; /* Por debajo del sidebar, pero por encima del contenido */
+            top: 0;
+            left: 0;
+            background-color: rgba(0,0,0,0.4); /* Color gris semitransparente */
+            overflow-x: hidden;
+            transition: 0.5s;
+            display: none; /* Oculto por defecto */
+        }
+        body.sidebar-open .overlay {
+            display: block; /* Muestra el overlay cuando el sidebar está abierto */
+        }
+    </style>
 </head>
 <body>
-  <h1>Comparador Visual</h1>
-  <div id="uploadBox" class="upload-box">
-    📁 Suelta tus imágenes aquí (drag & drop)
-  </div>
-  <input type="file" id="fileInput" multiple accept="image/*">
-  <div id="comparisonContainer"></div>
-  <button id="exportButton">Exportar reporte</button>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html">Visualizador</a>
+        <a href="replicador.html">Replicador</a>
+        <a href="renombre.html">Renombrador</a>
+        <a href="Comparar.html">Comparador</a>
+    </div>
 
-  <script>
-    const uploadBox = document.getElementById('uploadBox');
-    const fileInput = document.getElementById('fileInput');
-    const container = document.getElementById('comparisonContainer');
-    const exportButton = document.getElementById('exportButton');
-    const resultados = {};
+    <div class="overlay" onclick="closeNav()"></div>
 
-    uploadBox.addEventListener('dragover', e => {
-      e.preventDefault();
-      uploadBox.style.background = '#eaffd0';
-    });
+    <div class="sidebar-toggle" onclick="openNav()">
+        <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png" alt="Abrir menú">
+    </div>
 
-    uploadBox.addEventListener('dragleave', () => {
-      uploadBox.style.background = 'white';
-    });
+    <div id="main">
+        <h1>Comparador Visual</h1>
+        <div id="uploadBox" class="upload-box">
+            📁 Suelta tus imágenes aquí (drag & drop)
+        </div>
+        <input type="file" id="fileInput" multiple accept="image/*">
+        <div id="comparisonContainer"></div>
+        <button id="exportButton">Exportar reporte</button>
+    </div>
 
-    uploadBox.addEventListener('drop', e => {
-      e.preventDefault();
-      uploadBox.style.background = 'white';
-      handleFiles(e.dataTransfer.files);
-    });
+    <script>
+        // Funciones para abrir y cerrar el sidebar
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+            document.body.classList.add("sidebar-open");
+        }
 
-    function handleFiles(fileList) {
-      const files = Array.from(fileList);
-      container.innerHTML = '';
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+            document.body.classList.remove("sidebar-open");
+        }
 
-      files.forEach(file => {
-        const match = file.name.match(/^(\d+)_\d+/);
-        if (!match) return;
+        const uploadBox = document.getElementById('uploadBox');
+        const fileInput = document.getElementById('fileInput');
+        const container = document.getElementById('comparisonContainer');
+        const exportButton = document.getElementById('exportButton');
+        const resultados = {};
 
-        const sku = match[1];
-        const remoteUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${sku}/public`;
-
-        const pairDiv = document.createElement('div');
-        pairDiv.className = 'pair';
-
-        const leftDiv = createZoomableImage(remoteUrl, `Imagen original SKU: ${sku}`);
-        const localURL = URL.createObjectURL(file);
-        const rightDiv = createZoomableImage(localURL, `Tu imagen: ${file.name}`, sku);
-
-        pairDiv.appendChild(leftDiv);
-        pairDiv.appendChild(rightDiv);
-        container.appendChild(pairDiv);
-      });
-    }
-
-    function createZoomableImage(src, label, sku = null) {
-      const wrapper = document.createElement('div');
-      wrapper.className = 'img-wrapper';
-
-      const img = document.createElement('img');
-      img.src = src;
-      img.alt = label;
-
-      const caption = document.createElement('div');
-      caption.className = 'img-label';
-      caption.textContent = label;
-
-      wrapper.appendChild(img);
-      wrapper.appendChild(caption);
-
-      // Lupa dinámica solo al entrar
-      img.addEventListener('mouseenter', () => {
-        const magnifier = document.createElement('div');
-        magnifier.style.position = 'absolute';
-        magnifier.style.border = '2px solid #8fca00';
-        magnifier.style.width = '300px';
-        magnifier.style.height = '300px';
-        magnifier.style.pointerEvents = 'none';
-        magnifier.style.backgroundRepeat = 'no-repeat';
-        magnifier.style.backgroundSize = '250%';
-        magnifier.style.zIndex = '999';
-        magnifier.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
-        wrapper.appendChild(magnifier);
-
-        wrapper.addEventListener('mousemove', e => moveMagnifier(e, img, magnifier));
-        wrapper.addEventListener('mouseleave', () => {
-          magnifier.remove();
-        });
-      });
-
-      if (sku) {
-        const controls = document.createElement('div');
-        controls.className = 'controls';
-
-        const approve = document.createElement('input');
-        approve.type = 'radio';
-        approve.name = `estado-${sku}`;
-        approve.value = 'Aprobado';
-        approve.id = `aprobado-${sku}`;
-
-        const approveLabel = document.createElement('label');
-        approveLabel.htmlFor = approve.id;
-        approveLabel.textContent = 'Aprobar';
-
-        const reject = document.createElement('input');
-        reject.type = 'radio';
-        reject.name = `estado-${sku}`;
-        reject.value = 'Rechazado';
-        reject.id = `rechazado-${sku}`;
-
-        const rejectLabel = document.createElement('label');
-        rejectLabel.htmlFor = reject.id;
-        rejectLabel.textContent = 'Rechazar';
-
-        const motivo = document.createElement('input');
-        motivo.type = 'text';
-        motivo.placeholder = 'Motivo del rechazo...';
-        motivo.id = `motivo-${sku}`;
-
-        approve.addEventListener('change', () => {
-          resultados[sku] = { estado: 'Aprobado', motivo: '' };
-          motivo.style.display = 'none';
+        // Evento para hacer clic en el área de carga y abrir el selector de archivos
+        uploadBox.addEventListener('click', () => {
+            fileInput.click();
         });
 
-        reject.addEventListener('change', () => {
-          resultados[sku] = { estado: 'Rechazado', motivo: '' };
-          motivo.style.display = 'block';
+        // Evento para cuando se seleccionan archivos a través del input file
+        fileInput.addEventListener('change', (e) => {
+            handleFiles(e.target.files);
         });
 
-        motivo.addEventListener('input', () => {
-          if (resultados[sku]) {
-            resultados[sku].motivo = motivo.value;
-          }
+        uploadBox.addEventListener('dragover', e => {
+            e.preventDefault();
+            uploadBox.style.background = '#eaffd0';
         });
 
-        controls.appendChild(approve);
-        controls.appendChild(approveLabel);
-        controls.appendChild(reject);
-        controls.appendChild(rejectLabel);
-        controls.appendChild(motivo);
-        wrapper.appendChild(controls);
-      }
+        uploadBox.addEventListener('dragleave', () => {
+            uploadBox.style.background = 'white';
+        });
 
-      return wrapper;
-    }
+        uploadBox.addEventListener('drop', e => {
+            e.preventDefault();
+            uploadBox.style.background = 'white';
+            handleFiles(e.dataTransfer.files);
+        });
 
-    function moveMagnifier(e, img, magnifier) {
-      const rect = img.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      const zoom = 2.5;
-      const size = 300;
+        function handleFiles(fileList) {
+            const files = Array.from(fileList);
+            container.innerHTML = '';
+            resultados = {}; // Reset resultados para nuevas cargas
 
-      let posX = x - size / 2;
-      let posY = y - size / 2;
+            files.forEach(file => {
+                const match = file.name.match(/^(\d+)(_.*)?\./); // Ajuste regex para capturar sufijos si existen
+                if (!match) {
+                    console.warn(`Archivo ignorado (no coincide el patrón SKU): ${file.name}`);
+                    return;
+                }
 
-      magnifier.style.left = `${posX}px`;
-      magnifier.style.top = `${posY}px`;
-      magnifier.style.backgroundImage = `url('${img.src}')`;
-      magnifier.style.backgroundSize = `${img.width * zoom}px ${img.height * zoom}px`;
-      magnifier.style.backgroundPosition = `-${x * zoom - size / 2}px -${y * zoom - size / 2}px`;
-    }
+                const sku = match[1];
+                const suffix = match[2] || ''; // Captura el sufijo o un string vacío si no hay
 
-    exportButton.addEventListener('click', () => {
-      const data = [['SKU', 'Estado', 'Motivo']];
-      for (const sku in resultados) {
-        const r = resultados[sku];
-        data.push([sku, r.estado, r.motivo || '']);
-      }
-      const worksheet = XLSX.utils.aoa_to_sheet(data);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
-      XLSX.writeFile(workbook, 'reporte_comparador.xlsx');
-    });
-  </script>
+                // Asumiendo Falabella CL por defecto para la imagen remota, puedes hacer esto dinámico
+                // si quieres seleccionar la lógica de tienda/país como en Replicador.html
+                const remoteUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${sku}${suffix}/public`;
+
+                const pairDiv = document.createElement('div');
+                pairDiv.className = 'pair';
+
+                const leftDiv = createZoomableImage(remoteUrl, `Imagen original SKU: ${sku}${suffix}`);
+                const localURL = URL.createObjectURL(file);
+                const rightDiv = createZoomableImage(localURL, `Tu imagen: ${file.name}`, sku);
+
+                pairDiv.appendChild(leftDiv);
+                pairDiv.appendChild(rightDiv);
+                container.appendChild(pairDiv);
+            });
+        }
+
+        function createZoomableImage(src, label, sku = null) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'img-wrapper';
+
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = label;
+
+            const caption = document.createElement('div');
+            caption.className = 'img-label';
+            caption.textContent = label;
+
+            wrapper.appendChild(img);
+            wrapper.appendChild(caption);
+
+            // Lupa dinámica solo al entrar
+            img.addEventListener('mouseenter', () => {
+                const magnifier = document.createElement('div');
+                magnifier.style.position = 'absolute';
+                magnifier.style.border = '2px solid #8fca00';
+                magnifier.style.width = '300px';
+                magnifier.style.height = '300px';
+                magnifier.style.pointerEvents = 'none';
+                magnifier.style.backgroundRepeat = 'no-repeat';
+                magnifier.style.backgroundSize = '250%';
+                magnifier.style.zIndex = '999';
+                magnifier.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+                wrapper.appendChild(magnifier);
+
+                wrapper.addEventListener('mousemove', e => moveMagnifier(e, img, magnifier));
+                wrapper.addEventListener('mouseleave', () => {
+                    magnifier.remove();
+                });
+            });
+
+            if (sku) {
+                const controls = document.createElement('div');
+                controls.className = 'controls';
+
+                const approve = document.createElement('input');
+                approve.type = 'radio';
+                approve.name = `estado-${sku}`;
+                approve.value = 'Aprobado';
+                approve.id = `aprobado-${sku}`;
+
+                const approveLabel = document.createElement('label');
+                approveLabel.htmlFor = approve.id;
+                approveLabel.textContent = 'Aprobar';
+
+                const reject = document.createElement('input');
+                reject.type = 'radio';
+                reject.name = `estado-${sku}`;
+                reject.value = 'Rechazado';
+                reject.id = `rechazado-${sku}`;
+
+                const rejectLabel = document.createElement('label');
+                rejectLabel.htmlFor = reject.id;
+                rejectLabel.textContent = 'Rechazar';
+
+                const motivo = document.createElement('input');
+                motivo.type = 'text';
+                motivo.placeholder = 'Motivo del rechazo...';
+                motivo.id = `motivo-${sku}`;
+
+                approve.addEventListener('change', () => {
+                    resultados[sku] = { estado: 'Aprobado', motivo: '' };
+                    motivo.style.display = 'none';
+                });
+
+                reject.addEventListener('change', () => {
+                    resultados[sku] = { estado: 'Rechazado', motivo: '' };
+                    motivo.style.display = 'block';
+                });
+
+                motivo.addEventListener('input', () => {
+                    if (resultados[sku]) {
+                        resultados[sku].motivo = motivo.value;
+                    }
+                });
+
+                controls.appendChild(approve);
+                controls.appendChild(approveLabel);
+                controls.appendChild(reject);
+                controls.appendChild(rejectLabel);
+                controls.appendChild(motivo);
+                wrapper.appendChild(controls);
+            }
+
+            return wrapper;
+        }
+
+        function moveMagnifier(e, img, magnifier) {
+            const rect = img.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const zoom = 2.5;
+            const size = 300;
+
+            let posX = x - size / 2;
+            let posY = y - size / 2;
+
+            magnifier.style.left = `${posX}px`;
+            magnifier.style.top = `${posY}px`;
+            magnifier.style.backgroundImage = `url('${img.src}')`;
+            magnifier.style.backgroundSize = `${img.width * zoom}px ${img.height * zoom}px`;
+            magnifier.style.backgroundPosition = `-${x * zoom - size / 2}px -${y * zoom - size / 2}px`;
+        }
+
+        exportButton.addEventListener('click', () => {
+            const data = [['SKU', 'Estado', 'Motivo']];
+            for (const sku in resultados) {
+                const r = resultados[sku];
+                data.push([sku, r.estado, r.motivo || '']);
+            }
+            const worksheet = XLSX.utils.aoa_to_sheet(data);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Reporte');
+            XLSX.writeFile(workbook, 'reporte_comparador.xlsx');
+        });
+    </script>
 </body>
 </html>
