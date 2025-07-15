@@ -25,10 +25,44 @@
             color: #333;
             background-color: #fff;
         }
-        .container {
+        .main-wrapper { /* Contenedor principal para el sidebar y el resto del contenido */
             display: flex;
             height: 100%;
             width: 100%;
+        }
+        .sidebar {
+            width: 60px; /* Ancho fijo para el sidebar */
+            background-color: #f8f8f8;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border-right: 1px solid #eee;
+        }
+        .sidebar img.icon {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        .sidebar a {
+            background-color: #8fca00;
+            padding: 5px 15px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            font-size: 10px; /* Ajustado para el sidebar */
+            font-weight: bold;
+            white-space: nowrap;
+            display: block; /* Para que cada enlace ocupe su propia línea */
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .container {
+            display: flex;
+            flex-grow: 1; /* Permite que ocupe el espacio restante */
+            height: 100%;
+            width: calc(100% - 60px); /* Ajusta el ancho para dejar espacio al sidebar */
         }
         .leftContainer {
             width: 35%;
@@ -81,27 +115,7 @@
             font-size: 10px;
             padding: 2px;
         }
-        .visualizadorContainer {
-            width: 5%;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: flex-end;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .visualizadorContainer a {
-            background-color: #8fca00;
-            padding: 5px 15px;
-            border-radius: 5px;
-            color: white;
-            text-decoration: none;
-            font-size: 12px;
-            font-weight: bold;
-            white-space: nowrap;
-            display: inline-block;
-            margin-bottom: 10px; /* Espacio entre botones */
-        }
+        /* Eliminamos .visualizadorContainer ya que su contenido se mueve al sidebar */
         textarea {
             width: 100%;
             margin: 20px 0;
@@ -223,55 +237,59 @@
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="leftContainer">
-            <div class="title">Replicar</div>
-
-            <div class="icon-selector">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
-            </div>
-
-            <div class="country-selector" id="countrySelector">
-                <a href="#" class="country-link" id="linkCL">Chile</a>
-                <a href="#" class="country-link" id="linkPE">Perú</a>
-                <a href="#" class="country-link" id="linkCO">Colombia</a>
-            </div>
-
-            <div class="columns">
-                <div class="column">
-                    <textarea id="skuInputLeft" placeholder="Ingrese SKUs, uno por línea"></textarea>
-                    <button id="buscar">Buscar</button>
-                </div>
-                <div class="column">
-                    <textarea id="skuInputRight" placeholder="Ingrese los nombres para renombrar, uno por línea"></textarea>
-                    <button id="downloadAll">Descargar Todo</button>
-                </div>
-            </div>
-            <div class="switch-container">
-                <span>Vista</span>
-                <label class="switch">
-                    <input type="checkbox" id="viewToggle">
-                    <span class="slider"></span>
-                </label>
-                <span>SKU</span>
-            </div>
-
-            <div id="errorLog">
-                <strong>No encontrado:</strong>
-                <ul id="errorList"></ul>
-            </div>
-        </div>
-
-        <div class="rightContainer">
-            <div class="title">Previsualizar</div>                        
-            <div class="imgContainer" id="imgContainer"></div>
-        </div>
-
-        <div class="visualizadorContainer">
+    <div class="main-wrapper">
+        <div class="sidebar">
+            <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/icon.png" alt="Icono" class="icon">
             <a href="index.html">Visualizador</a>
-            <a href="renombre.html">Renombre local</a> </div>
+            <a href="renombre.html">Renombre local</a>
+            <a href="replicador.html">Replicador</a> </div>
+
+        <div class="container">
+            <div class="leftContainer">
+                <div class="title">Replicar</div>
+
+                <div class="icon-selector">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
+                </div>
+
+                <div class="country-selector" id="countrySelector">
+                    <a href="#" class="country-link" id="linkCL">Chile</a>
+                    <a href="#" class="country-link" id="linkPE">Perú</a>
+                    <a href="#" class="country-link" id="linkCO">Colombia</a>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <textarea id="skuInputLeft" placeholder="Ingrese SKUs, uno por línea"></textarea>
+                        <button id="buscar">Buscar</button>
+                    </div>
+                    <div class="column">
+                        <textarea id="skuInputRight" placeholder="Ingrese los nombres para renombrar, uno por línea"></textarea>
+                        <button id="downloadAll">Descargar Todo</button>
+                    </div>
+                </div>
+                <div class="switch-container">
+                    <span>Vista</span>
+                    <label class="switch">
+                        <input type="checkbox" id="viewToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>SKU</span>
+                </div>
+
+                <div id="errorLog">
+                    <strong>No encontrado:</strong>
+                    <ul id="errorList"></ul>
+                </div>
+            </div>
+
+            <div class="rightContainer">
+                <div class="title">Previsualizar</div>                        
+                <div class="imgContainer" id="imgContainer"></div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -537,12 +555,8 @@
             return day + '-' + month + '_' + hours + minutes;
         }
 
-        // Esta función no tiene elementos en el HTML para mostrar los conteos.
-        // Si deseas que los conteos sean visibles, necesitas añadir elementos HTML
-        // con los IDs 'leftCount' y 'rightCount' (ej. <span>Total SKUs/Vistas: <span id="leftCount"></span></span>).
         function updateCounts() {
-            // $('#leftCount').text('Total SKUs/Vistas: ' + skuList.length);
-            // $('#rightCount').text('Total Renombres: ' + $('#skuInputRight').val().trim().split('\n').filter(Boolean).length);
+            // Actualmente no se muestran los conteos en el HTML, esta función se mantiene por si se desean añadir.
         }
 
         function getSuffixes(logic) {
