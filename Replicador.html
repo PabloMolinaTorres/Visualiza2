@@ -41,13 +41,13 @@
             box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
 
-        /* ESTILO CORREGIDO PARA LOS ENLACES DEL SIDEBAR (TEXTO SIMPLE) */
+        /* ESTILO AJUSTADO PARA LOS ENLACES DEL SIDEBAR */
         .sidebar a {
-            padding: 8px 8px 8px 32px; /* Espaciado */
+            padding: 15px 8px 15px 32px; /* Aumentado el padding vertical para más espacio */
             text-decoration: none;
-            font-size: 18px; /* Tamaño de fuente para que sea legible */
+            font-size: 20px; /* Tamaño de fuente ligeramente más grande */
             color: #333; /* Color de texto oscuro */
-            display: block; /* Cada enlace ocupa su propia línea */
+            display: block;
             transition: 0.3s;
         }
 
@@ -62,7 +62,7 @@
             right: 25px;
             font-size: 36px;
             margin-left: 0;
-            color: #333; /* Color de la "X" */
+            color: #333;
         }
 
         /* Estilos para el ícono de "hamburguesa" */
@@ -84,22 +84,42 @@
 
         /* Contenido principal */
         #main {
-            transition: margin-left .5s; /* Transición para el empuje del contenido */
+            transition: margin-left .5s, filter .5s; /* Transición también para el filtro */
             margin-left: 0; /* Sin margen inicial */
             height: 100%;
-            display: flex; /* Mantiene el layout flex de los contenedores internos */
-            width: 100%; /* Ocupa todo el ancho inicialmente */
+            display: flex;
+            width: 100%;
         }
 
-        /* Ajustes para el contenido cuando el sidebar está abierto */
+        /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
         body.sidebar-open #main {
-            margin-left: 200px; /* Empuja el contenido a la derecha del sidebar abierto */
+            margin-left: 250px; /* Ancho del sidebar ajustado para dar más espacio */
+            filter: brightness(70%); /* Oscurece el contenido */
+            pointer-events: none; /* Deshabilita clics en el contenido principal */
         }
 
-        /* Tu CSS existente a continuación, con ajustes donde sea necesario */
+        /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
+        .overlay {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            z-index: 99; /* Por debajo del sidebar, pero por encima del contenido */
+            top: 0;
+            left: 0;
+            background-color: rgba(0,0,0,0.4); /* Color gris semitransparente */
+            overflow-x: hidden;
+            transition: 0.5s;
+            display: none; /* Oculto por defecto */
+        }
+        body.sidebar-open .overlay {
+            display: block; /* Muestra el overlay cuando el sidebar está abierto */
+        }
+
+
+        /* Tu CSS existente a continuación */
         .container {
             display: flex;
-            flex-grow: 1; /* Ocupa el espacio restante */
+            flex-grow: 1;
             height: 100%;
         }
         .leftContainer {
@@ -282,6 +302,8 @@
         <a href="comparar.html">Comparar</a>
     </div>
 
+    <div class="overlay" onclick="closeNav()"></div>
+
     <div class="sidebar-toggle" onclick="openNav()">
         <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png" alt="Abrir menú">
     </div>
@@ -338,8 +360,8 @@
     <script>
         // Funciones para abrir y cerrar el sidebar
         function openNav() {
-            document.getElementById("mySidebar").style.width = "200px";
-            document.getElementById("main").style.marginLeft = "200px";
+            document.getElementById("mySidebar").style.width = "250px"; // Ancho del sidebar ajustado
+            document.getElementById("main").style.marginLeft = "250px"; // Empuje del contenido ajustado
             document.body.classList.add("sidebar-open");
         }
 
@@ -350,9 +372,9 @@
         }
 
         var skuList = [];
-        var mode = "vista"; // Por defecto, modo vista
-        var country = "CL"; // Por defecto, Chile
-        var activeLogic = "falabella"; // Falabella activa por defecto
+        var mode = "vista";
+        var country = "CL";
+        var activeLogic = "falabella";
 
         function loadImage(sku, suffix = "") {
             return new Promise(function(resolve, reject) {
