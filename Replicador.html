@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -212,7 +211,6 @@
             margin-bottom: 15px;
             color: #333;
         }
-
         /* Estilo para el log de errores */
         #errorLog {
             display: none;
@@ -226,19 +224,15 @@
 </head>
 <body>
     <div class="container">
-        <!-- Left Container -->
         <div class="leftContainer">
-            <!-- Título Renombre -->
             <div class="title">Replicar</div>
 
-            <!-- Icon Selector -->
             <div class="icon-selector">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
             </div>
 
-            <!-- Country Selector centered below the icons -->
             <div class="country-selector" id="countrySelector">
                 <a href="#" class="country-link" id="linkCL">Chile</a>
                 <a href="#" class="country-link" id="linkPE">Perú</a>
@@ -264,26 +258,20 @@
                 <span>SKU</span>
             </div>
 
-            <!-- Log de errores -->
             <div id="errorLog">
                 <strong>No encontrado:</strong>
                 <ul id="errorList"></ul>
             </div>
         </div>
 
-        <!-- Right Container -->
         <div class="rightContainer">
-            <!-- Título Previsualizar -->
-            <div class="title">Previsualizar</div>
-            
+            <div class="title">Previsualizar</div>                        
             <div class="imgContainer" id="imgContainer"></div>
         </div>
 
-        <!-- Visualizador Container -->
         <div class="visualizadorContainer">
             <a href="index.html">Visualizador</a>
-            <a href="renombre.html">Renombre local</a> <!-- Nuevo botón de Renombre local -->
-        </div>
+            <a href="renombre.html">Renombre local</a> </div>
     </div>
 
     <script>
@@ -352,7 +340,6 @@
             countrySelector.empty();
             countries.forEach(function(countryName) {
                 var countryCode;
-                
                 // Asignar códigos manualmente
                 if (countryName === "Uruguay") {
                     countryCode = "UY";
@@ -500,29 +487,41 @@
             var filenames = [];
 
             originalSkus.forEach(function(originalSku, index) {
-                skuList.forEach(function(sku) {
-                    if (sku.startsWith(originalSku)) {
-                        var renameSku = renameSkus[index];
-                        var finalName = sku.replace(originalSku, renameSku);
-                        var imgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/${sku}/w=1500,h=1500,fit=pad`;
-                        urls.push(imgUrl);
-                        filenames.push(finalName);
-                    }
+                // Filtramos skuList para solo incluir imágenes que coincidan con el originalSku base.
+                // Esto es importante para el modo "SKU" donde originalSku puede ser "123" y skuList contiene "123_01", "123_02".
+                skuList.filter(s => s.startsWith(originalSku.trim())).forEach(function(sku) {
+                    var renameSkuBase = renameSkus[index].trim();
+                    var suffix = sku.substring(originalSku.trim().length); // Extrae el sufijo (ej: "_01")
+
+                    var finalName = renameSkuBase + suffix; // Combina el nuevo nombre base con el sufijo original
+                    
+                    var imgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/${sku}/w=1500,h=1500,fit=pad`;
+                    urls.push(imgUrl);
+                    filenames.push(finalName);
                 });
             });
+
+            if (urls.length === 0) {
+                alert('No hay imágenes para descargar. Asegúrese de que las imágenes se hayan cargado correctamente.');
+                return;
+            }
 
             urls.forEach(function(url, index) {
                 var filename = filenames[index] + ".jpg";
                 JSZipUtils.getBinaryContent(url, function(err, data) {
                     if (err) {
-                        console.error("Error al obtener contenido binario:", err);
-                        return;
+                        console.error("Error al obtener contenido binario para", url, ":", err);
+                        // No es necesario un alert aquí, el error ya se ha registrado en la consola
+                    } else {
+                        zip.file(filename, data, { binary: true });
                     }
-                    zip.file(filename, data, { binary: true });
                     count++;
                     if (count === urls.length) {
                         zip.generateAsync({ type: 'blob' }).then(function(content) {
                             saveAs(content, zipFilename);
+                        }).catch(function(e) {
+                            console.error("Error al generar el ZIP:", e);
+                            alert("Hubo un error al generar el archivo ZIP. Intente de nuevo.");
                         });
                     }
                 });
@@ -538,9 +537,12 @@
             return day + '-' + month + '_' + hours + minutes;
         }
 
+        // Esta función no tiene elementos en el HTML para mostrar los conteos.
+        // Si deseas que los conteos sean visibles, necesitas añadir elementos HTML
+        // con los IDs 'leftCount' y 'rightCount' (ej. <span>Total SKUs/Vistas: <span id="leftCount"></span></span>).
         function updateCounts() {
-            $('#leftCount').text('Total SKUs/Vistas: ' + skuList.length);
-            $('#rightCount').text('Total Renombres: ' + $('#skuInputRight').val().trim().split('\n').length);
+            // $('#leftCount').text('Total SKUs/Vistas: ' + skuList.length);
+            // $('#rightCount').text('Total Renombres: ' + $('#skuInputRight').val().trim().split('\n').filter(Boolean).length);
         }
 
         function getSuffixes(logic) {
