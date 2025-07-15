@@ -190,6 +190,8 @@
             display: flex;
             align-items: center;
             margin: 20px;
+            /* Agregado para alinear correctamente los elementos internos */
+            position: relative; /* Necesario para posicionamiento absoluto de sidebar-toggle si lo ponemos dentro */
         }
         .icon-switch img {
             width: 40px;
@@ -318,13 +320,15 @@
 
         /* Estilos para el nuevo sidebar (panel lateral) */
         .sidebar-toggle {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+            /* Eliminadas las propiedades de posición absoluta que lo movían a la derecha */
+            /* top: 10px; */
+            /* right: 10px; */
+            position: static; /* Volver a la posición normal dentro del flex container */
+            margin-right: 10px; /* Espacio a la derecha de los logos */
             cursor: pointer;
             width: 30px;
             height: 30px;
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png'); /* CORRECCIÓN: Usando icon.png */
+            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
             background-size: cover;
             opacity: 0.8;
             z-index: 1001; /* Mayor que el sidebar para que siempre sea clicable */
@@ -395,8 +399,6 @@
 <body>
     <div class="overlay" id="overlay"></div>
 
-    <div class="sidebar-toggle" id="sidebarToggle"></div>
-
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
         <a href="index.html">Visualizador</a> <a href="Replicador.html">Replicador</a>
@@ -407,6 +409,7 @@
     <div class="container">
         <div class="leftMenu">
             <div class="icon-switch">
+                <div class="sidebar-toggle" id="sidebarToggle"></div>
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png" id="tottusIcon" class="inactive">
