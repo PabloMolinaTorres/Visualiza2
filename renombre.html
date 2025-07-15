@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -12,12 +11,104 @@
             box-sizing: border-box;
             font-family: 'Lato', sans-serif;
         }
-        body {
-            background-color: #fff;
+        html, body { /* Asegúrate de que html y body ocupen toda la altura */
+            height: 100%;
             margin: 0;
             padding: 0;
             color: #333;
+            background-color: #fff;
         }
+
+        /* Estilos para el sidebar colapsable */
+        .sidebar {
+            height: 100%;
+            width: 0; /* Ancho inicial: colapsado */
+            position: fixed;
+            z-index: 100; /* Asegura que esté por encima de otros elementos */
+            top: 0;
+            left: 0; /* Sale desde la izquierda */
+            background-color: #ffffff; /* FONDO BLANCO */
+            overflow-x: hidden;
+            transition: 0.5s; /* Transición suave al abrir/cerrar */
+            padding-top: 60px; /* Espacio para el botón de cerrar */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
+        }
+
+        /* ESTILO AJUSTADO PARA LOS ENLACES DEL SIDEBAR */
+        .sidebar a {
+            padding: 15px 8px 15px 32px; /* Aumentado el padding vertical para más espacio */
+            text-decoration: none;
+            font-size: 20px; /* Tamaño de fuente ligeramente más grande */
+            color: #333; /* Color de texto oscuro */
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #8fca00; /* Color verde al pasar el ratón */
+            background-color: #f1f1f1; /* Fondo ligeramente gris al pasar el ratón */
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 0;
+            color: #333;
+        }
+
+        /* Estilos para el ícono de "hamburguesa" */
+        .sidebar-toggle {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            cursor: pointer;
+            z-index: 101; /* Para asegurar que esté sobre el contenido */
+            width: 40px; /* Tamaño del icono */
+            height: 40px; /* Tamaño del icono */
+        }
+
+        .sidebar-toggle img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Contenido principal */
+        #main-content { /* Renombrado de #main a #main-content para evitar conflicto con la clase .main original */
+            transition: margin-left .5s, filter .5s; /* Transición también para el filtro */
+            margin-left: 0; /* Sin margen inicial */
+            /* Tus estilos originales para el contenedor principal de la página */
+            padding: 20px; /* Asegura que no haya un padding inicial aquí si ya lo tienes en .container */
+        }
+
+        /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
+        body.sidebar-open #main-content { /* Usamos #main-content */
+            margin-left: 250px; /* Ancho del sidebar ajustado para dar más espacio */
+            filter: brightness(70%); /* Oscurece el contenido */
+            pointer-events: none; /* Deshabilita clics en el contenido principal */
+        }
+
+        /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
+        .overlay {
+            height: 100%;
+            width: 100%;
+            position: fixed;
+            z-index: 99; /* Por debajo del sidebar, pero por encima del contenido */
+            top: 0;
+            left: 0;
+            background-color: rgba(0,0,0,0.4); /* Color gris semitransparente */
+            overflow-x: hidden;
+            transition: 0.5s;
+            display: none; /* Oculto por defecto */
+        }
+        body.sidebar-open .overlay {
+            display: block; /* Muestra el overlay cuando el sidebar está abierto */
+        }
+
+
+        /* Tu CSS existente a continuación */
         h1 {
             text-align: center;
             color: #333;
@@ -26,7 +117,7 @@
         }
         .container {
             display: flex;
-            padding: 20px;
+            padding: 0px; /* Eliminado el padding si #main-content ya lo tiene, o ajustarlo */
         }
         .leftContainer {
             width: 25%;
@@ -127,12 +218,11 @@
             color: red;
         }
         .replicatorContainer {
-            position: absolute;
-            top: 10px;
-            right: 20px;
+            /* No se necesita si el sidebar es el navegador principal */
+            display: none; /* Ocultar el botón original si el sidebar lo reemplaza */
         }
         .replicatorButton {
-            background-color: #8fca00; /* Green color */
+            /* No se necesita si el sidebar es el navegador principal */
         }
 
         /* Animación de resalto */
@@ -149,49 +239,75 @@
     </style>
 </head>
 <body>
-    <h1>Renombrador</h1>
-    
-    <div class="container">
-        <!-- Botón para volver al replicador -->
-        <div class="replicatorContainer">
-            <a href="Replicador.html">
-                <button class="replicatorButton">Replicador</button>
-            </a>
-        </div>
-        
-        <div class="leftContainer">
-            <div class="message" id="message">
-                Primero, por favor cargue las imágenes.
-            </div>
-            <input type="file" id="excelUpload" accept=".xlsx,.xls" disabled>
-            <button id="downloadTemplate">Descargar plantilla</button>
-            <div class="excelContent" id="excelContent"></div>
-            <div id="errorLog" class="error-log" style="display:none;">
-                <strong>Errores:</strong>
-                <ul id="errorList"></ul>
-            </div>
-        </div>
-        <div class="rightContainer">
-            <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png" class="highlight">
-            <table>
-                <thead>
-                    <tr>
-                        <th>SKU Original</th>
-                        <th>Nuevo Renombre</th>
-                    </tr>
-                </thead>
-                <tbody id="fileTable"></tbody>
-            </table>
-            <div id="progressBarContainer">
-                <div id="progressBar"></div>
-            </div>
-            <button id="renameButton" disabled>Descargar</button>
-        </div>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html">Visualizador</a>
+        <a href="renombre.html">Renombre local</a>
+        <a href="replicador.html">Replicador</a>
+        <a href="comparar.html">Comparar</a>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+    <div class="overlay" onclick="closeNav()"></div>
+
+    <div class="sidebar-toggle" onclick="openNav()">
+        <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png" alt="Abrir menú">
+    </div>
+
+    <div id="main-content">
+        <h1>Renombrador</h1>
+        
+        <div class="container">
+            <div class="replicatorContainer">
+                <a href="Replicador.html">
+                    <button class="replicatorButton">Replicador</button>
+                </a>
+            </div>
+            
+            <div class="leftContainer">
+                <div class="message" id="message">
+                    Primero, por favor cargue las imágenes.
+                </div>
+                <input type="file" id="excelUpload" accept=".xlsx,.xls" disabled>
+                <button id="downloadTemplate">Descargar plantilla</button>
+                <div class="excelContent" id="excelContent"></div>
+                <div id="errorLog" class="error-log" style="display:none;">
+                    <strong>Errores:</strong>
+                    <ul id="errorList"></ul>
+                </div>
+            </div>
+            <div class="rightContainer">
+                <input type="file" id="fileUpload" multiple accept=".jpg,.jpeg,.png" class="highlight">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>SKU Original</th>
+                            <th>Nuevo Renombre</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fileTable"></tbody>
+                </table>
+                <div id="progressBarContainer">
+                    <div id="progressBar"></div>
+                </div>
+                <button id="renameButton" disabled>Descargar</button>
+            </div>
+        </div>
+    </div> <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     <script>
+        // Funciones para abrir y cerrar el sidebar
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px"; // Ancho del sidebar ajustado
+            document.getElementById("main-content").style.marginLeft = "250px"; // Empuje del contenido ajustado
+            document.body.classList.add("sidebar-open");
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main-content").style.marginLeft= "0";
+            document.body.classList.remove("sidebar-open");
+        }
+
         const fileUpload = document.getElementById('fileUpload');
         const fileTable = document.getElementById('fileTable');
         const renameButton = document.getElementById('renameButton');
@@ -237,7 +353,7 @@
             });
             renameButton.disabled = !allRenamed; // Habilitar solo si todos los SKUs tienen renombre
 
-            if (allRenamed) {
+            if (allRenamed && files.length > 0 && excelUpload.files.length > 0 && errors.length === 0) {
                 highlightStep(renameButton);  // Resaltar el botón de descarga si todo está bien
             }
         }
@@ -258,10 +374,16 @@
             files = Array.from(event.target.files);
             fileTable.innerHTML = '';
             skus = {};
+            errors = []; // Limpiar errores al cargar nuevas imágenes
+            errorLog.style.display = 'none';
+            errorList.innerHTML = '';
 
             files.forEach((file, index) => {
                 const fileName = file.name.split('.')[0];
-                if (!validateSKU(fileName)) return;
+                if (!validateSKU(fileName)) {
+                    errors.push(`El nombre de archivo "${file.name}" no sigue el formato SKU_VISTA (ej. 123456_01).`);
+                    return; // Saltar este archivo si no es válido
+                }
 
                 const sku = fileName.split('_')[0];
                 if (!skus[sku]) {
@@ -289,10 +411,23 @@
                 }
             });
 
+            if (errors.length > 0) {
+                errorLog.style.display = 'block';
+                errors.forEach(error => {
+                    const li = document.createElement('li');
+                    li.textContent = error;
+                    errorList.appendChild(li);
+                });
+            }
+
             if (files.length > 0) {
                 excelUpload.disabled = false;
                 message.textContent = "Ahora, por favor cargue el archivo Excel.";
                 highlightStep(excelUpload); // Resaltar el paso de cargar el Excel
+            } else {
+                excelUpload.disabled = true; // Si no hay imágenes válidas, deshabilitar excel upload
+                message.textContent = "Primero, por favor cargue las imágenes.";
+                highlightStep(fileUpload);
             }
             checkDownloadButton();
         });
@@ -310,6 +445,8 @@
 
                 if (sheet[0][0] !== 'original' || sheet[0][1] !== 'renombre') {
                     alert("El archivo debe tener 'original' y 'renombre' como títulos de columna en A1 y B1.");
+                    // Vuelve a resaltar el excelUpload si el formato es incorrecto
+                    highlightStep(excelUpload);
                     return;
                 }
 
@@ -318,16 +455,16 @@
                 const tbody = document.createElement('tbody');
                 table.appendChild(tbody);
 
-                errors = [];
+                errors = []; // Limpiar errores al cargar un nuevo Excel
                 errorList.innerHTML = '';
 
                 sheet.forEach((row, index) => {
                     if (index === 0) return;
-                    const originalSku = row[0];
-                    const newSku = row[1];
+                    const originalSku = String(row[0]).trim(); // Convertir a string y trim
+                    const newSku = String(row[1]).trim(); // Convertir a string y trim
 
                     if (!originalSku || !newSku) {
-                        errors.push(`Fila ${index + 1} tiene valores vacíos. Verifique los datos.`);
+                        errors.push(`Fila ${index + 1} del Excel: tiene valores vacíos. Verifique los datos.`);
                         return;
                     }
 
@@ -344,12 +481,15 @@
 
                     if (!skus[originalSku]) {
                         tdSku.classList.add('missing-sku');
-                        errors.push(`El SKU "${originalSku}" del Excel no tiene una imagen correspondiente.`);
+                        errors.push(`El SKU "${originalSku}" del Excel no tiene una imagen cargada correspondiente.`);
                     } else {
                         const input = document.querySelector(`input[data-sku="${originalSku}"]`);
                         if (input) {
                             input.value = newSku;
-                            input.dispatchEvent(new Event('input'));  // Verificar si el botón puede habilitarse
+                            input.dispatchEvent(new Event('input'));  // Disparar evento para que checkDownloadButton se actualice
+                        } else {
+                            // Este caso ocurriría si hay una imagen con SKU, pero el excel no la reconoce
+                            // Ya se está manejando con skus[originalSku]
                         }
                     }
                 });
@@ -363,6 +503,8 @@
                         li.textContent = error;
                         errorList.appendChild(li);
                     });
+                    // Si hay errores, no resaltar el botón de descarga, quizás el excelUpload
+                    highlightStep(excelUpload);
                 } else {
                     errorLog.style.display = 'none';
                     checkDownloadButton(); // Verificar si se puede habilitar el botón de descarga
@@ -375,25 +517,49 @@
         renameButton.addEventListener('click', function() {
             progressBarContainer.style.display = 'block';
             progressBar.style.width = '0%';
+            renameButton.disabled = true; // Deshabilitar el botón durante la descarga
 
             const zip = new JSZip();
             const date = new Date();
             const timestamp = `${String(date.getDate()).padStart(2, '0')}/${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getHours()).padStart(2, '0')}${String(date.getMinutes()).padStart(2, '0')}`;
 
             let processedFiles = 0;
-            const totalFiles = files.length;
+            let totalFilesToProcess = 0;
+
+            // Calcular el total de archivos que realmente se procesarán (los que tienen renombre)
+            Object.keys(skus).forEach(sku => {
+                const input = document.querySelector(`input[data-sku="${sku}"]`);
+                if (input && input.value.trim()) {
+                    totalFilesToProcess += skus[sku].length;
+                }
+            });
+
+            if (totalFilesToProcess === 0) {
+                alert('No hay imágenes para renombrar o los SKUs de renombre están vacíos.');
+                progressBarContainer.style.display = 'none';
+                renameButton.disabled = false;
+                return;
+            }
+
+            let filesAddedToZip = 0;
 
             Object.keys(skus).forEach(sku => {
                 const input = document.querySelector(`input[data-sku="${sku}"]`);
-                const newSku = input.value.trim();
+                const newSku = input ? input.value.trim() : ''; // Obtener el nuevo SKU
+                
                 if (newSku) {
                     skus[sku].forEach(file => {
-                        const vista = file.name.split('_')[1]; // Extraer la vista
-                        const newFileName = `${newSku}_${vista}`;
+                        // Extraer solo la parte numérica de la vista (ej. "01" de "01.jpg")
+                        const fileNameParts = file.name.split('.');
+                        const baseName = fileNameParts[0]; // "123456_01"
+                        const extension = fileNameParts[1]; // "jpg"
+                        const vista = baseName.split('_')[1]; // "01"
+
+                        const newFileName = `${newSku}_${vista}.${extension}`; // Nuevo nombre completo
                         zip.file(newFileName, file);
 
-                        processedFiles++;
-                        progressBar.style.width = `${(processedFiles / totalFiles) * 100}%`;
+                        filesAddedToZip++;
+                        progressBar.style.width = `${(filesAddedToZip / totalFilesToProcess) * 100}%`;
                     });
                 }
             });
@@ -401,8 +567,18 @@
             zip.generateAsync({ type: 'blob' }).then(function(content) {
                 saveAs(content, `${timestamp}.zip`);
                 progressBarContainer.style.display = 'none';
+                renameButton.disabled = false; // Re-habilitar el botón al finalizar
+            }).catch(function(err) {
+                console.error("Error al generar el ZIP:", err);
+                alert("Hubo un error al generar el archivo ZIP. Por favor, inténtelo de nuevo.");
+                progressBarContainer.style.display = 'none';
+                renameButton.disabled = false;
             });
         });
+
+        // Asegurarse de que el botón de descarga se verifique al iniciar si ya hay datos
+        // (Aunque en esta página, normalmente se empieza cargando archivos)
+        checkDownloadButton();
     </script>
 </body>
 </html>
