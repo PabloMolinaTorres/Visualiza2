@@ -190,8 +190,7 @@
             display: flex;
             align-items: center;
             margin: 20px;
-            /* Agregado para alinear correctamente los elementos internos */
-            position: relative; /* Necesario para posicionamiento absoluto de sidebar-toggle si lo ponemos dentro */
+            position: relative;
         }
         .icon-switch img {
             width: 40px;
@@ -320,18 +319,16 @@
 
         /* Estilos para el nuevo sidebar (panel lateral) */
         .sidebar-toggle {
-            /* Eliminadas las propiedades de posición absoluta que lo movían a la derecha */
-            /* top: 10px; */
-            /* right: 10px; */
-            position: static; /* Volver a la posición normal dentro del flex container */
-            margin-right: 10px; /* Espacio a la derecha de los logos */
+            position: static;
+            margin-right: 10px;
             cursor: pointer;
-            width: 30px;
-            height: 30px;
+            /* AUMENTADO EL TAMAÑO DEL ICONO */
+            width: 40px; 
+            height: 40px; 
             background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
             background-size: cover;
             opacity: 0.8;
-            z-index: 1001; /* Mayor que el sidebar para que siempre sea clicable */
+            z-index: 1001;
         }
         .sidebar-toggle:hover {
             opacity: 1;
@@ -339,20 +336,21 @@
 
         .sidebar {
             height: 100%;
-            width: 0; /* Inicialmente oculto */
-            position: fixed; /* Fijo en la pantalla */
-            z-index: 1000; /* Se superpone a otros elementos */
+            width: 0;
+            position: fixed;
+            z-index: 1000;
+            /* CAMBIO CLAVE: AHORA APARECE DESDE LA IZQUIERDA */
             top: 0;
-            right: 0; /* Aparece desde la derecha */
+            left: 0; 
             background-color: #fff;
             overflow-x: hidden;
-            transition: 0.5s; /* Animación de apertura/cierre */
-            padding-top: 60px; /* Espacio para el icono de cierre o título */
-            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+            transition: 0.5s;
+            padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
 
         .sidebar.open {
-            width: 250px; /* Ancho del sidebar cuando está abierto */
+            width: 250px;
         }
 
         .sidebar a {
@@ -372,18 +370,18 @@
         .sidebar .closebtn {
             position: absolute;
             top: 0;
-            right: 25px;
+            /* AJUSTE PARA QUE LA "X" SIGA EN LA ESQUINA SUPERIOR DERECHA DEL SIDEBAR */
+            right: 25px; 
             font-size: 36px;
-            margin-left: 50px;
             color: #aaa;
             text-decoration: none;
+            /* margin-left: 50px; eliminado porque ahora 'right' lo posiciona */
         }
 
         .sidebar .closebtn:hover {
             color: #333;
         }
 
-        /* Overlay para oscurecer el contenido principal cuando el sidebar está abierto */
         .overlay {
             position: fixed;
             top: 0;
@@ -391,8 +389,8 @@
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
-            z-index: 999; /* Detrás del sidebar, pero encima del resto del contenido */
-            display: none; /* Inicialmente oculto */
+            z-index: 999;
+            display: none;
         }
     </style>
 </head>
@@ -401,7 +399,8 @@
 
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
-        <a href="index.html">Visualizador</a> <a href="Replicador.html">Replicador</a>
+        <a href="index.html">Visualizador</a>
+        <a href="Replicador.html">Replicador</a>
         <a href="renombre.html">Renombrador</a>
         <a href="Comparar.html">Comparador</a>
     </div>
