@@ -24,6 +24,7 @@
             padding: 0;
             color: #333;
             background-color: #fff;
+            overflow-x: hidden; /* Evita el scroll horizontal cuando el sidebar está oculto */
         }
         .container {
             display: flex;
@@ -314,27 +315,96 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-        .replica-renombre-link {
+
+        /* Estilos para el nuevo sidebar (panel lateral) */
+        .sidebar-toggle {
             position: absolute;
             top: 10px;
             right: 10px;
-            background-color: #8fca00;
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 12px;
-            font-weight: bold;
-            color: white;
-            text-decoration: none;
-            z-index: 1000;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/menu-icon.png'); /* Asegúrate de que esta URL sea la de tu icono */
+            background-size: cover;
+            opacity: 0.8;
+            z-index: 1001; /* Mayor que el sidebar para que siempre sea clicable */
         }
-        .replica-renombre-link:hover {
-            background-color: #76a700;
+        .sidebar-toggle:hover {
+            opacity: 1;
+        }
+
+        .sidebar {
+            height: 100%;
+            width: 0; /* Inicialmente oculto */
+            position: fixed; /* Fijo en la pantalla */
+            z-index: 1000; /* Se superpone a otros elementos */
+            top: 0;
+            right: 0; /* Aparece desde la derecha */
+            background-color: #fff;
+            overflow-x: hidden;
+            transition: 0.5s; /* Animación de apertura/cierre */
+            padding-top: 60px; /* Espacio para el icono de cierre o título */
+            box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+        }
+
+        .sidebar.open {
+            width: 250px; /* Ancho del sidebar cuando está abierto */
+        }
+
+        .sidebar a {
+            padding: 15px 25px;
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+            display: block;
+            transition: 0.3s;
+        }
+
+        .sidebar a:hover {
+            color: #8fca00;
+            background-color: #f1f1f1;
+        }
+
+        .sidebar .closebtn {
+            position: absolute;
+            top: 0;
+            right: 25px;
+            font-size: 36px;
+            margin-left: 50px;
+            color: #aaa;
+            text-decoration: none;
+        }
+
+        .sidebar .closebtn:hover {
+            color: #333;
+        }
+
+        /* Overlay para oscurecer el contenido principal cuando el sidebar está abierto */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 999; /* Detrás del sidebar, pero encima del resto del contenido */
+            display: none; /* Inicialmente oculto */
         }
     </style>
 </head>
 <body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="sidebar-toggle" id="sidebarToggle"></div>
+
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
+        <a href="index.html">Visualizador</a> <a href="Replicador.html">Replicador</a>
+        <a href="renombre.html">Renombrador</a>
+        <a href="Comparar.html">Comparador</a>
+    </div>
+
     <div class="container">
-        <a href="Replicador.html" class="replica-renombre-link">Replica y Renombre</a>
         <div class="leftMenu">
             <div class="icon-switch">
                 <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
@@ -368,15 +438,13 @@
             </div>
             <div class="imgContainer"></div>
             <div id="thumbnailContainer" style="display:none;">
-                <!-- Thumbnails will be displayed here -->
-            </div>
+                </div>
         </div>
         <div class="rightMenu">
             <div class="intro">No tiene foto:</div>
             <div class="error-list" id="errorList">
                 <button id="copyErrors">Copiar</button>
-                <!-- Errores 404 aparecerán aquí -->
-            </div>
+                </div>
         </div>
     </div>
     <script>
@@ -385,7 +453,6 @@
         var useSodimac = false;
         var useTottus = false;
         var viewMode = "vista";  // Estado inicial: por vista
-
         const paisesFalabella = [
             { nombre: 'Chile', codigo: 'CL' },
             { nombre: 'Colombia', codigo: 'CO' },
@@ -546,7 +613,6 @@
             const results = await Promise.all(promises);
 
             const thumbnails = results.filter(result => result !== null); // Filtrar los que no tienen imagen
-
             if (thumbnails.length > 0) {
                 var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
                 thumbnails.forEach(thumbnail => row.append(thumbnail)); // Añadir cada miniatura a la fila
@@ -710,6 +776,25 @@
                 $('#copyErrors').text('Copiar').removeClass('copied');
             }, 2000);
         });
+
+        // Lógica para el sidebar
+        $('#sidebarToggle').click(function() {
+            openNav();
+        });
+
+        $('#closeSidebar, #overlay').click(function() {
+            closeNav();
+        });
+
+        function openNav() {
+            document.getElementById("mySidebar").classList.add('open');
+            document.getElementById("overlay").style.display = "block";
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").classList.remove('open');
+            document.getElementById("overlay").style.display = "none";
+        }
 
         actualizarPaises();
     </script>
