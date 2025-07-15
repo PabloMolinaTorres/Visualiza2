@@ -68,7 +68,7 @@
             letter-spacing: .075em;
             cursor: pointer;
         }
-        .rightMenu button:disabled {
+        .rightMenu button[disabled] {
             background-color: #cccccc;
             cursor: not-allowed;
         }
@@ -192,21 +192,11 @@
             margin: 20px;
             position: relative;
         }
-        /* Ajuste para el primer elemento (sidebar-toggle) */
-        .icon-switch > *:first-child {
-            margin-left: 0; /* Elimina el margen izquierdo si lo tuviera */
-            margin-right: 10px; /* Espacio a la derecha del icono de menú */
-        }
         .icon-switch img {
             width: 40px;
             height: 40px;
             cursor: pointer;
             margin-right: 10px;
-            /* margin-left: 10px;  Comentado para que el Falabella tenga su propio ajuste */
-        }
-        /* Ajuste específico para Falabella (segundo hijo) */
-        .icon-switch img:nth-child(2) {
-            margin-left: 50px; /* Desplaza Falabella a la derecha */
         }
         .icon-switch img.inactive {
             filter: grayscale(100%);
@@ -332,8 +322,9 @@
             position: static;
             margin-right: 10px;
             cursor: pointer;
-            width: 40px;
-            height: 40px;
+            /* AUMENTADO EL TAMAÑO DEL ICONO */
+            width: 40px; 
+            height: 40px; 
             background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
             background-size: cover;
             opacity: 0.8;
@@ -348,8 +339,9 @@
             width: 0;
             position: fixed;
             z-index: 1000;
+            /* CAMBIO CLAVE: AHORA APARECE DESDE LA IZQUIERDA */
             top: 0;
-            left: 0;
+            left: 0; 
             background-color: #fff;
             overflow-x: hidden;
             transition: 0.5s;
@@ -378,10 +370,12 @@
         .sidebar .closebtn {
             position: absolute;
             top: 0;
-            right: 25px;
+            /* AJUSTE PARA QUE LA "X" SIGA EN LA ESQUINA SUPERIOR DERECHA DEL SIDEBAR */
+            right: 25px; 
             font-size: 36px;
             color: #aaa;
             text-decoration: none;
+            /* margin-left: 50px; eliminado porque ahora 'right' lo posiciona */
         }
 
         .sidebar .closebtn:hover {
@@ -548,7 +542,7 @@
         });
 
         $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true);
+            $('#ordenarVistas').attr('disabled', true);  // Deshabilitar botón de ordenar
             if (viewMode === "vista") {
                 buscarPorVista();
             } else {
@@ -557,13 +551,13 @@
         });
 
         $('#ordenarVistas').click(function() {
-            $('#buscar').trigger('click');
+            $('#buscar').trigger('click');  // Hacer que el botón "Ordenar Vistas" dispare el evento click de "Buscar"
         });
 
         async function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
-            $('#errorList').empty();
+            $('#errorList').empty(); // Limpiar lista de errores
             $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
@@ -586,13 +580,13 @@
                 }
             });
 
-            $('#ordenarVistas').removeAttr('disabled');
+            $('#ordenarVistas').removeAttr('disabled');  // Habilitar botón de ordenar
         }
 
         function buscarPorSKU() {
-            $('#thumbnailContainer').empty();
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
+            $('#thumbnailContainer').empty(); // Limpiar el contenedor de miniaturas
+            $('#errorList').empty();  // Limpiar lista de errores
+            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Volver a agregar el botón de copiar
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -611,7 +605,7 @@
             });
 
             Promise.all(promises).then(() => {
-                $('#ordenarVistas').removeAttr('disabled');
+                $('#ordenarVistas').removeAttr('disabled');  // Habilitar botón de ordenar
             });
         }
 
@@ -620,16 +614,16 @@
 
             const results = await Promise.all(promises);
 
-            const thumbnails = results.filter(result => result !== null);
+            const thumbnails = results.filter(result => result !== null); // Filtrar los que no tienen imagen
             if (thumbnails.length > 0) {
-                var row = $('<div class="thumbnail-row"></div>');
-                thumbnails.forEach(thumbnail => row.append(thumbnail));
-                $('#thumbnailContainer').append(row);
+                var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
+                thumbnails.forEach(thumbnail => row.append(thumbnail)); // Añadir cada miniatura a la fila
+                $('#thumbnailContainer').append(row); // Añadir la fila al contenedor
                 if (index > 0) {
-                    $('#thumbnailContainer').append('<div class="divider"></div>');
+                    $('#thumbnailContainer').append('<div class="divider"></div>'); // Añadir un divisor si no es el primer SKU
                 }
             } else {
-                $('#errorList').append('<div>' + sku + '</div>');
+                $('#errorList').append('<div>' + sku + '</div>'); // Si no se encuentra ninguna imagen, añadir SKU a la lista de errores
             }
         }
 
@@ -659,10 +653,10 @@
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.append(downloadIcon);
-                    resolve(thumbnail);
+                    resolve(thumbnail); // Resolver la promesa con el elemento miniatura
                 };
                 img.onerror = function() {
-                    resolve(null);
+                    resolve(null); // Si no se encuentra la imagen, resolver con null
                 };
             });
         }
