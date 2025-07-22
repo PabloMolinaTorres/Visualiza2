@@ -126,10 +126,15 @@
             font-size: 14px;
             resize: vertical;
         }
+        .button-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Espacio entre los botones */
+            margin-top: 10px;
+        }
         button {
             width: 100%;
             border: none;
-            margin: 5px 0;
             background-color: #8fca00;
             height: 45px;
             line-height: 45px;
@@ -138,20 +143,21 @@
             font-size: 12px;
             cursor: pointer;
             text-transform: uppercase;
-            /* Estilos para Drag & Drop */
             transition: background-color 0.2s ease-in-out, border 0.2s ease-in-out;
             border: 2px dashed transparent; /* Borde para drag & drop */
-            padding: 0 15px; /* Ajuste de padding si es necesario */
+            padding: 0 15px; 
+            box-sizing: border-box; /* Asegura que padding no aumente el tamaño total */
         }
-        button:hover {
+        button:hover:not(:disabled) {
             background-color: #76a700;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
         button.drag-over {
             background-color: #a7e03c; /* Color cuando se arrastra sobre él */
             border: 2px dashed #4CAF50; /* Borde para indicar zona de drop */
-        }
-        button:last-of-type {
-            margin-bottom: 10px;
         }
         .title {
             font-size: 18px;
@@ -212,8 +218,11 @@
 
             <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
-            <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
-            <button id="renameAndDownloadBtn">Cargar y Renombrar Imágenes (Arrastra o Haz Clic)</button>
+            <div class="button-group">
+                <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
+                <button id="loadImagesBtn">Cargar Imágenes (Arrastra o Haz Clic)</button>
+                <button id="downloadZipBtn" disabled>Descargar Imágenes Renombradas (ZIP)</button>
+            </div>
             
             <div id="errorLog">
                 <strong>Errores de procesamiento:</strong>
@@ -223,6 +232,9 @@
         </div>
     </div>
     <script>
+        // Global variable to store processed image data for ZIP generation
+        let processedImagesForZip = [];
+
         // Funciones para abrir y cerrar el sidebar
         function openNav() {
             document.getElementById("mySidebar").style.width = "250px";
@@ -253,109 +265,46 @@
         // Mapeo de códigos de color de Mango a nombres para Falabella
         // Si hay códigos duplicados, el último en la lista tendrá preferencia.
         const mangoColorCodeToFalabellaName = {
-            "TU": "GRISOSCUROTEJANO",
-            "91": "GRISCLAROVIGORE",
-            "94": "GRISMEDIOVIGORE",
-            "96": "GRISOSCUROVIGORE",
-            "84": "ROSACHILE",
-            "68": "TEJANOCLARO", 
-            "TC": "SINCOLOR",
-            "379": "TEJANOGRIS",
-            "TG": "NOINFORMADO",
-            "-1": "ROSALIGHT",
-            "82": "TEJANOMEDIO",
-            "TM": "TEJANONEGRO",
-            "TN": "AZULNOCHE",
-            "57": "TEJANOOSCURO",
-            "TO": "AMARILLOPASTEL",
-            "11": "ROSAPASTEL",
-            "81": "VERDEPASTEL",
-            "40": "NARANJAPASTEL",
-            "21": "TEJANOSOFT",
-            "TS": "ROSAVIEJO",
-            "83": "ROSAVIEJO", 
-            "02": "BLANCO", 
-            "70": "ROJO",
-            "01": "BLANCO", 
-            "87": "CORAL", 
-            "07": "ARENA",
-            "16": "OCRE",
-            "05": "CRUDO",
-            "37": "KHAKI",
-            "85": "ROSA",
-            "88": "FUCSIA",
-            "99": "NEGRO",
-            "43": "VERDE",
-            "08": "BEIGE",
-            "12": "AMARILLO",
-            "59": "PETROLEO",
-            "06": "PIEDRA",
-            "09": "CAMEL",
-            "52": "CARPETA",
-            "30": "MARRON",
-            "10": "VAINILLA",
-            "65": "MORADO",
-            "79": "COBRE",
-            "56": "NAVY",
-            "03": "HIELO",
-            "80": "NUDE",
-            "69": "MARINO",
-            "95": "ANTRACITA",
-            "48": "MUSGO",
-            "92": "GRIS",
-            "32": "CHOCOLATE",
-            "53": "ELECTRICO",
-            "61": "LILA",
-            "76": "GRANATE",
-            "20": "NARANJA",
-            "74": "TOMATE",
-            "49": "BOTELLA",
-            "23": "PAPAYA",
-            "28": "TERRACOTA",
-            "24": "POMELO",
-            "45": "AGUA",
-            "77": "VINO",
-            "44": "ESMERALDA",
-            "75": "CEREZA",
-            "17": "TOFFEE",
-            "42": "MANZANA",
-            "27": "PIMENTON",
-            "14": "LIMA",
-            "50": "CELESTE",
-            "54": "INDIGO",
-            "CG": "COGNAC",
-            "33": "COFFE",
-            "CU": "CUERO",
-            "GM": "GUNMETAL",
-            "OR": "MORO",
-            "101": "NATURAL",
-            "26": "PEACH",
-            "PL": "PLATA",
-            "46": "TURQUESA",
-            "38": "CAZA",
-            "18": "CANELA",
-            "41": "CLINIQUE",
-            "66": "CIRUELA",
-            "TA": "TAUPE",
-            "04": "MARFIL",
-            "DC": "DIRTYCLARO"
+            "TU": "GRISOSCUROTEJANO", "91": "GRISCLAROVIGORE", "94": "GRISMEDIOVIGORE", "96": "GRISOSCUROVIGORE",
+            "84": "ROSACHILE", "68": "TEJANOCLARO", "TC": "SINCOLOR", "379": "TEJANOGRIS",
+            "TG": "NOINFORMADO", "-1": "ROSALIGHT", "82": "TEJANOMEDIO", "TM": "TEJANONEGRO",
+            "TN": "AZULNOCHE", "57": "TEJANOOSCURO", "TO": "AMARILLOPASTEL", "11": "ROSAPASTEL",
+            "81": "VERDEPASTEL", "40": "NARANJAPASTEL", "21": "TEJANOSOFT", "TS": "ROSAVIEJO",
+            "83": "ROSAVIEJO", "02": "BLANCO", "70": "ROJO", "01": "BLANCO", 
+            "87": "CORAL", "07": "ARENA", "16": "OCRE", "05": "CRUDO",
+            "37": "KHAKI", "85": "ROSA", "88": "FUCSIA", "99": "NEGRO",
+            "43": "VERDE", "08": "BEIGE", "12": "AMARILLO", "59": "PETROLEO",
+            "06": "PIEDRA", "09": "CAMEL", "52": "CARPETA", "30": "MARRON",
+            "10": "VAINILLA", "65": "MORADO", "79": "COBRE", "56": "NAVY",
+            "03": "HIELO", "80": "NUDE", "69": "MARINO", "95": "ANTRACITA",
+            "48": "MUSGO", "92": "GRIS", "32": "CHOCOLATE", "53": "ELECTRICO",
+            "61": "LILA", "76": "GRANATE", "20": "NARANJA", "74": "TOMATE",
+            "49": "BOTELLA", "23": "PAPAYA", "28": "TERRACOTA", "24": "POMELO",
+            "45": "AGUA", "77": "VINO", "44": "ESMERALDA", "75": "CEREZA",
+            "17": "TOFFEE", "42": "MANZANA", "27": "PIMENTON", "14": "LIMA",
+            "50": "CELESTE", "54": "INDIGO", "CG": "COGNAC", "33": "COFFE",
+            "CU": "CUERO", "GM": "GUNMETAL", "OR": "MORO", "101": "NATURAL",
+            "26": "PEACH", "PL": "PLATA", "46": "TURQUESA", "38": "CAZA",
+            "18": "CANELA", "41": "CLINIQUE", "66": "CIRUELA", "TA": "TAUPE",
+            "04": "MARFIL", "DC": "DIRTYCLARO"
         };
 
         // Función para extraer el modelo base de Mango y el sufijo de vista del nombre del archivo
+        // Ahora más robusta para manejar variantes como 87087686_02-99999999_01.avif
         function parseMangoFilename(filename) {
             const nameWithoutExt = filename.split('.').slice(0, -1).join('.'); 
             
-            // Regex ajustada para ser más flexible con el código de color y capturar sufijos de vista comunes.
-            // Permite un modelo base como "87087686" o "87087686_02"
-            // y sufijos como "_D5", "_B", "_R", "_D1", "_D8", "_D0", "_01" a "_10", o "_99999999_01"
-            const regex = /^(\d{8,}(?:_[A-Z0-9]+)?)(?:_(D[0-9]|[A-Z]|\d{2,}|99999999_01))?$/i;
+            // Expresión regular mejorada:
+            // - (\d{8,}(?:[_-][A-Z0-9]+)?) : Captura el modelo base, ahora permite guion o guion bajo para el color (ej. 87087686_02 o 87087686-02)
+            // - (?:[_-](?:D[0-9]|[A-Z]|\d{2,}|99999999_01))? : Captura el sufijo opcional, también permite guion o guion bajo
+            const regex = /^(\d{8,}(?:[_-][A-Z0-9]+)?)(?:[_-](?:D[0-9]|[A-Z]|\d{2,}|99999999_01))?$/i;
             const match = nameWithoutExt.match(regex);
 
             if (match) {
-                const modelBase = match[1]; // Ej: "87087686_02" o "87087686"
-                let suffix = match[2] ? `_${match[2]}` : ''; // Ej: "_D5" o ""
+                const modelBase = match[1].replace(/[-_]([A-Z0-9]+)$/, '_$1'); // Normaliza a guion bajo para el color (ej. 87087686-02 -> 87087686_02)
+                let suffix = match[2] ? `_${match[2].replace(/^-/, '')}` : ''; // Normaliza el sufijo (ej. -D5 -> _D5)
 
-                // Asegurar que el sufijo _99999999_01 se capture correctamente si es el caso
+                // Asegurar que el sufijo _99999999_01 se capture correctamente
                 if (suffix.includes('99999999')) {
                     suffix = '_99999999_01';
                 }
@@ -364,7 +313,6 @@
             }
             return null;
         }
-
 
         // Función para extraer el código de color de Mango de un modelo base
         function getMangoColorCode(mangoModelBase) {
@@ -385,11 +333,12 @@
         async function processFiles(files) {
             $('#errorLog').hide();
             $('#errorList').empty();
-            let allImagesToZip = []; 
+            processedImagesForZip = []; // Clear previous data
 
             const inputLines = $('#dataInput').val().trim().split('\n').filter(s => s.trim() !== '');
             if (inputLines.length === 0) {
-                alert('Por favor, ingrese la información de Modelo Mango-SKU Falabella en la caja de texto antes de cargar las imágenes.');
+                logProcessingError('Entrada de texto', 'Por favor, ingrese la información de Modelo Mango-SKU Falabella en la caja de texto antes de cargar las imágenes.');
+                $('#downloadZipBtn').prop('disabled', true);
                 return;
             }
 
@@ -401,13 +350,15 @@
                     logProcessingError(line, 'Formato incorrecto en la entrada de texto. Se esperan al menos 3 partes (Modelo-Color-SKU).');
                     continue;
                 }
-                const mangoModelRaw = parts[0].trim();
+                // Normalizar el mangoModelRaw para que coincida con lo que parseMangoFilename produce
+                const mangoModelRaw = parts[0].trim().replace(/[-_]([A-Z0-9]+)$/, '_$1'); 
                 const falabellaSku = parts[2].trim();
                 inputMap.set(mangoModelRaw, { falabellaSku, fullLine: line });
             }
 
             if (inputMap.size === 0) {
-                alert('No se pudo extraer información válida de la caja de texto.');
+                logProcessingError('Entrada de texto', 'No se pudo extraer información válida de la caja de texto.');
+                $('#downloadZipBtn').prop('disabled', true);
                 return;
             }
 
@@ -427,7 +378,8 @@
             }
 
             if (filesGroupedByModel.size === 0) {
-                alert('No se encontraron archivos con nombres que sigan la convención de Mango.');
+                logProcessingError('Carga de archivos', 'No se encontraron archivos con nombres que sigan la convención de Mango.');
+                $('#downloadZipBtn').prop('disabled', true);
                 return;
             }
 
@@ -492,12 +444,12 @@
                     return indexA - indexB;
                 });
 
-                let processedImagesForZip = [];
+                let entryProcessedImages = []; // Images for this specific entry (before making filenames unique globally)
                 // 1. Añadir la imagen principal (con nombre de color)
                 if (currentMainImage) {
                     const originalExt = currentMainImage.originalFilename.split('.').pop();
                     currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.${originalExt}`;
-                    processedImagesForZip.push(currentMainImage);
+                    entryProcessedImages.push(currentMainImage);
                 } else {
                      logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo en el nombre del archivo) para el modelo ${mangoModelBase}.`);
                 }
@@ -508,11 +460,10 @@
                     if (currentViewNumber <= 7) { 
                         const originalExt = imgInfo.originalFilename.split('.').pop();
                         imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.${originalExt}`;
-                        processedImagesForZip.push(imgInfo);
+                        entryProcessedImages.push(imgInfo);
                         currentViewNumber++;
                     } else {
-                        // Si hay más de 7 vistas (sin contar la principal y outfit), se ignoran o se les asigna un sufijo genérico
-                        logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal). Esta imagen no será renombrada secuencialmente.`);
+                        logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal para Falabella). Esta imagen no será renombrada secuencialmente.`);
                     }
                 }
 
@@ -520,39 +471,47 @@
                 if (currentOutfitImage) {
                     const originalExt = currentOutfitImage.originalFilename.split('.').pop();
                     currentOutfitImage.renamedFilename = `${falabellaSku}_08.${originalExt}`; 
-                    processedImagesForZip.push(currentOutfitImage);
+                    entryProcessedImages.push(currentOutfitImage);
                 }
                 
                 // Añadir todas las imágenes procesadas de esta entrada a la lista global para el ZIP
-                for (const imgInfo of processedImagesForZip) {
+                for (const imgInfo of entryProcessedImages) {
                     let uniqueFilename = imgInfo.renamedFilename;
                     let counter = 1;
                     const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
                     const extension = uniqueFilename.split('.').pop();
-                    while (allImagesToZip.some(info => info.renamedFilename === uniqueFilename)) {
+                    while (processedImagesForZip.some(info => info.renamedFilename === uniqueFilename)) {
                         uniqueFilename = `${baseName}_${counter}.${extension}`;
                         counter++;
                     }
                     imgInfo.renamedFilename = uniqueFilename; 
-                    allImagesToZip.push(imgInfo);
+                    processedImagesForZip.push(imgInfo);
                 }
             }
             
-            // Generar y descargar el ZIP
-            if (allImagesToZip.length === 0) {
-                alert('No se pudo procesar ninguna imagen. Verifique los nombres de los archivos y el formato de entrada.');
-                return;
+            // Habilitar el botón de descarga si hay imágenes para procesar, deshabilitar si no
+            if (processedImagesForZip.length > 0) {
+                $('#downloadZipBtn').prop('disabled', false);
+            } else {
+                $('#downloadZipBtn').prop('disabled', true);
             }
 
-            await generateZip(allImagesToZip);
+            if (processedImagesForZip.length > 0 && $('#errorList li').length === 0) {
+                // Solo un mensaje de éxito silencioso
+            }
         }
 
         // Función para generar el archivo ZIP
-        async function generateZip(imageInfos) {
+        async function generateZip() {
+            if (processedImagesForZip.length === 0) {
+                logProcessingError('Descarga ZIP', 'No hay imágenes cargadas o procesadas para generar el ZIP.');
+                return;
+            }
+
             var zip = new JSZip();
             var zipFilename = `Renombrado_Local_Falabella_${getFormattedDate()}.zip`;
 
-            for (const info of imageInfos) {
+            for (const info of processedImagesForZip) {
                 const finalFilename = info.renamedFilename; 
                 const imageData = info.imageData; 
 
@@ -569,10 +528,14 @@
             try {
                 const content = await zip.generateAsync({ type: 'blob' });
                 saveAs(content, zipFilename);
-                alert('Renombrado y descarga completados con éxito!');
+                // No alert, just silent success
             } catch (e) {
                 console.error("Error al generar el ZIP:", e);
-                alert("Hubo un error al generar el archivo ZIP. Intente de nuevo.");
+                logProcessingError('Generación ZIP', `Hubo un error al generar el archivo ZIP: ${e.message}`);
+            } finally {
+                processedImagesForZip = []; // Clear data after download
+                $('#downloadZipBtn').prop('disabled', true); // Disable button
+                $('#uploadImagesInput').val(''); // Clear input for next load
             }
         }
 
@@ -604,35 +567,41 @@
         });
 
         $(document).ready(function() {
-            const uploadBtn = $('#renameAndDownloadBtn');
+            const loadBtn = $('#loadImagesBtn');
+            const downloadBtn = $('#downloadZipBtn');
             const fileInput = $('#uploadImagesInput');
 
-            // Evento para abrir el selector de archivos al hacer clic en el botón
-            uploadBtn.on('click', function() {
+            // Evento para abrir el selector de archivos al hacer clic en el botón de carga
+            loadBtn.on('click', function() {
                 fileInput.click();
             });
 
             // Evento para procesar archivos seleccionados manualmente
             fileInput.on('change', function(event) {
                 processFiles(event.target.files);
-                fileInput.val(''); // Limpiar el input para permitir recargar los mismos archivos
+                // fileInput.val(''); // Do not clear here, let the download function do it
             });
 
-            // --- Eventos de Drag & Drop ---
-            uploadBtn.on('dragover', function(e) {
-                e.preventDefault(); // Previene la acción por defecto (abrir el archivo en el navegador)
+            // Evento para activar la descarga del ZIP
+            downloadBtn.on('click', function() {
+                generateZip();
+            });
+
+            // --- Eventos de Drag & Drop para el botón de carga ---
+            loadBtn.on('dragover', function(e) {
+                e.preventDefault(); 
                 e.stopPropagation();
                 $(this).addClass('drag-over');
             });
 
-            uploadBtn.on('dragleave', function(e) {
+            loadBtn.on('dragleave', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
             });
 
-            uploadBtn.on('drop', function(e) {
-                e.preventDefault(); // Previene la acción por defecto
+            loadBtn.on('drop', function(e) {
+                e.preventDefault(); 
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
 
@@ -640,7 +609,7 @@
                 if (files.length > 0) {
                     processFiles(files);
                 } else {
-                    alert('No se detectaron archivos para cargar.');
+                    logProcessingError('Carga por Drag & Drop', 'No se detectaron archivos para cargar.');
                 }
             });
         });
