@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Descargar y Renombrar SKUs Falabella</title>
+    <title>Renombrar y Descargar Imágenes Mango a SKU Falabella</title>
     <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png">
     <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
     <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
@@ -107,14 +107,24 @@
             height: 100%;
         }
         .leftContainer {
-            width: 35%;
+            width: 40%; /* Ajustado para dar más espacio a las columnas */
             display: flex;
             padding: 20px;
             box-sizing: border-box;
             flex-direction: column;
         }
+        .columns {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px; /* Espacio entre columnas */
+        }
+        .column {
+            width: 50%; /* Cada columna ocupa el 50% del espacio disponible */
+            display: flex;
+            flex-direction: column;
+        }
         .rightContainer {
-            width: 60%;
+            width: 60%; /* Se mantiene igual */
             padding: 20px;
             overflow-y: auto;
             box-sizing: border-box;
@@ -152,7 +162,7 @@
         }
         textarea {
             width: 100%;
-            margin: 20px 0;
+            margin: 10px 0; /* Ajustado el margen */
             padding: 10px;
             height: 250px;
             border: 1px solid #ddd;
@@ -164,7 +174,7 @@
         button {
             width: 100%;
             border: none;
-            margin: 20px 0;
+            margin: 10px 0; /* Ajustado el margen */
             background-color: #8fca00;
             height: 50px;
             line-height: 50px;
@@ -173,83 +183,6 @@
             font-size: 12px;
             cursor: pointer;
             text-transform: uppercase;
-        }
-        .icon-selector {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .icon-selector img {
-            width: 50px;
-            height: 50px;
-            margin: 0 10px;
-            cursor: pointer;
-        }
-        .icon-selector img.inactive {
-            filter: grayscale(100%);
-        }
-        .country-selector {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-        .country-link {
-            color: grey;
-            font-size: 14px;
-            margin-right: 10px;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .country-link.active {
-            color: #333;
-            font-size: 16px;
-            font-weight: bold;
-            border-bottom: 2px solid #8fca00;
-        }
-        .switch-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #8fca00;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
         }
         .title {
             font-size: 18px;
@@ -274,8 +207,8 @@
             cursor: pointer;
             border-radius: 5px;
             font-size: 10px;
-            width: auto; /* Ajustar el ancho del botón de copiar */
-            margin-bottom: 10px;
+            width: auto;
+            margin-bottom: 5px; /* Ajustado el margen */
         }
         #copyErrors:hover {
             background-color: #bbb;
@@ -295,7 +228,8 @@
         <a href="replicador.html">Replicador</a>
         <a href="renombre.html">Renombrador</a>
         <a href="Comparar.html">Comparador</a>
-        <a href="descargar_y_renombrar.html">Descargar y Renombrar</a> </div>
+        <a href="descargar_y_renombrar.html">Descargar y Renombrar Falabella</a>
+        <a href="mango_renombrador.html">Descargar y Renombrar Mango</a> </div>
 
     <div class="overlay" onclick="closeNav()"></div>
     <div class="sidebar-toggle" onclick="openNav()">
@@ -305,29 +239,18 @@
     <div id="main">
         <div class="container">
             <div class="leftContainer">
-                <div class="title">Descargar y Renombrar SKUs</div>
+                <div class="title">Descargar y Renombrar Imágenes Mango</div>
 
-                <div class="icon-selector">
-                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
-                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
-                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
-                </div>
-
-                <div class="country-selector" id="countrySelector">
+                <div class="columns">
+                    <div class="column">
+                        <textarea id="mangoModelInput" placeholder="Ingrese Modelos Mango (ej. 87087686_02-99999999), uno por línea"></textarea>
                     </div>
-
-                <textarea id="skuInput" placeholder="Ingrese SKUs (uno por línea)"></textarea>
+                    <div class="column">
+                        <textarea id="falabellaSkuInput" placeholder="Ingrese SKUs Falabella para renombrar (uno por línea)"></textarea>
+                    </div>
+                </div>
                 <button id="searchAndDownload">Buscar y Descargar</button>
                 
-                <div class="switch-container">
-                    <span>Vista</span>
-                    <label class="switch">
-                        <input type="checkbox" id="viewToggle">
-                        <span class="slider"></span>
-                    </label>
-                    <span>SKU</span>
-                </div>
-
                 <div id="errorLog">
                     <strong>No encontrados:</strong>
                     <button id="copyErrors">Copiar</button>
@@ -355,161 +278,59 @@
             document.body.classList.remove("sidebar-open");
         }
 
-        var foundSkusWithSuffix = []; // Almacena los SKUs encontrados con sus sufijos (ej: "12345_01")
-        var mode = "vista"; // 'vista' o 'sku'
-        var country = "CL";
-        var activeLogic = "falabella"; // 'falabella', 'sodimac', 'tottus'
+        var foundImageInfos = []; // Almacena info de imágenes encontradas para descarga
 
-        // Función para obtener la URL base de la imagen
-        function getImageBaseUrl(logic, countryCode) {
-            return `https://media.falabella.com/${logic}${countryCode}/`;
+        // Función para construir la URL base de Mango
+        function getMangoImageBaseUrl(mangoModelBase) {
+            // mangoModelBase es algo como "87087686_02-99999999"
+            const mainModelPart = mangoModelBase.split('_')[0]; // "87087686"
+            if (!mainModelPart || mainModelPart.length === 0) {
+                console.error("Mango model base is invalid:", mangoModelBase);
+                return null;
+            }
+            const firstDigit = mainModelPart[0]; // "8"
+            return `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/`;
         }
 
         // Función para cargar la imagen y previsualizarla
-        function loadImage(sku, suffix = "") {
+        async function loadImage(mangoModelId) {
             return new Promise(function(resolve) {
-                let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
-                let fallbackBaseUrl = null;
+                // mangoModelId incluye el sufijo, ej: "87087686_02-99999999_01"
+                const modelBaseWithoutSuffix = mangoModelId.substring(0, mangoModelId.lastIndexOf('_')); // "87087686_02-99999999"
+                const baseUrl = getMangoImageBaseUrl(modelBaseWithoutSuffix);
 
-                // Definir fallback solo si es Sodimac y el país es Chile
-                if (activeLogic === "sodimac" && country === "CL") {
-                    fallbackBaseUrl = getImageBaseUrl("falabella", "CL"); // Fallback a Falabella CL
+                if (!baseUrl) {
+                    resolve(null);
+                    return;
                 }
 
-                function tryLoad(currentBaseUrl, isFallback = false) {
-                    var imgUrl = `${currentBaseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
-                    var img = new Image();
-                    img.src = imgUrl;
-                    img.alt = sku + suffix;
-                    img.setAttribute('data-full-url', `${currentBaseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`);
+                var imgUrl = `${baseUrl}${mangoModelId}.jpg?imwidth=1125&imdensity=1`; // Tamaño de previsualización
+                var img = new Image();
+                img.src = imgUrl;
+                img.alt = mangoModelId;
+                img.setAttribute('data-full-url', `${baseUrl}${mangoModelId}.jpg?imwidth=1500&imdensity=1`); // URL para descarga de alta calidad
 
-                    img.onload = function() {
-                        var wrapper = document.createElement('div');
-                        wrapper.classList.add('imgWrapper');
-                        var link = document.createElement('a');
-                        link.href = img.getAttribute('data-full-url'); // Enlace a la imagen grande
-                        link.target = '_blank';
-                        link.appendChild(img);
-                        var skuDiv = document.createElement('div');
-                        skuDiv.classList.add('sku');
-                        skuDiv.textContent = sku + suffix;
-                        wrapper.appendChild(link);
-                        wrapper.appendChild(skuDiv);
-                        resolve(wrapper);
-                    };
+                img.onload = function() {
+                    var wrapper = document.createElement('div');
+                    wrapper.classList.add('imgWrapper');
+                    var link = document.createElement('a');
+                    link.href = img.getAttribute('data-full-url');
+                    link.target = '_blank';
+                    link.appendChild(img);
+                    var skuDiv = document.createElement('div');
+                    skuDiv.classList.add('sku');
+                    skuDiv.textContent = mangoModelId;
+                    wrapper.appendChild(link);
+                    wrapper.appendChild(skuDiv);
+                    resolve(wrapper);
+                };
 
-                    img.onerror = function() {
-                        if (!isFallback && fallbackBaseUrl) {
-                            console.log(`Error loading ${sku}${suffix} from primary URL. Trying fallback: ${fallbackBaseUrl}`);
-                            tryLoad(fallbackBaseUrl, true);
-                        } else {
-                            console.log(`Error loading ${sku}${suffix} from all URLs.`);
-                            resolve(null);
-                        }
-                    };
-                }
-
-                tryLoad(primaryBaseUrl);
+                img.onerror = function() {
+                    console.log(`Error loading Mango image: ${mangoModelId}`);
+                    resolve(null);
+                };
             });
         }
-
-        // Manejo del toggle Vista/SKU
-        $('#viewToggle').change(function() {
-            mode = $(this).is(':checked') ? 'sku' : 'vista';
-            $('#imgContainer').empty();
-            foundSkusWithSuffix = [];
-            $('#errorLog').hide();
-            $('#errorList').empty();
-        });
-
-        // Establecer el país activo
-        function setActiveCountry(countryCode) {
-            $('.country-link').removeClass('active');
-            $(`#link${countryCode}`).addClass('active');
-            country = countryCode;
-            $('#imgContainer').empty();
-            foundSkusWithSuffix = [];
-            $('#errorLog').hide();
-            $('#errorList').empty();
-        }
-
-        // Clicks en los enlaces de país
-        $('.country-link').click(function(e) {
-            e.preventDefault();
-            var selectedCountry = $(this).attr('id').replace('link', '');
-            setActiveCountry(selectedCountry);
-        });
-
-        // Actualizar el selector de países basado en la tienda activa
-        function updateCountrySelector(countries) {
-            var countrySelector = $('#countrySelector');
-            countrySelector.empty();
-            countries.forEach(function(countryName) {
-                var countryCode;
-                switch(countryName) {
-                    case "Chile": countryCode = "CL"; break;
-                    case "Colombia": countryCode = "CO"; break;
-                    case "Perú": countryCode = "PE"; break;
-                    case "Argentina": countryCode = "AR"; break;
-                    case "Brasil": countryCode = "BR"; break;
-                    case "México": countryCode = "MX"; break;
-                    case "Uruguay": countryCode = "UY"; break;
-                    default: countryCode = countryName.slice(0, 2).toUpperCase();
-                }
-                
-                var countryLink = $('<a href="#" class="country-link">' + countryName + '</a>');
-                countryLink.attr('id', `link${countryCode}`);
-                countryLink.click(function(e) {
-                    e.preventDefault();
-                    setActiveCountry(countryCode);
-                });
-                countrySelector.append(countryLink);
-            });
-            setActiveCountry("CL"); // Siempre activar Chile por defecto al cambiar de tienda
-        }
-
-        // Clicks en los íconos de tienda
-        $('#falabellaIcon').click(function() {
-            activeLogic = "falabella";
-            $('.icon-selector img').removeClass('active').addClass('inactive');
-            $(this).removeClass('inactive').addClass('active');
-            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png');
-            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
-            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
-            updateCountrySelector(["Chile", "Perú", "Colombia"]);
-            $('#imgContainer').empty();
-            foundSkusWithSuffix = [];
-            $('#errorLog').hide();
-            $('#errorList').empty();
-        });
-
-        $('#sodimacIcon').click(function() {
-            activeLogic = "sodimac";
-            $('.icon-selector img').removeClass('active').addClass('inactive');
-            $(this).removeClass('inactive').addClass('active');
-            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
-            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac.png');
-            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
-            updateCountrySelector(["Chile", "Argentina", "Colombia", "Perú", "Brasil", "México", "Uruguay"]);
-            $('#imgContainer').empty();
-            foundSkusWithSuffix = [];
-            $('#errorLog').hide();
-            $('#errorList').empty();
-        });
-
-        $('#tottusIcon').click(function() {
-            activeLogic = "tottus";
-            $('.icon-selector img').removeClass('active').addClass('inactive');
-            $(this).removeClass('inactive').addClass('active');
-            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
-            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
-            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus.png');
-            updateCountrySelector(["Chile", "Perú"]);
-            $('#imgContainer').empty();
-            foundSkusWithSuffix = [];
-            $('#errorLog').hide();
-            $('#errorList').empty();
-        });
 
         // Función para registrar errores
         function logError(errorSku) {
@@ -517,62 +338,69 @@
             $('#errorList').append('<li>' + errorSku + '</li>');
         }
 
+        // Obtener sufijos de imagen para Mango
+        function getMangoSuffixes() {
+            // Basado en el ejemplo "_01.jpg", se asume que siempre hay un sufijo numérico
+            // Se pueden añadir más si se descubren otros patrones de Mango
+            const suffixes = [];
+            for (let i = 1; i <= 10; i++) { // Intentar del _01 al _10
+                suffixes.push(`_${String(i).padStart(2, '0')}`);
+            }
+            return suffixes;
+        }
+
         // Botón principal de búsqueda y descarga
         $('#searchAndDownload').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
-            foundSkusWithSuffix = []; // Reiniciar la lista de SKUs encontrados
+            foundImageInfos = []; // Reiniciar la lista
 
-            const skusInput = $('#skuInput').val().trim().split('\n').filter(s => s.trim() !== '');
+            const mangoModels = $('#mangoModelInput').val().trim().split('\n').filter(s => s.trim() !== '');
+            const falabellaSkus = $('#falabellaSkuInput').val().trim().split('\n').filter(s => s.trim() !== '');
 
-            if (skusInput.length === 0) {
-                alert('Por favor, ingrese SKUs en el área de texto.');
+            if (mangoModels.length === 0 || falabellaSkus.length === 0) {
+                alert('Por favor, ingrese Modelos Mango y SKUs Falabella en ambas columnas.');
                 return;
             }
 
-            const downloadPromises = [];
+            if (mangoModels.length !== falabellaSkus.length) {
+                alert('La cantidad de Modelos Mango y SKUs Falabella debe coincidir.');
+                return;
+            }
 
-            for (const sku of skusInput) {
-                if (mode === "vista") {
-                    const imgElement = await loadImage(sku);
+            const suffixes = getMangoSuffixes();
+
+            for (let i = 0; i < mangoModels.length; i++) {
+                const mangoModelBase = mangoModels[i]; // Ej: "87087686_02-99999999"
+                const falabellaSku = falabellaSkus[i];
+
+                let foundAnyForModel = false;
+
+                for (const suffix of suffixes) {
+                    const fullMangoModelId = mangoModelBase + suffix; // Ej: "87087686_02-99999999_01"
+                    
+                    const imgElement = await loadImage(fullMangoModelId);
+
                     if (imgElement) {
                         $('#imgContainer').append(imgElement);
-                        foundSkusWithSuffix.push({
-                            originalSku: sku,
-                            foundSku: sku,
+                        foundImageInfos.push({
+                            mangoModel: fullMangoModelId,
+                            falabellaSku: falabellaSku,
                             downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
                         });
-                        downloadPromises.push({ url: imgElement.querySelector('img').getAttribute('data-full-url'), filename: sku });
-                    } else {
-                        logError(sku);
+                        foundAnyForModel = true;
                     }
-                } else { // mode === "sku"
-                    const suffixes = getSuffixes(activeLogic);
-                    let foundAnyForSku = false;
-                    for (const suffix of suffixes) {
-                        const fullSku = sku + suffix;
-                        const imgElement = await loadImage(sku, suffix);
-                        if (imgElement) {
-                            $('#imgContainer').append(imgElement);
-                            foundSkusWithSuffix.push({
-                                originalSku: sku,
-                                foundSku: fullSku,
-                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
-                            });
-                            downloadPromises.push({ url: imgElement.querySelector('img').getAttribute('data-full-url'), filename: fullSku });
-                            foundAnyForSku = true;
-                        }
-                    }
-                    if (!foundAnyForSku) {
-                        logError(sku);
-                    }
+                }
+                
+                if (!foundAnyForModel) {
+                    logError(mangoModelBase); // Si no se encuentra ninguna imagen para el modelo base
                 }
             }
             
             // Iniciar la descarga del ZIP después de previsualizar
-            if (downloadPromises.length > 0) {
-                await downloadImagesAsZip(downloadPromises);
+            if (foundImageInfos.length > 0) {
+                await downloadImagesAsZip(foundImageInfos);
             } else {
                 alert('No se encontraron imágenes para descargar.');
             }
@@ -582,14 +410,15 @@
         async function downloadImagesAsZip(imageInfos) {
             var zip = new JSZip();
             var processedCount = 0;
-            var zipFilename = `Descarga_SKUs_${getFormattedDate()}.zip`;
+            var zipFilename = `Mango_Renombrado_${getFormattedDate()}.zip`;
 
-            // Usamos un Set para asegurar que cada nombre de archivo sea único en el ZIP
             const filenamesInZip = new Set(); 
 
             for (const info of imageInfos) {
-                const url = info.url;
-                const originalFilename = info.filename + ".jpg";
+                const url = info.downloadUrl;
+                // Renombrar a Falabella SKU + sufijo de imagen Mango (ej: "SKU_01.jpg")
+                const mangoSuffix = info.mangoModel.substring(info.mangoModel.lastIndexOf('_'));
+                const originalFilename = info.falabellaSku + mangoSuffix + ".jpg";
 
                 try {
                     const data = await new Promise((resolve, reject) => {
@@ -604,9 +433,9 @@
 
                     let finalFilename = originalFilename;
                     let counter = 1;
-                    // Asegurar que el nombre de archivo sea único si ya existe en el set (manejo de posibles duplicados en caso de fallback o errores)
+                    // Asegurar que el nombre de archivo sea único en el ZIP si hay duplicados
                     while (filenamesInZip.has(finalFilename)) {
-                        finalFilename = info.filename + `_${counter}.jpg`;
+                        finalFilename = info.falabellaSku + mangoSuffix + `_${counter}.jpg`;
                         counter++;
                     }
                     filenamesInZip.add(finalFilename);
@@ -615,7 +444,6 @@
 
                 } catch (err) {
                     console.error(`Error downloading ${url}:`, err);
-                    // No es necesario logear en la lista de errores aquí, ya se hizo en la previsualización
                 } finally {
                     processedCount++;
                     if (processedCount === imageInfos.length) {
@@ -641,19 +469,6 @@
             var minutes = String(date.getMinutes()).padStart(2, '0');
             return day + '-' + month + '_' + hours + minutes;
         }
-
-        // Obtener sufijos de imagen según la lógica de tienda
-        function getSuffixes(logic) {
-            if (logic === "falabella" || logic === "tottus") {
-                return ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
-            } else if (logic === "sodimac") {
-                let sodimacSuffixes = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
-                if (country === 'CL') {
-                    sodimacSuffixes.push('_300', '_400');
-                }
-                return sodimacSuffixes;
-            }
-        }
         
         // Manejo del botón Copiar Errores
         $(document).on('click', '#copyErrors', function() {
@@ -672,10 +487,10 @@
             }, 2000);
         });
 
-        // Inicialización al cargar la página
+        // No se necesita inicialización específica de tienda/país para Mango
         $(document).ready(function() {
-            updateCountrySelector(["Chile", "Perú", "Colombia"]); // Establecer los países iniciales para Falabella
-            setActiveCountry("CL"); // Asegurar que Chile esté activo al cargar la página
+            // El modo vista/sku no es relevante aquí ya que Mango siempre usa sufijos como _01
+            // por lo tanto, la parte de "viewToggle" se ha eliminado del HTML y JS
         });
     </script>
 </body>
