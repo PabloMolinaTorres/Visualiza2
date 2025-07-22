@@ -312,10 +312,7 @@
                 </div>
 
                 <div class="country-selector" id="countrySelector">
-                    <a href="#" class="country-link" id="linkCL">Chile</a>
-                    <a href="#" class="country-link" id="linkPE">Perú</a>
-                    <a href="#" class="country-link" id="linkCO">Colombia</a>
-                </div>
+                    </div>
 
                 <div class="columns">
                     <div class="column">
@@ -367,21 +364,18 @@
         var country = "CL";
         var activeLogic = "falabella"; // 'falabella', 'sodimac', 'tottus'
 
+        function getImageBaseUrl(logic, countryCode) {
+            return `https://media.falabella.com/${logic}${countryCode}/`;
+        }
+
         function loadImage(sku, suffix = "") {
             return new Promise(function(resolve) {
-                let baseUrl;
+                let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
                 let fallbackBaseUrl = null; // Para el caso de Sodimac CL
 
-                if (activeLogic === "falabella") {
-                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
-                } else if (activeLogic === "sodimac") {
-                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac${country}/`;
-                    if (country === "CL") {
-                        // Fallback específico para Sodimac Chile a Falabella Chile
-                        fallbackBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/`;
-                    }
-                } else if (activeLogic === "tottus") {
-                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/tottus${country}/`;
+                // Definir fallback solo si es Sodimac y el país es Chile
+                if (activeLogic === "sodimac" && country === "CL") {
+                    fallbackBaseUrl = getImageBaseUrl("falabella", "CL"); // Fallback a Falabella CL
                 }
 
                 function tryLoad(currentBaseUrl, isFallback = false) {
@@ -394,6 +388,7 @@
                         var wrapper = document.createElement('div');
                         wrapper.classList.add('imgWrapper');
                         var link = document.createElement('a');
+                        // La URL de descarga debe usar la misma base desde la que se cargó la imagen exitosamente
                         link.href = `${currentBaseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
                         link.target = '_blank';
                         link.appendChild(img);
@@ -407,7 +402,7 @@
 
                     img.onerror = function() {
                         if (!isFallback && fallbackBaseUrl) {
-                            console.log(`Error loading ${sku}${suffix} from primary URL. Trying fallback.`);
+                            console.log(`Error loading ${sku}${suffix} from primary URL. Trying fallback: ${fallbackBaseUrl}`);
                             tryLoad(fallbackBaseUrl, true);
                         } else {
                             console.log(`Error loading ${sku}${suffix} from all URLs.`);
@@ -416,7 +411,7 @@
                     };
                 }
 
-                tryLoad(baseUrl); // Intentar con la URL principal primero
+                tryLoad(primaryBaseUrl); // Intentar con la URL principal primero
             });
         }
 
@@ -595,17 +590,7 @@
                     let renamedBaseSku = skuRenameMap[baseSku];
                     let finalName = renamedBaseSku + suffix;
 
-                    let currentBaseUrl;
-                    if (activeLogic === "falabella") {
-                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
-                    } else if (activeLogic === "sodimac") {
-                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac${country}/`;
-                        // Considerar el fallback para la descarga si la imagen original vino de ahí
-                        // Esto requiere saber de qué URL se cargó la imagen. Por simplicidad,
-                        // intentaremos con la URL de Sodimac y luego con la de Falabella si falla en Sodimac.
-                    } else if (activeLogic === "tottus") {
-                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/tottus${country}/`;
-                    }
+                    let currentBaseUrl = getImageBaseUrl(activeLogic, country);
                     
                     let imgUrl = `${currentBaseUrl}${fullSkuWithSuffix}/w=1500,h=1500,fit=pad`;
                     urlsToDownload.push(imgUrl);
@@ -613,7 +598,7 @@
 
                     // Si es Sodimac CL, añadir la URL de fallback para la descarga también
                     if (activeLogic === "sodimac" && country === "CL") {
-                        let fallbackImgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${fullSkuWithSuffix}/w=1500,h=1500,fit=pad`;
+                        let fallbackImgUrl = getImageBaseUrl("falabella", "CL") + `${fullSkuWithSuffix}/w=1500,h=1500,fit=pad`;
                         urlsToDownload.push(fallbackImgUrl);
                         filenamesToSave.push(finalName + "_fallback"); // Nombre temporal para el intento de fallback
                     }
@@ -651,10 +636,6 @@
                         }
                     } else {
                         console.error(`Error al obtener contenido binario para ${url}:`, err);
-                        // Si falla una URL principal, y hay una URL de fallback para el mismo archivo (no implementado en esta versión de descarga directamente en el bucle)
-                        // Para la descarga, la lógica de fallback debería estar integrada en el loadImage original
-                        // o manejada aquí para reintentar la descarga si el activo es SodimacCL y falla.
-                        // Por simplicidad, el código actual no reintenta descargas con fallback aquí, solo para la previsualización.
                     }
 
                     if (processedCount === totalUrls) {
@@ -682,9 +663,8 @@
             if (logic === "falabella" || logic === "tottus") {
                 return ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
             } else if (logic === "sodimac") {
-                // Añadir _300 y _400 para Sodimac si es Chile (aunque esto es para variantes, no para vistas)
                 let sodimacSuffixes = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
-                if (country === 'CL') { // Si estamos en Sodimac Chile, añadir estos sufijos específicos
+                if (country === 'CL') {
                     sodimacSuffixes.push('_300', '_400');
                 }
                 return sodimacSuffixes;
