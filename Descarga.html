@@ -258,4 +258,425 @@
             margin-bottom: 15px;
             color: #333;
         }
-        #error
+        #errorLog {
+            display: none;
+            background-color: #ffe6e6;
+            padding: 10px;
+            border: 1px solid #ff0000;
+            border-radius: 4px;
+            margin-top: 10px;
+        }
+        #copyErrors {
+            background-color: #ccc;
+            border: none;
+            color: white;
+            padding: 3px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 10px;
+            width: auto; /* Ajustar el ancho del botón de copiar */
+            margin-bottom: 10px;
+        }
+        #copyErrors:hover {
+            background-color: #bbb;
+        }
+        #copyErrors.copied {
+            background-color: #8fca00;
+        }
+        #copyErrors.copied:hover {
+            background-color: #76a700;
+        }
+    </style>
+</head>
+<body>
+    <div id="mySidebar" class="sidebar">
+        <a href="javascript:void(0)" class="closebtn" onclick="closeNav()">&times;</a>
+        <a href="index.html">Visualizador</a>
+        <a href="replicador.html">Replicador</a>
+        <a href="renombre.html">Renombrador</a>
+        <a href="Comparar.html">Comparador</a>
+        <a href="descargar_y_renombrar.html">Descargar y Renombrar</a> </div>
+
+    <div class="overlay" onclick="closeNav()"></div>
+    <div class="sidebar-toggle" onclick="openNav()">
+        <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png" alt="Abrir menú">
+    </div>
+
+    <div id="main">
+        <div class="container">
+            <div class="leftContainer">
+                <div class="title">Descargar y Renombrar SKUs</div>
+
+                <div class="icon-selector">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" id="falabellaIcon" class="active" alt="Falabella">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png" id="sodimacIcon" class="inactive" alt="Sodimac">
+                    <img src="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png" id="tottusIcon" class="inactive" alt="Tottus">
+                </div>
+
+                <div class="country-selector" id="countrySelector">
+                    </div>
+
+                <textarea id="skuInput" placeholder="Ingrese SKUs (uno por línea)"></textarea>
+                <button id="searchAndDownload">Buscar y Descargar</button>
+                
+                <div class="switch-container">
+                    <span>Vista</span>
+                    <label class="switch">
+                        <input type="checkbox" id="viewToggle">
+                        <span class="slider"></span>
+                    </label>
+                    <span>SKU</span>
+                </div>
+
+                <div id="errorLog">
+                    <strong>No encontrados:</strong>
+                    <button id="copyErrors">Copiar</button>
+                    <ul id="errorList"></ul>
+                </div>
+            </div>
+
+            <div class="rightContainer">
+                <div class="title">Previsualización</div>
+                <div class="imgContainer" id="imgContainer"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Funciones para abrir y cerrar el sidebar
+        function openNav() {
+            document.getElementById("mySidebar").style.width = "250px";
+            document.getElementById("main").style.marginLeft = "250px";
+            document.body.classList.add("sidebar-open");
+        }
+
+        function closeNav() {
+            document.getElementById("mySidebar").style.width = "0";
+            document.getElementById("main").style.marginLeft= "0";
+            document.body.classList.remove("sidebar-open");
+        }
+
+        var foundSkusWithSuffix = []; // Almacena los SKUs encontrados con sus sufijos (ej: "12345_01")
+        var mode = "vista"; // 'vista' o 'sku'
+        var country = "CL";
+        var activeLogic = "falabella"; // 'falabella', 'sodimac', 'tottus'
+
+        // Función para obtener la URL base de la imagen
+        function getImageBaseUrl(logic, countryCode) {
+            return `https://media.falabella.com/${logic}${countryCode}/`;
+        }
+
+        // Función para cargar la imagen y previsualizarla
+        function loadImage(sku, suffix = "") {
+            return new Promise(function(resolve) {
+                let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
+                let fallbackBaseUrl = null;
+
+                // Definir fallback solo si es Sodimac y el país es Chile
+                if (activeLogic === "sodimac" && country === "CL") {
+                    fallbackBaseUrl = getImageBaseUrl("falabella", "CL"); // Fallback a Falabella CL
+                }
+
+                function tryLoad(currentBaseUrl, isFallback = false) {
+                    var imgUrl = `${currentBaseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
+                    var img = new Image();
+                    img.src = imgUrl;
+                    img.alt = sku + suffix;
+                    img.setAttribute('data-full-url', `${currentBaseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`);
+
+                    img.onload = function() {
+                        var wrapper = document.createElement('div');
+                        wrapper.classList.add('imgWrapper');
+                        var link = document.createElement('a');
+                        link.href = img.getAttribute('data-full-url'); // Enlace a la imagen grande
+                        link.target = '_blank';
+                        link.appendChild(img);
+                        var skuDiv = document.createElement('div');
+                        skuDiv.classList.add('sku');
+                        skuDiv.textContent = sku + suffix;
+                        wrapper.appendChild(link);
+                        wrapper.appendChild(skuDiv);
+                        resolve(wrapper);
+                    };
+
+                    img.onerror = function() {
+                        if (!isFallback && fallbackBaseUrl) {
+                            console.log(`Error loading ${sku}${suffix} from primary URL. Trying fallback: ${fallbackBaseUrl}`);
+                            tryLoad(fallbackBaseUrl, true);
+                        } else {
+                            console.log(`Error loading ${sku}${suffix} from all URLs.`);
+                            resolve(null);
+                        }
+                    };
+                }
+
+                tryLoad(primaryBaseUrl);
+            });
+        }
+
+        // Manejo del toggle Vista/SKU
+        $('#viewToggle').change(function() {
+            mode = $(this).is(':checked') ? 'sku' : 'vista';
+            $('#imgContainer').empty();
+            foundSkusWithSuffix = [];
+            $('#errorLog').hide();
+            $('#errorList').empty();
+        });
+
+        // Establecer el país activo
+        function setActiveCountry(countryCode) {
+            $('.country-link').removeClass('active');
+            $(`#link${countryCode}`).addClass('active');
+            country = countryCode;
+            $('#imgContainer').empty();
+            foundSkusWithSuffix = [];
+            $('#errorLog').hide();
+            $('#errorList').empty();
+        }
+
+        // Clicks en los enlaces de país
+        $('.country-link').click(function(e) {
+            e.preventDefault();
+            var selectedCountry = $(this).attr('id').replace('link', '');
+            setActiveCountry(selectedCountry);
+        });
+
+        // Actualizar el selector de países basado en la tienda activa
+        function updateCountrySelector(countries) {
+            var countrySelector = $('#countrySelector');
+            countrySelector.empty();
+            countries.forEach(function(countryName) {
+                var countryCode;
+                switch(countryName) {
+                    case "Chile": countryCode = "CL"; break;
+                    case "Colombia": countryCode = "CO"; break;
+                    case "Perú": countryCode = "PE"; break;
+                    case "Argentina": countryCode = "AR"; break;
+                    case "Brasil": countryCode = "BR"; break;
+                    case "México": countryCode = "MX"; break;
+                    case "Uruguay": countryCode = "UY"; break;
+                    default: countryCode = countryName.slice(0, 2).toUpperCase();
+                }
+                
+                var countryLink = $('<a href="#" class="country-link">' + countryName + '</a>');
+                countryLink.attr('id', `link${countryCode}`);
+                countryLink.click(function(e) {
+                    e.preventDefault();
+                    setActiveCountry(countryCode);
+                });
+                countrySelector.append(countryLink);
+            });
+            setActiveCountry("CL"); // Siempre activar Chile por defecto al cambiar de tienda
+        }
+
+        // Clicks en los íconos de tienda
+        $('#falabellaIcon').click(function() {
+            activeLogic = "falabella";
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
+            updateCountrySelector(["Chile", "Perú", "Colombia"]);
+            $('#imgContainer').empty();
+            foundSkusWithSuffix = [];
+            $('#errorLog').hide();
+            $('#errorList').empty();
+        });
+
+        $('#sodimacIcon').click(function() {
+            activeLogic = "sodimac";
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
+            updateCountrySelector(["Chile", "Argentina", "Colombia", "Perú", "Brasil", "México", "Uruguay"]);
+            $('#imgContainer').empty();
+            foundSkusWithSuffix = [];
+            $('#errorLog').hide();
+            $('#errorList').empty();
+        });
+
+        $('#tottusIcon').click(function() {
+            activeLogic = "tottus";
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
+            $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
+            $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
+            $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus.png');
+            updateCountrySelector(["Chile", "Perú"]);
+            $('#imgContainer').empty();
+            foundSkusWithSuffix = [];
+            $('#errorLog').hide();
+            $('#errorList').empty();
+        });
+
+        // Función para registrar errores
+        function logError(errorSku) {
+            $('#errorLog').show();
+            $('#errorList').append('<li>' + errorSku + '</li>');
+        }
+
+        // Botón principal de búsqueda y descarga
+        $('#searchAndDownload').click(async function() {
+            $('#imgContainer').empty();
+            $('#errorLog').hide();
+            $('#errorList').empty();
+            foundSkusWithSuffix = []; // Reiniciar la lista de SKUs encontrados
+
+            const skusInput = $('#skuInput').val().trim().split('\n').filter(s => s.trim() !== '');
+
+            if (skusInput.length === 0) {
+                alert('Por favor, ingrese SKUs en el área de texto.');
+                return;
+            }
+
+            const downloadPromises = [];
+
+            for (const sku of skusInput) {
+                if (mode === "vista") {
+                    const imgElement = await loadImage(sku);
+                    if (imgElement) {
+                        $('#imgContainer').append(imgElement);
+                        foundSkusWithSuffix.push({
+                            originalSku: sku,
+                            foundSku: sku,
+                            downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
+                        });
+                        downloadPromises.push({ url: imgElement.querySelector('img').getAttribute('data-full-url'), filename: sku });
+                    } else {
+                        logError(sku);
+                    }
+                } else { // mode === "sku"
+                    const suffixes = getSuffixes(activeLogic);
+                    let foundAnyForSku = false;
+                    for (const suffix of suffixes) {
+                        const fullSku = sku + suffix;
+                        const imgElement = await loadImage(sku, suffix);
+                        if (imgElement) {
+                            $('#imgContainer').append(imgElement);
+                            foundSkusWithSuffix.push({
+                                originalSku: sku,
+                                foundSku: fullSku,
+                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
+                            });
+                            downloadPromises.push({ url: imgElement.querySelector('img').getAttribute('data-full-url'), filename: fullSku });
+                            foundAnyForSku = true;
+                        }
+                    }
+                    if (!foundAnyForSku) {
+                        logError(sku);
+                    }
+                }
+            }
+            
+            // Iniciar la descarga del ZIP después de previsualizar
+            if (downloadPromises.length > 0) {
+                await downloadImagesAsZip(downloadPromises);
+            } else {
+                alert('No se encontraron imágenes para descargar.');
+            }
+        });
+
+        // Función para descargar las imágenes en un ZIP
+        async function downloadImagesAsZip(imageInfos) {
+            var zip = new JSZip();
+            var processedCount = 0;
+            var zipFilename = `Descarga_SKUs_${getFormattedDate()}.zip`;
+
+            // Usamos un Set para asegurar que cada nombre de archivo sea único en el ZIP
+            const filenamesInZip = new Set(); 
+
+            for (const info of imageInfos) {
+                const url = info.url;
+                const originalFilename = info.filename + ".jpg";
+
+                try {
+                    const data = await new Promise((resolve, reject) => {
+                        JSZipUtils.getBinaryContent(url, function(err, data) {
+                            if (err) {
+                                reject(err);
+                            } else {
+                                resolve(data);
+                            }
+                        });
+                    });
+
+                    let finalFilename = originalFilename;
+                    let counter = 1;
+                    // Asegurar que el nombre de archivo sea único si ya existe en el set (manejo de posibles duplicados en caso de fallback o errores)
+                    while (filenamesInZip.has(finalFilename)) {
+                        finalFilename = info.filename + `_${counter}.jpg`;
+                        counter++;
+                    }
+                    filenamesInZip.add(finalFilename);
+                    zip.file(finalFilename, data, { binary: true });
+                    console.log(`Added ${finalFilename} to zip.`);
+
+                } catch (err) {
+                    console.error(`Error downloading ${url}:`, err);
+                    // No es necesario logear en la lista de errores aquí, ya se hizo en la previsualización
+                } finally {
+                    processedCount++;
+                    if (processedCount === imageInfos.length) {
+                        try {
+                            const content = await zip.generateAsync({ type: 'blob' });
+                            saveAs(content, zipFilename);
+                            alert('Descarga completada con éxito!');
+                        } catch (e) {
+                            console.error("Error al generar el ZIP:", e);
+                            alert("Hubo un error al generar el archivo ZIP. Intente de nuevo.");
+                        }
+                    }
+                }
+            }
+        }
+
+        // Función para obtener la fecha formateada para el nombre del ZIP
+        function getFormattedDate() {
+            var date = new Date();
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0');
+            var hours = String(date.getHours()).padStart(2, '0');
+            var minutes = String(date.getMinutes()).padStart(2, '0');
+            return day + '-' + month + '_' + hours + minutes;
+        }
+
+        // Obtener sufijos de imagen según la lógica de tienda
+        function getSuffixes(logic) {
+            if (logic === "falabella" || logic === "tottus") {
+                return ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
+            } else if (logic === "sodimac") {
+                let sodimacSuffixes = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
+                if (country === 'CL') {
+                    sodimacSuffixes.push('_300', '_400');
+                }
+                return sodimacSuffixes;
+            }
+        }
+        
+        // Manejo del botón Copiar Errores
+        $(document).on('click', '#copyErrors', function() {
+            var errors = [];
+            $('#errorList li').each(function() {
+                errors.push($(this).text());
+            });
+            var tempInput = $('<textarea>');
+            $('body').append(tempInput);
+            tempInput.val(errors.join('\n')).select();
+            document.execCommand('copy');
+            tempInput.remove();
+            $(this).text('Copiado').addClass('copied');
+            setTimeout(function() {
+                $('#copyErrors').text('Copiar').removeClass('copied');
+            }, 2000);
+        });
+
+        // Inicialización al cargar la página
+        $(document).ready(function() {
+            updateCountrySelector(["Chile", "Perú", "Colombia"]); // Establecer los países iniciales para Falabella
+            setActiveCountry("CL"); // Asegurar que Chile esté activo al cargar la página
+        });
+    </script>
+</body>
+</html>
