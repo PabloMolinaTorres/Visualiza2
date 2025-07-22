@@ -678,8 +678,9 @@
                     primaryBaseUrl = 'https://media.falabella.com/falabella';
                 } else if (useSodimac) {
                     primaryBaseUrl = `https://media.falabella.com/sodimac${pais}`;
+                    // Definir fallback solo si es Sodimac y el país es Chile
                     if (pais === 'CL') {
-                        fallbackBaseUrl = 'https://media.falabella.com/falabella'; // Fallback a Falabella CL
+                        fallbackBaseUrl = `https://media.falabella.com/falabella${pais}`; // Fallback a Falabella CL
                     }
                 } else { // Tottus
                     primaryBaseUrl = `https://media.falabella.com/tottus${pais}`;
@@ -708,7 +709,7 @@
 
                     img.onerror = function() {
                         if (!isFallback && fallbackUrl) {
-                            console.log(`Primary image failed for ${sku} from ${url}. Trying fallback URL.`);
+                            console.log(`Primary image failed for ${sku} from ${url}. Trying fallback URL: ${fallbackUrl}`);
                             tryLoadImage(fallbackUrl, fallbackDownloadUrl, fallbackAlternateUrl, true);
                         } else if (sku.includes('-') && altUrl) {
                             console.log(`Trying alternate URL for SKU: ${sku} from URL: ${altUrl}`);
