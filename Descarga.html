@@ -12,7 +12,6 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
-    <script src="https://unpkg.com/libavif.js@1.0.1/dist/libavif.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -220,8 +219,8 @@
             <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR_MANGO-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
             <div class="button-group">
-                <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
-                <button id="loadImagesBtn" disabled>Cargar Imágenes (Arrastra o Haz Clic)</button>
+                <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif, image/webp" multiple style="display: none;">
+                <button id="loadImagesBtn">Cargar Imágenes (Arrastra o Haz Clic)</button>
                 <button id="downloadZipBtn" disabled>Descargar Imágenes Renombradas (ZIP)</button>
             </div>
             
@@ -235,26 +234,6 @@
     <script>
         // Global variable to store processed image data for ZIP generation
         let processedImagesForZip = [];
-        let libavifModulePromise; // Promesa para la inicialización de libavif
-        let libavifReady = false; // Bandera para indicar si libavif está lista
-
-        // Inicializar libavif y habilitar el botón de carga
-        if (typeof libavif === 'undefined') {
-            console.error("libavif.js no se ha cargado correctamente. Asegúrate de que la URL es correcta.");
-            logProcessingError('Inicialización AVIF', 'La librería de conversión AVIF no se encontró. La conversión de AVIF a JPG no estará disponible.');
-        } else {
-            libavifModulePromise = libavif().then(Module => {
-                window.libavifModule = Module; // Asignar al objeto window para acceso global
-                libavifReady = true;
-                $('#loadImagesBtn').prop('disabled', false).text('Cargar Imágenes (Arrastra o Haz Clic)'); // Habilitar el botón
-                console.log("libavif.js cargado e inicializado. Sistema listo.");
-            }).catch(e => {
-                console.error("Error al inicializar libavif.js:", e);
-                logProcessingError('Inicialización AVIF', 'Hubo un error al cargar o inicializar la librería de conversión AVIF. La conversión no estará disponible.');
-                $('#loadImagesBtn').prop('disabled', true).text('Error de carga AVIF. Recarga la página.'); // Mantener el botón deshabilitado
-            });
-        }
-
 
         // Funciones para abrir y cerrar el sidebar
         function openNav() {
@@ -352,61 +331,8 @@
             console.error(`[ErrorLog] ${originalName} - Error: ${errorMessage}`);
         }
 
-        // Función para convertir AVIF a JPG usando libavif.js y canvas
-        async function convertAvifToJpg(avifBuffer, quality = 0.9) { // Calidad por defecto 90%
-            if (!window.libavifModule) { // Acceder a la variable global window.libavifModule
-                throw new Error("La librería libavif.js no está cargada o inicializada.");
-            }
-
-            const uint8 = new Uint8Array(avifBuffer);
-            let result;
-            try {
-                // Decodificar el buffer AVIF
-                result = window.libavifModule.decode(uint8);
-            } catch (e) {
-                console.error("Error al decodificar AVIF:", e);
-                throw new Error(`Fallo al decodificar imagen AVIF: ${e.message}`);
-            }
-
-            if (!result || !result.width || !result.height || !result.data) {
-                throw new Error("Decodificación AVIF fallida o datos inválidos.");
-            }
-
-            const { width, height, data } = result;
-
-            // Crear un canvas temporal para dibujar la imagen
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-
-            // Crear un ImageData a partir de los datos RGB/RGBA del AVIF decodificado
-            // libavif.js devuelve RGBA, por lo que ImageData lo manejará directamente
-            const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
-            ctx.putImageData(imageData, 0, 0);
-
-            // Exportar el canvas como un Blob JPG
-            return new Promise((resolve, reject) => {
-                canvas.toBlob(blob => {
-                    if (blob) {
-                        resolve(blob);
-                    } else {
-                        reject(new Error("Fallo al convertir canvas a Blob JPG."));
-                    }
-                }, 'image/jpeg', quality);
-            });
-        }
-
-
         // --- Manejo del proceso de carga y renombrado de archivos ---
         async function processFiles(files) {
-            // Asegurarse de que libavif esté lista antes de continuar si hay AVIFs
-            const hasAvif = Array.from(files).some(file => file.name.toLowerCase().endsWith('.avif'));
-            if (hasAvif && !libavifReady) {
-                 logProcessingError('Carga de Imágenes', 'La librería de conversión AVIF aún no está lista. Por favor, espere y reintente.');
-                 return;
-            }
-
             console.log(`[processFiles] Starting process with ${files.length} files.`);
             $('#errorLog').hide();
             $('#errorList').empty();
@@ -500,26 +426,10 @@
                         reader.readAsArrayBuffer(fileInfo.file);
                     });
 
-                    let finalExt = originalExt;
-                    // Si es AVIF, convertir a JPG
-                    if (originalExt === 'avif') {
-                        try {
-                            if (!window.libavifModule) { // Doble verificación por si acaso
-                                throw new Error("La librería libavif.js no está cargada o inicializada para la conversión.");
-                            }
-                            // Convertir ArrayBuffer a Blob JPG
-                            fileData = await convertAvifToJpg(fileData);
-                            finalExt = 'jpg';
-                        } catch (e) {
-                            logProcessingError(fileInfo.file.name, `Fallo la conversión de AVIF a JPG: ${e.message}. Archivo ignorado.`);
-                            continue; // Ignorar el archivo si la conversión falla
-                        }
-                    }
-
                     imagesForCurrentEntry.push({
                         file: fileInfo.file,
-                        imageData: fileData, // Ya es el ArrayBuffer original o el Blob JPG
-                        outputExtension: finalExt, // Nueva extensión si se convirtió
+                        imageData: fileData, // El ArrayBuffer del archivo original
+                        outputExtension: originalExt, // Mantiene la extensión original
                         falabellaSku: falabellaSku,
                         mangoModelFull: mangoModelBase + fileInfo.parsedInfo.suffix,
                         // 'MAIN_COLOR_IMAGE' ahora mapea a _1 de Falabella
@@ -617,13 +527,8 @@
                 const imageData = info.imageData; 
 
                 try {
-                    // Si imageData es un Blob (ej. de la conversión AVIF), leemos su ArrayBuffer para JSZip
-                    if (imageData instanceof Blob) {
-                        const buffer = await new Response(imageData).arrayBuffer();
-                        zip.file(finalFilename, buffer, { binary: true });
-                    } else { // Si ya es un ArrayBuffer
-                        zip.file(finalFilename, imageData, { binary: true });
-                    }
+                    // No hay conversión, solo se añaden los datos binarios tal cual
+                    zip.file(finalFilename, imageData, { binary: true });
                     console.log(`[generateZip] Added ${finalFilename} to zip.`);
 
                 } catch (err) {
@@ -678,6 +583,9 @@
             const downloadBtn = $('#downloadZipBtn');
             const fileInput = $('#uploadImagesInput');
 
+            // Habilitar el botón de carga al inicio, ya que no hay dependencias externas de AVIF
+            loadBtn.prop('disabled', false);
+
             // Evento para abrir el selector de archivos al hacer clic en el botón de carga
             loadBtn.on('click', function() {
                 fileInput.click();
@@ -697,9 +605,7 @@
             loadBtn.on('dragover', function(e) {
                 e.preventDefault(); 
                 e.stopPropagation();
-                if (!loadBtn.prop('disabled')) { // Solo añadir clase si no está deshabilitado
-                    $(this).addClass('drag-over');
-                }
+                $(this).addClass('drag-over');
             });
 
             loadBtn.on('dragleave', function(e) {
@@ -712,11 +618,6 @@
                 e.preventDefault(); 
                 e.stopPropagation();
                 $(this).removeClass('drag-over');
-
-                if (loadBtn.prop('disabled')) { // Si está deshabilitado, no procesar
-                    logProcessingError('Carga por Drag & Drop', 'El sistema no está listo. Espere a que la librería AVIF se cargue.');
-                    return;
-                }
 
                 const files = e.originalEvent.dataTransfer.files;
                 if (files.length > 0) {
