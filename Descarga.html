@@ -11,7 +11,6 @@
     <meta http-equiv="Last-Modified" content="0">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
     <style>
         * {
@@ -174,15 +173,18 @@
         button {
             width: 100%;
             border: none;
-            margin: 10px 0; /* Ajustado el margen */
+            margin: 5px 0; /* Ajustado el margen entre botones */
             background-color: #8fca00;
-            height: 50px;
-            line-height: 50px;
+            height: 45px; /* Altura ligeramente reducida */
+            line-height: 45px;
             border-radius: 5px;
             color: white;
             font-size: 12px;
             cursor: pointer;
             text-transform: uppercase;
+        }
+        button:last-of-type { /* Margen inferior para el último botón */
+            margin-bottom: 10px;
         }
         .title {
             font-size: 18px;
@@ -250,7 +252,8 @@
                         <textarea id="falabellaSkuInput" placeholder="Ingrese SKUs Falabella para renombrar (ej. SKU_1, SKU_2), uno por línea"></textarea>
                     </div>
                 </div>
-                <button id="searchAndDownload">Buscar y Descargar</button>
+                <button id="previewImages">Previsualizar Imágenes</button>
+                <button id="downloadImages">Descargar Imágenes (ZIP)</button>
                 
                 <div id="errorLog">
                     <strong>Errores de descarga:</strong>
@@ -284,7 +287,9 @@
         // Función para obtener los sufijos de imagen para Mango
         function getMangoSuffixes() {
             return [
-                '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08',
+                // Sufijos comunes de fotos de producto
+                '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_10', 
+                // Sufijos de vistas alternativas y de detalle
                 '_B', '_D0', '_D1', '_D2', '_D3', '_D4', '_D5', '_D6', '_D7', '_D8', '_R',
                 // Sufijo específico para imágenes de outfit
                 '_99999999_01' 
@@ -306,11 +311,17 @@
             let fullModelId = `${mainModelPart}${colorCodePart}${suffix}`;
             
             // Ruta para imágenes estándar
-            urls.push(`https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/S/${fullModelId}.jpg`);
+            urls.push({
+                type: 'standard',
+                url: `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/S/${fullModelId}.jpg`
+            });
             
             // Ruta para imágenes de outfit (cuando el sufijo lo indica)
             if (suffix === '_99999999_01') {
-                urls.push(`https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/${fullModelId}.jpg`);
+                urls.push({
+                    type: 'outfit',
+                    url: `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/${fullModelId}.jpg`
+                });
             }
             return urls;
         }
@@ -319,7 +330,7 @@
         async function loadImage(url, displayId) {
             return new Promise(function(resolve) {
                 var img = new Image();
-                img.src = `${url}?imwidth=1125&imdensity=1`; // URL para previsualización
+                img.src = `${url}?imwidth=300&imdensity=1`; // URL para previsualización (más pequeña para rapidez)
                 img.alt = displayId;
                 img.setAttribute('data-full-url', `${url}?imwidth=1500&imdensity=1`); // URL para descarga de alta calidad
 
@@ -345,17 +356,17 @@
         }
 
         // Función para registrar errores de descarga
-        function logDownloadError(falabellaSku, mangoModelFull) {
+        function logDownloadError(falabellaSku, mangoModelFull, errorMessage) {
             $('#errorLog').show();
-            $('#errorList').append(`<li>${falabellaSku} (Mango: ${mangoModelFull})</li>`);
+            $('#errorList').append(`<li>${falabellaSku} (Mango: ${mangoModelFull}) - Error: ${errorMessage}</li>`);
         }
 
-        // Botón principal de búsqueda y descarga
-        $('#searchAndDownload').click(async function() {
+        // Botón "Previsualizar Imágenes"
+        $('#previewImages').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
-            foundImageInfos = []; // Reiniciar la lista
+            foundImageInfos = []; // Reiniciar la lista de imágenes encontradas para descarga
 
             const mangoModels = $('#mangoModelInput').val().trim().split('\n').filter(s => s.trim() !== '');
             const falabellaSkus = $('#falabellaSkuInput').val().trim().split('\n').filter(s => s.trim() !== '');
@@ -376,13 +387,11 @@
                 const mangoModelBase = mangoModels[i]; // Ej: "87087686_02"
                 const falabellaSku = falabellaSkus[i];
                 
-                let foundAnyForModel = false; // Bandera para saber si se encontró AL MENOS UNA imagen para este modelo base
-
                 for (const suffix of suffixes) {
-                    const candidateUrls = getMangoImageUrls(mangoModelBase, suffix);
+                    const candidateUrlObjects = getMangoImageUrls(mangoModelBase, suffix);
                     
-                    for (const url of candidateUrls) {
-                        // Construir el ID de Mango para mostrar en la previsualización y para renombrar
+                    for (const urlObj of candidateUrlObjects) {
+                        const url = urlObj.url;
                         let displayMangoId = `${mangoModelBase}${suffix}`;
                         
                         const imgElement = await loadImage(url, displayMangoId);
@@ -392,26 +401,37 @@
                             foundImageInfos.push({
                                 mangoModelFull: displayMangoId, // El ID completo usado para encontrar la imagen
                                 falabellaSku: falabellaSku,
-                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
+                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
+                                suffixUsed: suffix // Guardar el sufijo para el renombrado preciso
                             });
-                            foundAnyForModel = true; // Se encontró al menos una imagen
-                            // No usar 'break' aquí para que intente todas las URLs candidatas, aunque ya haya encontrado una para previsualización
-                            // Es posible que una URL de previsualización funcione pero la de descarga de alta calidad falle por otros motivos,
-                            // o que prefiramos que pruebe todas las rutas y acumule las que encuentra.
+                            // No usar 'break' aquí para que intente todas las URLs candidatas y acumule las que encuentra para previsualización.
+                            // Si se encuentra una, no significa que las otras URLs (con el mismo sufijo pero diferente ruta) no existan o no sean útiles.
                         }
                     }
                 }
             }
-            
-            // Iniciar la descarga del ZIP después de previsualizar
-            if (foundImageInfos.length > 0) {
-                await downloadImagesAsZip(foundImageInfos);
+            if (foundImageInfos.length === 0) {
+                alert('No se encontraron imágenes para los modelos ingresados. Verifique los modelos y asegúrese de que existan en Mango.');
             } else {
-                alert('No se encontraron imágenes válidas para descargar.');
+                alert(`Previsualización completada. ${foundImageInfos.length} imágenes encontradas.`);
             }
         });
 
-        // Función para descargar las imágenes en un ZIP
+        // Botón "Descargar Imágenes (ZIP)"
+        $('#downloadImages').click(async function() {
+            if (foundImageInfos.length === 0) {
+                alert('No hay imágenes previsualizadas para descargar. Por favor, haga clic en "Previsualizar Imágenes" primero.');
+                return;
+            }
+
+            // Limpiar errores previos de descarga
+            $('#errorLog').hide();
+            $('#errorList').empty();
+
+            await downloadImagesAsZip(foundImageInfos);
+        });
+
+        // Función para descargar las imágenes en un ZIP usando fetch y FileReader
         async function downloadImagesAsZip(imageInfos) {
             var zip = new JSZip();
             var processedCount = 0;
@@ -422,58 +442,25 @@
             for (const info of imageInfos) {
                 const url = info.downloadUrl;
                 
-                // Extraer el sufijo relevante para el renombrado
-                let mangoSuffixToRename = '';
-                const lastUnderscoreIndex = info.mangoModelFull.lastIndexOf('_');
-                // Asegurarse de que el sufijo no sea solo "_02" si el modelo base era "87087686_02"
-                // Queremos el sufijo *adicional* si existe, o el final del modelo si no hay sufijo adicional.
-                let tempSuffixPart = info.mangoModelFull.substring(info.mangoModelFull.lastIndexOf('_'));
-                // Si el mangoModelFull es "87087686_02" y el sufijo es "_02", necesitamos que el sufijo a renombrar sea vacío o "_0" (del '_01' original)
-                // Si el mangoModelFull es "87087686_02_R" el sufijo es "_R"
-                // Si el mangoModelFull es "87087686_02_99999999_01" el sufijo es "_99999999_01"
-
                 // Lógica para obtener el sufijo para el renombrado
                 // Queremos el sufijo que distingue esta imagen de otras vistas del mismo modelo base.
-                // Si el modelo base es "87087686_02" y la imagen es "87087686_02_01", el sufijo es "_01".
-                // Si la imagen es "87087686_02_R", el sufijo es "_R".
-                // Si la imagen es "87087686_02_99999999_01", el sufijo es "_99999999_01".
-                const mangoModelBaseWithoutColor = info.mangoModelFull.split('_')[0]; // "87087686"
-                const modelBaseWithColorLength = info.mangoModelFull.split('_')[0].length + 3; // "87087686_02" -> length + _ + 02 = 11.
-                                                                                        // Esto asume que el color siempre es _XX
-                
-                if (info.mangoModelFull.includes('_99999999_01')) {
-                    // Si es una imagen de outfit, tomamos el sufijo completo de outfit
-                    mangoSuffixToRename = '_99999999_01';
-                } else if (info.mangoModelFull.length > (mangoModelBaseWithoutColor.length + 3) && info.mangoModelFull.includes('_')) {
-                    // Si hay un sufijo adicional más allá del código de color (e.g., _R, _D5)
-                    mangoSuffixToRename = info.mangoModelFull.substring(mangoModelBaseWithoutColor.length + 3); // Obtiene lo que va después de "87087686_02"
-                } else {
-                    // Si solo tiene el código de color y es la vista principal (ej. 87087686_02_01), 
-                    // extraemos el último sufijo numérico
-                    const match = info.mangoModelFull.match(/(_\d{2})$/); // Busca "_XX" al final
-                    if (match) {
-                        mangoSuffixToRename = match[0];
-                    } else {
-                        // Si no hay sufijo adicional ni numérico, podría ser la vista principal que corresponde a "_01"
-                        // o no tener sufijo si la URL original no lo tenía, aunque Mango siempre usa sufijos.
-                        // Para simplificar, si no se detecta un sufijo específico, se podría dejar vacío o forzar _01 si es la primera vista
-                        // Sin embargo, con la lógica de getMangoSuffixes, siempre habrá un sufijo al final del mangoModelFull
-                        mangoSuffixToRename = ''; // Dejar vacío si no se encuentra un sufijo distintivo más allá del color
-                    }
-                }
-                
-                // Caso especial para la primera imagen si es _01 y no hay otro sufijo
-                if (mangoSuffixToRename === '_01' && info.mangoModelFull.endsWith('_01')) {
-                    // Si el modelo base con color ya termina en "_01", no añadimos "_01" duplicado
-                    // Esto maneja el caso donde el modelo base ya es "87087686_01" y la imagen es "_01.jpg"
-                    // Pero si el modelo base es "87087686_02" y la imagen es "87087686_02_01.jpg", SÍ queremos el _01
-                    const modelBaseWithoutLastSuffix = info.mangoModelFull.substring(0, info.mangoModelFull.lastIndexOf('_'));
-                    if (modelBaseWithoutLastSuffix === info.mangoModelFull.replace(mangoSuffixToRename, '')) {
-                         // El sufijo ya es parte del modelo base, no lo agregamos de nuevo.
-                         mangoSuffixToRename = '';
-                    }
-                }
+                let mangoSuffixToRename = info.suffixUsed; // Usamos el sufijo exacto que se usó para encontrarla.
 
+                // Caso especial para la primera imagen estándar si el modelo base ya tiene el _XX del color.
+                // Si el mangoModelBase es "87087686_02" y el suffixUsed es "_01", queremos "SKU_01.jpg"
+                // Pero si el mangoModelBase es "87087686" (sin color en el input) y suffixUsed es "_01", 
+                // el renombrado debería ser "SKU_01.jpg". La lógica actual del `mangoSuffixToRename` ya maneja esto.
+
+                // Eliminar el _01 si el modelo base ya termina en _01 y es la primera vista estándar, 
+                // para evitar doble sufijo. Esto es más específico para el _01.
+                if (mangoSuffixToRename === '_01') {
+                    const modelParts = info.mangoModelFull.split('_');
+                    // Si el modelo es "87087686_02_01", el sufijo a mantener es "_01"
+                    // Si el modelo es "87087686_01", y es la primera vista, el sufijo sería vacío para evitar "SKU_01_01.jpg"
+                    if (modelParts.length === 2 && modelParts[1] === '01') { // Ejemplo: "87087686_01"
+                        mangoSuffixToRename = ''; // No añadir _01 si ya está implícito en el modelo base como color
+                    }
+                }
 
                 const baseFilename = info.falabellaSku;
                 let finalFilename = `${baseFilename}${mangoSuffixToRename}.jpg`;
@@ -487,14 +474,17 @@
                 filenamesInZip.add(finalFilename);
 
                 try {
+                    const response = await fetch(url, {mode: 'cors'}); // Intenta con CORS mode
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    
                     const data = await new Promise((resolve, reject) => {
-                        JSZipUtils.getBinaryContent(url, function(err, data) {
-                            if (err) {
-                                reject(err);
-                            } else {
-                                resolve(data);
-                            }
-                        });
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsArrayBuffer(blob);
                     });
                     
                     zip.file(finalFilename, data, { binary: true });
@@ -502,7 +492,7 @@
 
                 } catch (err) {
                     console.error(`Error downloading ${url} for ${finalFilename}:`, err);
-                    logDownloadError(info.falabellaSku, info.mangoModelFull); // Registrar error de descarga específico
+                    logDownloadError(info.falabellaSku, info.mangoModelFull, err.message); // Registrar error de descarga específico
                 } finally {
                     processedCount++;
                     if (processedCount === imageInfos.length) {
