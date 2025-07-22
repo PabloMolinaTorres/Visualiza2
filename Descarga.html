@@ -106,24 +106,14 @@
             height: 100%;
         }
         .leftContainer {
-            width: 40%; /* Ajustado para dar más espacio a las columnas */
+            width: 40%; 
             display: flex;
             padding: 20px;
             box-sizing: border-box;
             flex-direction: column;
         }
-        .columns {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px; /* Espacio entre columnas */
-        }
-        .column {
-            width: 50%; /* Cada columna ocupa el 50% del espacio disponible */
-            display: flex;
-            flex-direction: column;
-        }
         .rightContainer {
-            width: 60%; /* Se mantiene igual */
+            width: 60%;
             padding: 20px;
             overflow-y: auto;
             box-sizing: border-box;
@@ -161,28 +151,21 @@
         }
         textarea {
             width: 100%;
-            margin: 10px 0; /* Ajustado el margen */
+            margin: 10px 0;
             padding: 10px;
             height: 250px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-family: 'Lato', sans-serif;
             font-size: 14px;
-            resize: none;
-        }
-        input[type="file"] {
-            width: 100%;
-            margin: 10px 0;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            resize: vertical;
         }
         button {
             width: 100%;
             border: none;
-            margin: 5px 0; /* Ajustado el margen entre botones */
+            margin: 5px 0;
             background-color: #8fca00;
-            height: 45px; /* Altura ligeramente reducida */
+            height: 45px;
             line-height: 45px;
             border-radius: 5px;
             color: white;
@@ -190,7 +173,7 @@
             cursor: pointer;
             text-transform: uppercase;
         }
-        button:last-of-type { /* Margen inferior para el último botón */
+        button:last-of-type {
             margin-bottom: 10px;
         }
         .title {
@@ -217,7 +200,7 @@
             border-radius: 5px;
             font-size: 10px;
             width: auto;
-            margin-bottom: 5px; /* Ajustado el margen */
+            margin-bottom: 5px;
         }
         #copyErrors:hover {
             background-color: #bbb;
@@ -249,22 +232,15 @@
     <div id="main">
         <div class="container">
             <div class="leftContainer">
-                <div class="title">Renombrar Imágenes Mango desde tu PC</div>
+                <div class="title">Descargar y Renombrar Imágenes Mango</div>
 
-                <div class="columns">
-                    <div class="column">
-                        <textarea id="mangoModelInput" placeholder="Ingrese Modelos Mango (ej. 87087686_02), uno por línea. Asegúrese de que coincidan con los nombres de sus archivos locales." disabled></textarea>
-                    </div>
-                    <div class="column">
-                        <textarea id="falabellaSkuInput" placeholder="Ingrese SKUs Falabella para renombrar (ej. SKU_1, SKU_2), uno por línea"></textarea>
-                    </div>
-                </div>
-                <input type="file" id="imageUpload" multiple accept="image/*">
-                <button id="previewImages">Previsualizar y Renombrar</button>
+                <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
+                
+                <button id="previewImages">Previsualizar Imágenes</button>
                 <button id="downloadImages">Descargar Imágenes (ZIP)</button>
                 
                 <div id="errorLog">
-                    <strong>Errores de procesamiento:</strong>
+                    <strong>Errores de descarga:</strong>
                     <button id="copyErrors">Copiar</button>
                     <ul id="errorList"></ul>
                 </div>
@@ -290,184 +266,430 @@
             document.body.classList.remove("sidebar-open");
         }
 
-        let loadedImageFiles = []; // Almacena los objetos File cargados por el usuario
-        let processedImageInfos = []; // Almacena info de imágenes procesadas para descarga
+        var foundImageInfos = []; // Almacena info de imágenes encontradas para descarga
 
-        // Función para registrar errores de procesamiento
-        function logProcessingError(filename, errorMessage) {
-            $('#errorLog').show();
-            $('#errorList').append(`<li>${filename} - Error: ${errorMessage}</li>`);
+        // Define el orden de prioridad de los sufijos de Mango para la numeración de Falabella
+        const mangoSuffixPriority = [
+            // The "main" image will be handled by color code, not _01.
+            // _01 is still a valid Mango suffix, but it won't be "_01" in the Falabella name
+            '_01', // Example: 87087686_02_01.jpg -> will become SKU_FALABELLA_02.jpg (if it's the second image found)
+            '_02',
+            '_03',
+            '_04',
+            '_05',
+            '_06',
+            '_07',
+            '_08',
+            '_09',
+            '_10',
+            '_D5', // Vista 2
+            '_B',  // Vista 3
+            '_R',  // Vista 4
+            '_D1', // Vista 5
+            '_D8', // Vista 6
+            '_D0', // Vista 7
+            // _99999999_01 is Vista 8 and handled separately
+        ];
+
+        // Mapeo de códigos de color de Mango a nombres para Falabella
+        // Si hay códigos duplicados, el último en la lista tendrá preferencia.
+        const mangoColorCodeToFalabellaName = {
+            "TU": "GRISOSCUROTEJANO",
+            "91": "GRISCLAROVIGORE",
+            "94": "GRISMEDIOVIGORE",
+            "96": "GRISOSCUROVIGORE",
+            "84": "ROSACHILE",
+            "68": "TEJANOCLARO", // Prioritizing TEJANO CLARO for 68
+            "TC": "SINCOLOR",
+            "379": "TEJANOGRIS",
+            "TG": "NOINFORMADO",
+            "-1": "ROSALIGHT",
+            "82": "TEJANOMEDIO",
+            "TM": "TEJANONEGRO",
+            "TN": "AZULNOCHE",
+            "57": "TEJANOOSCURO",
+            "TO": "AMARILLOPASTEL",
+            "11": "ROSAPASTEL",
+            "81": "VERDEPASTEL",
+            "40": "NARANJAPASTEL",
+            "21": "TEJANOSOFT",
+            "TS": "ROSAVIEJO",
+            "83": "ROSAVIEJO", // Consistency for 83
+            "02": "BLANCO", // Prioritizing BLANCO for 02 (was OFF WHITE, CORAL)
+            "70": "ROJO",
+            "01": "BLANCO", // Consistency for 01 (was BLANCO, then OFFWHITE)
+            "87": "CORAL", // Consistency for 87
+            "07": "ARENA",
+            "16": "OCRE",
+            "05": "CRUDO",
+            "37": "KHAKI",
+            "85": "ROSA",
+            "88": "FUCSIA",
+            "99": "NEGRO",
+            "43": "VERDE",
+            "08": "BEIGE",
+            "12": "AMARILLO",
+            "59": "PETROLEO",
+            "06": "PIEDRA",
+            "09": "CAMEL",
+            "52": "CARPETA",
+            "30": "MARRON",
+            "10": "VAINILLA",
+            "65": "MORADO",
+            "79": "COBRE",
+            "56": "NAVY",
+            "03": "HIELO",
+            "80": "NUDE",
+            "69": "MARINO",
+            "95": "ANTRACITA",
+            "48": "MUSGO",
+            "92": "GRIS",
+            "32": "CHOCOLATE",
+            "53": "ELECTRICO",
+            "61": "LILA",
+            "76": "GRANATE",
+            "20": "NARANJA",
+            "74": "TOMATE",
+            "49": "BOTELLA",
+            "23": "PAPAYA",
+            "28": "TERRACOTA",
+            "24": "POMELO",
+            "45": "AGUA",
+            "77": "VINO",
+            "44": "ESMERALDA",
+            "75": "CEREZA",
+            "17": "TOFFEE",
+            "42": "MANZANA",
+            "27": "PIMENTON",
+            "14": "LIMA",
+            "50": "CELESTE",
+            "54": "INDIGO",
+            "CG": "COGNAC",
+            "33": "COFFE",
+            "CU": "CUERO",
+            "GM": "GUNMETAL",
+            "OR": "MORO",
+            "101": "NATURAL",
+            "26": "PEACH",
+            "PL": "PLATA",
+            "46": "TURQUESA",
+            "38": "CAZA",
+            "18": "CANELA",
+            "41": "CLINIQUE",
+            "66": "CIRUELA",
+            "TA": "TAUPE",
+            "04": "MARFIL",
+            "DC": "DIRTYCLARO"
+        };
+
+
+        // Function to extract color code from Mango model (e.g., "87087686_02" -> "02")
+        function getMangoColorCode(mangoModel) {
+            const parts = mangoModel.split('_');
+            if (parts.length > 1) {
+                return parts[parts.length - 1]; // Last part should be the color code
+            }
+            return null; // No color code found
         }
 
-        // --- Nuevo Input de Archivo ---
-        $('#imageUpload').on('change', function(event) {
-            loadedImageFiles = Array.from(event.target.files);
-            // Opcionalmente, puedes actualizar el textarea de MangoModels con los nombres de archivo
-            // para que el usuario vea qué archivos se han cargado y pueda mapearlos
-            const filenames = loadedImageFiles.map(file => file.name.split('.')[0]).join('\n');
-            $('#mangoModelInput').val(filenames);
-        });
+        // Function to build Mango image URLs
+        // Note: The main image for a MODELO_COLOR (e.g., 87087686_02) often doesn't have an additional suffix like _01.
+        // It's the base URL of that model itself.
+        function getMangoImageUrls(mangoModelBase, suffix = '') { // suffix is now optional for the main image
+            const parts = mangoModelBase.split('_');
+            const mainModelNumber = parts[0]; // "87087686"
+            const colorVariantCode = parts[1] ? `_${parts[1]}` : ''; // "_02" if exists
 
-        // Botón "Previsualizar y Renombrar"
+            if (!mainModelNumber || mainModelNumber.length === 0) {
+                console.error("Mango model base number is invalid:", mangoModelBase);
+                return [];
+            }
+            const firstDigit = mainModelNumber[0]; // "8"
+
+            let urls = [];
+            let fullModelId = `${mainModelNumber}${colorVariantCode}${suffix}`; // For example: 87087686_02 or 87087686_02_D5
+
+            // Primary route for standard and detail images
+            urls.push({
+                type: 'standard',
+                url: `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/S/${fullModelId}.jpg`
+            });
+
+            // Special route for outfit images
+            if (suffix === '_99999999_01') {
+                urls.push({
+                    type: 'outfit',
+                    url: `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/${fullModelId}.jpg`
+                });
+            }
+            return urls;
+        }
+
+        // Function to load image and provide preview
+        async function loadImage(url, displayId) {
+            return new Promise(function(resolve) {
+                var img = new Image();
+                img.src = `${url}?imwidth=300&imdensity=1`; 
+                img.alt = displayId;
+                img.setAttribute('data-full-url', `${url}?imwidth=1500&imdensity=1`); 
+
+                img.onload = function() {
+                    var wrapper = document.createElement('div');
+                    wrapper.classList.add('imgWrapper');
+                    var link = document.createElement('a');
+                    link.href = img.getAttribute('data-full-url');
+                    link.target = '_blank';
+                    link.appendChild(img);
+                    var skuDiv = document.createElement('div');
+                    skuDiv.classList.add('sku');
+                    skuDiv.textContent = displayId;
+                    wrapper.appendChild(link);
+                    wrapper.appendChild(skuDiv);
+                    resolve(wrapper);
+                };
+
+                img.onerror = function() {
+                    resolve(null);
+                };
+            });
+        }
+
+        // Function to log download errors
+        function logDownloadError(originalLine, errorMessage) {
+            $('#errorLog').show();
+            $('#errorList').append(`<li>${originalLine} - Error: ${errorMessage}</li>`);
+        }
+
+        // "Previsualizar Imágenes" button logic
         $('#previewImages').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
-            processedImageInfos = []; // Reiniciar la lista de imágenes procesadas
+            foundImageInfos = []; // Reset list
 
-            const falabellaSkus = $('#falabellaSkuInput').val().trim().split('\n').filter(s => s.trim() !== '');
+            const inputLines = $('#dataInput').val().trim().split('\n').filter(s => s.trim() !== '');
 
-            if (loadedImageFiles.length === 0) {
-                alert('Por favor, cargue imágenes desde su computador.');
+            if (inputLines.length === 0) {
+                alert('Por favor, ingrese al menos una línea con la información de Mango y Falabella.');
                 return;
             }
 
-            if (loadedImageFiles.length !== falabellaSkus.length) {
-                alert('La cantidad de archivos cargados y SKUs Falabella debe coincidir. Asegúrese de que cada imagen tenga un SKU Falabella correspondiente.');
-                return;
-            }
-
-            for (let i = 0; i < loadedImageFiles.length; i++) {
-                const file = loadedImageFiles[i];
-                const falabellaSku = falabellaSkus[i];
-                const originalFilename = file.name;
-                const fileExtension = originalFilename.split('.').pop();
-                const baseFilename = originalFilename.replace(/\.[^/.]+$/, ""); // Nombre sin extensión
-
-                // Lógica de Renombrado
-                // Aquí es donde aplicas la "lógica de Falabella" para renombrar.
-                // Por ejemplo, si el nombre original de Mango contiene sufijos como "_01", "_02", etc.
-                // o si necesitas añadir un contador si no hay sufijo.
-                
-                // Ejemplo simple: mantener el sufijo original si existe, o usar un contador.
-                let mangoSuffix = '';
-                const match = baseFilename.match(/(_\d{2,})$/); // Busca _01, _02, etc. o _D0, _R etc.
-                if (match) {
-                    mangoSuffix = match[0]; // Extrae el sufijo, ej., "_02"
+            for (const line of inputLines) {
+                const parts = line.split('-');
+                if (parts.length < 3) {
+                    logDownloadError(line, 'Formato incorrecto. Se esperan al menos 3 partes (Modelo-Color-SKU).');
+                    continue;
                 }
 
-                // Si el SKU de Falabella ya incluye un sufijo que se corresponde con el mangoSuffix,
-                // podrías querer evitar duplicarlo. Esto es una regla de negocio.
-                // Por simplicidad, aquí siempre añadimos el sufijo de mango, a menos que sea la imagen principal.
-                let finalFilename = `${falabellaSku}`;
+                const mangoModelRaw = parts[0].trim(); // Ej: "87016341" o "87087686_02"
+                const falabellaSku = parts[2].trim();  // Ej: "17458661"
+
+                let imagesForCurrentEntry = []; // Temp storage for images found for this entry
+                let mainImageFound = false; // Flag for the main color image
+
+                // 1. Try to find the MAIN image (based on mangoModelRaw itself, no extra suffix)
+                const mangoColorCode = getMangoColorCode(mangoModelRaw);
+                let falabellaColorName = "UNKNCOLOR"; // Default if not found
+                if (mangoColorCode && mangoColorCodeToFalabellaName[mangoColorCode.toUpperCase()]) {
+                    falabellaColorName = mangoColorCodeToFalabellaName[mangoColorCode.toUpperCase()];
+                } else if (mangoModelRaw.includes(' ')) { // Try to parse if color code is part of model name directly
+                     // Example: "MODELO COLORGRIS"
+                     // This part needs adjustment based on how the color name is embedded if not _XX
+                     // For now, assume it's like 87087686_02
+                }
                 
-                // Aquí puedes implementar una lógica más robusta para el sufijo
-                // Por ejemplo, si el SKU de Falabella es para la imagen principal y no necesitas un sufijo:
-                // if (mangoSuffix === '_01' || mangoSuffix === '') {
-                //     finalFilename = `${falabellaSku}.` + fileExtension;
-                // } else {
-                //     finalFilename = `${falabellaSku}${mangoSuffix}.` + fileExtension;
-                // }
+                // Construct URL for the main image (without additional suffixes)
+                const mainImageUrlObjects = getMangoImageUrls(mangoModelRaw);
+                let mainImageInfo = null;
 
-                // Una estrategia más flexible: usar el sufijo si no es el primer SKU mapeado a una imagen
-                // o si el sufijo es específico (ej. "_D0", "_R").
-                // Por ejemplo, si tienes 3 imágenes para un SKU:
-                // SKU1.jpg (para la primera imagen, si el nombre original no tiene _01_01)
-                // SKU1_02.jpg
-                // SKU1_D0.jpg
-                
-                // Opción 1: Simplemente añadir el sufijo de Mango si existe, o un contador si no.
-                // Esta es la más directa y respeta el sufijo original de Mango.
-                // Si tienes un archivo "87087686_02_01.jpg" y SKU "FALABELLA_SKU001"
-                // se renombraría a "FALABELLA_SKU001_01.jpg"
-                finalFilename = `${falabellaSku}${mangoSuffix}.` + fileExtension;
-                
-                // Si quieres que la primera imagen (ej. "_01") del SKU no tenga sufijo:
-                // if (mangoSuffix === '_01' || mangoSuffix === '') { // Asumiendo _01 es la principal
-                //     finalFilename = `${falabellaSku}.` + fileExtension;
-                // } else {
-                //     finalFilename = `${falabellaSku}${mangoSuffix}.` + fileExtension;
-                // }
-
-                // Otra opción: Asignar sufijos numéricos basados en el orden de carga si no hay un patrón claro en Mango
-                // Esto requeriría una lógica diferente donde la textarea de MangoModels
-                // no sería necesaria, o se usaría solo para referencia.
-                // Por ahora, nos basamos en el nombre original y el SKU Falabella.
-
-                try {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const imgUrl = e.target.result;
-                        const wrapper = document.createElement('div');
-                        wrapper.classList.add('imgWrapper');
-                        const link = document.createElement('a');
-                        link.href = imgUrl; // La URL de la imagen local
-                        link.target = '_blank';
-                        const img = document.createElement('img');
-                        img.src = imgUrl;
-                        img.alt = finalFilename; // Usar el nombre renombrado
-                        link.appendChild(img);
-                        const skuDiv = document.createElement('div');
-                        skuDiv.classList.add('sku');
-                        skuDiv.textContent = finalFilename; // Mostrar el nombre renombrado
-                        wrapper.appendChild(link);
-                        wrapper.appendChild(skuDiv);
-                        $('#imgContainer').append(wrapper);
-
-                        processedImageInfos.push({
-                            originalFile: file, // Guardar el objeto File original
+                for (const urlObj of mainImageUrlObjects) {
+                    const imgElement = await loadImage(urlObj.url, `${mangoModelRaw} (MAIN)`);
+                    if (imgElement) {
+                        mainImageInfo = {
+                            originalLine: line,
                             falabellaSku: falabellaSku,
-                            renamedFilename: finalFilename
-                        });
-                    };
-                    reader.readAsDataURL(file); // Leer el archivo como URL de datos para previsualización
-                } catch (err) {
-                    logProcessingError(originalFilename, err.message);
+                            mangoModelFull: mangoModelRaw,
+                            downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
+                            originalMangoSuffix: 'MAIN_COLOR_IMAGE' // Special identifier for main image
+                        };
+                        imagesForCurrentEntry.push(mainImageInfo);
+                        mainImageFound = true;
+                        break; // Found the main image, move on
+                    }
+                }
+                
+                if (!mainImageFound) {
+                    logDownloadError(line, `No se encontró la imagen principal para el modelo ${mangoModelRaw}.`);
+                }
+
+                // 2. Try to find other views based on mangoSuffixPriority
+                // We add a dummy '_main_placeholder' to mangoSuffixPriority internally to keep the actual MAIN image always first
+                const tempSuffixPriority = ['_main_placeholder', ...mangoSuffixPriority];
+
+                for (const suffix of tempSuffixPriority) {
+                    if (suffix === '_main_placeholder') continue; // Skip placeholder, already handled
+
+                    // Handle outfit separately as it has a specific suffix and target name
+                    if (suffix === '_99999999_01') {
+                        const outfitUrlObjects = getMangoImageUrls(mangoModelRaw, suffix);
+                        let outfitImageInfo = null;
+                        for (const urlObj of outfitUrlObjects) {
+                            const imgElement = await loadImage(urlObj.url, `${mangoModelRaw}${suffix} (OUTFIT)`);
+                            if (imgElement) {
+                                outfitImageInfo = {
+                                    originalLine: line,
+                                    falabellaSku: falabellaSku,
+                                    mangoModelFull: `${mangoModelRaw}${suffix}`, 
+                                    downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
+                                    originalMangoSuffix: suffix // Keep original suffix for later ordering
+                                };
+                                imagesForCurrentEntry.push(outfitImageInfo);
+                                break;
+                            }
+                        }
+                        continue; // Move to next suffix
+                    }
+
+                    const candidateUrlObjects = getMangoImageUrls(mangoModelRaw, suffix);
+                    for (const urlObj of candidateUrlObjects) {
+                        const imgElement = await loadImage(urlObj.url, `${mangoModelRaw}${suffix}`);
+                        if (imgElement) {
+                            imagesForCurrentEntry.push({
+                                originalLine: line,
+                                falabellaSku: falabellaSku,
+                                mangoModelFull: `${mangoModelRaw}${suffix}`, 
+                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
+                                originalMangoSuffix: suffix
+                            });
+                            break; 
+                        }
+                    }
+                }
+
+                // --- Lógica de ordenamiento y renumeración ---
+                if (imagesForCurrentEntry.length === 0) {
+                    logDownloadError(line, 'No se encontraron imágenes para este modelo Mango.');
+                    continue; 
+                }
+
+                // Separate main and outfit images for precise numbering
+                let currentMainImage = null;
+                let currentOutfitImage = null;
+                let otherImages = [];
+
+                for (const imgInfo of imagesForCurrentEntry) {
+                    if (imgInfo.originalMangoSuffix === 'MAIN_COLOR_IMAGE') {
+                        currentMainImage = imgInfo;
+                    } else if (imgInfo.originalMangoSuffix === '_99999999_01') {
+                        currentOutfitImage = imgInfo;
+                    } else {
+                        otherImages.push(imgInfo);
+                    }
+                }
+
+                // Sort 'otherImages' based on the defined priority
+                otherImages.sort((a, b) => {
+                    const indexA = mangoSuffixPriority.indexOf(a.originalMangoSuffix);
+                    const indexB = mangoSuffixPriority.indexOf(b.originalMangoSuffix);
+                    return indexA - indexB;
+                });
+
+                let processedImages = [];
+                // 1. Add the main image if found, with its color name
+                if (currentMainImage) {
+                    currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.jpg`;
+                    processedImages.push(currentMainImage);
+                }
+
+                // 2. Add other images with sequential numbering
+                let currentViewNumber = 2; // Start from 2 because main image is 1
+                for (const imgInfo of otherImages) {
+                    // Ensure we don't exceed view 7 before the outfit image, if outfit image exists
+                    if (currentViewNumber <= 7) { 
+                        imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.jpg`;
+                        processedImages.push(imgInfo);
+                        currentViewNumber++;
+                    }
+                }
+
+                // 3. Add the outfit image as _08 if it exists
+                if (currentOutfitImage) {
+                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.jpg`; // Always vista 8
+                    processedImages.push(currentOutfitImage);
+                }
+                
+                // Add to DOM and global list for download
+                for (const imgInfo of processedImages) {
+                    const imgElement = await loadImage(imgInfo.downloadUrl, `${imgInfo.renamedFilename} (Mango: ${imgInfo.mangoModelFull})`);
+                    if (imgElement) {
+                        $('#imgContainer').append(imgElement);
+                        // Ensure unique filename in the final ZIP
+                        let uniqueFilename = imgInfo.renamedFilename;
+                        let counter = 1;
+                        const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
+                        const extension = uniqueFilename.split('.').pop();
+                        while (foundImageInfos.some(info => info.renamedFilename === uniqueFilename)) {
+                            uniqueFilename = `${baseName}_${counter}.${extension}`;
+                            counter++;
+                        }
+                        imgInfo.renamedFilename = uniqueFilename; 
+                        foundImageInfos.push(imgInfo);
+                    } else {
+                        logDownloadError(imgInfo.originalLine, `No se pudo previsualizar la imagen: ${imgInfo.mangoModelFull}`);
+                    }
                 }
             }
-
-            if (processedImageInfos.length === 0) {
-                alert('No se pudieron procesar las imágenes. Verifique los archivos cargados.');
+            
+            if (foundImageInfos.length === 0) {
+                alert('No se encontraron imágenes para ninguna de las entradas. Verifique los modelos y el formato de entrada.');
             } else {
-                alert(`Previsualización y renombrado completados. ${processedImageInfos.length} imágenes listas.`);
+                alert(`Previsualización completada. ${foundImageInfos.length} imágenes encontradas.`);
             }
         });
 
-        // Botón "Descargar Imágenes (ZIP)"
+        // "Descargar Imágenes (ZIP)" button logic (remains mostly unchanged)
         $('#downloadImages').click(async function() {
-            if (processedImageInfos.length === 0) {
-                alert('No hay imágenes previsualizadas para descargar. Por favor, haga clic en "Previsualizar y Renombrar" primero.');
+            if (foundImageInfos.length === 0) {
+                alert('No hay imágenes previsualizadas para descargar. Por favor, haga clic en "Previsualizar Imágenes" primero.');
                 return;
             }
 
-            // Limpiar errores previos de descarga
             $('#errorLog').hide();
             $('#errorList').empty();
 
-            await downloadImagesAsZip(processedImageInfos);
+            await downloadImagesAsZip(foundImageInfos);
         });
 
-        // Función para descargar las imágenes en un ZIP desde los archivos cargados
+        // Function to download images as ZIP
         async function downloadImagesAsZip(imageInfos) {
             var zip = new JSZip();
             var processedCount = 0;
-            var zipFilename = `Imagenes_Renombradas_Falabella_${getFormattedDate()}.zip`;
-
-            const filenamesInZip = new Set(); // Para asegurar nombres únicos en el ZIP
+            var zipFilename = `Mango_Renombrado_Falabella_${getFormattedDate()}.zip`;
 
             for (const info of imageInfos) {
-                const file = info.originalFile;
-                let finalFilename = info.renamedFilename;
-                let counter = 1;
-
-                // Asegurar que el nombre de archivo sea único en el ZIP si hay duplicados
-                const baseName = finalFilename.split('.').slice(0, -1).join('.');
-                const extension = finalFilename.split('.').pop();
-
-                while (filenamesInZip.has(finalFilename)) {
-                    finalFilename = `${baseName}_${counter}.${extension}`;
-                    counter++;
-                }
-                filenamesInZip.add(finalFilename);
+                const url = info.downloadUrl;
+                const finalFilename = info.renamedFilename; 
 
                 try {
-                    const arrayBuffer = await file.arrayBuffer(); // Leer el archivo como ArrayBuffer
-                    zip.file(finalFilename, arrayBuffer, { binary: true });
+                    const response = await fetch(url, {mode: 'cors'});
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const blob = await response.blob();
+                    
+                    const data = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => resolve(reader.result);
+                        reader.onerror = reject;
+                        reader.readAsArrayBuffer(blob);
+                    });
+                    
+                    zip.file(finalFilename, data, { binary: true });
                     console.log(`Added ${finalFilename} to zip.`);
 
                 } catch (err) {
-                    console.error(`Error al procesar ${file.name} para ZIP:`, err);
-                    logProcessingError(file.name, err.message); // Registrar error de procesamiento
+                    console.error(`Error downloading ${url} for ${finalFilename}:`, err);
+                    logDownloadError(info.originalLine || info.falabellaSku, `Error al descargar ${info.mangoModelFull}: ${err.message}`);
                 } finally {
                     processedCount++;
                     if (processedCount === imageInfos.length) {
@@ -484,7 +706,7 @@
             }
         }
 
-        // Función para obtener la fecha formateada para el nombre del ZIP
+        // Function to get formatted date for ZIP filename
         function getFormattedDate() {
             var date = new Date();
             var day = String(date.getDate()).padStart(2, '0');
@@ -494,7 +716,7 @@
             return day + '-' + month + '_' + hours + minutes;
         }
         
-        // Manejo del botón Copiar Errores
+        // Handle Copy Errors button
         $(document).on('click', '#copyErrors', function() {
             var errors = [];
             $('#errorList li').each(function() {
@@ -512,8 +734,7 @@
         });
 
         $(document).ready(function() {
-            // Deshabilitar la textarea de MangoModelInput ya que se llenará automáticamente
-            $('#mangoModelInput').prop('disabled', true);
+            // Any additional initialization if needed.
         });
     </script>
 </body>
