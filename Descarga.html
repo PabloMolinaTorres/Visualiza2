@@ -216,7 +216,7 @@
         <div class="container">
             <div class="title">Renombrar Imágenes Mango (Local) a Falabella</div>
 
-            <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
+            <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR_MANGO-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
             <div class="button-group">
                 <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
@@ -249,9 +249,9 @@
         }
 
         // Define el orden de prioridad de los sufijos de Mango para la numeración de Falabella
+        // NOTA: La imagen principal de Mango (sin sufijo) ahora será _1 en Falabella.
         const mangoSuffixPriority = [
-            // The "main" image is identified by having no suffix (e.g., 87087686_02.jpg)
-            '_01', // Standard _01 image
+            '_01', // Standard _01 image, now maps to _2 in Falabella
             '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_10', // Generic numbered suffixes
             '_D5', // Vista 2
             '_B',  // Vista 3
@@ -263,7 +263,7 @@
         ];
 
         // Mapeo de códigos de color de Mango a nombres para Falabella
-        // Si hay códigos duplicados, el último en la lista tendrá preferencia.
+        // Este mapa se usa solo para identificar el modelo Mango, no para el nombre de archivo final.
         const mangoColorCodeToFalabellaName = {
             "TU": "GRISOSCUROTEJANO", "91": "GRISCLAROVIGORE", "94": "GRISMEDIOVIGORE", "96": "GRISOSCUROVIGORE",
             "84": "ROSACHILE", "68": "TEJANOCLARO", "TC": "SINCOLOR", "379": "TEJANOGRIS",
@@ -290,19 +290,20 @@
         };
 
         // Función para extraer el modelo base de Mango y el sufijo de vista del nombre del archivo
-        // Ahora más robusta para manejar variantes como 87087686_02-99999999_01.avif
         function parseMangoFilename(filename) {
             const nameWithoutExt = filename.split('.').slice(0, -1).join('.'); 
             
             // Expresión regular mejorada:
-            // - (\d{8,}(?:[_-][A-Z0-9]+)?) : Captura el modelo base, ahora permite guion o guion bajo para el color (ej. 87087686_02 o 87087686-02)
+            // - (\d{8,}(?:[_-][A-Z0-9]+)?) : Captura el modelo base, permite guion o guion bajo para el color (ej. 87087686_02 o 87087686-02)
             // - (?:[_-](?:D[0-9]|[A-Z]|\d{2,}|99999999_01))? : Captura el sufijo opcional, también permite guion o guion bajo
             const regex = /^(\d{8,}(?:[_-][A-Z0-9]+)?)(?:[_-](?:D[0-9]|[A-Z]|\d{2,}|99999999_01))?$/i;
             const match = nameWithoutExt.match(regex);
 
             if (match) {
-                const modelBase = match[1].replace(/[-_]([A-Z0-9]+)$/, '_$1'); // Normaliza a guion bajo para el color (ej. 87087686-02 -> 87087686_02)
-                let suffix = match[2] ? `_${match[2].replace(/^-/, '')}` : ''; // Normaliza el sufijo (ej. -D5 -> _D5)
+                // Normaliza a guion bajo para el color (ej. 87087686-02 -> 87087686_02)
+                const modelBase = match[1].replace(/[-_]([A-Z0-9]+)$/, '_$1'); 
+                // Normaliza el sufijo (ej. -D5 -> _D5), y si no hay sufijo, será una cadena vacía
+                let suffix = match[2] ? `_${match[2].replace(/^-/, '')}` : ''; 
 
                 // Asegurar que el sufijo _99999999_01 se capture correctamente
                 if (suffix.includes('99999999')) {
@@ -393,11 +394,8 @@
                 }
 
                 const { falabellaSku, fullLine } = inputEntry;
-                const mangoColorCode = getMangoColorCode(mangoModelBase);
-                let falabellaColorName = "COLOR"; 
-                if (mangoColorCode && mangoColorCodeToFalabellaName[mangoColorCode]) {
-                    falabellaColorName = mangoColorCodeToFalabellaName[mangoColorCode];
-                }
+                // mangoColorCode ya no se usa para el nombre de archivo final, solo para identificar el modelo
+                // const mangoColorCode = getMangoColorCode(mangoModelBase); 
 
                 let imagesForCurrentEntry = []; 
 
@@ -414,6 +412,7 @@
                         imageData: imageData, 
                         falabellaSku: falabellaSku,
                         mangoModelFull: mangoModelBase + fileInfo.parsedInfo.suffix,
+                        // 'MAIN_COLOR_IMAGE' ahora mapea a _1 de Falabella
                         originalMangoSuffix: fileInfo.parsedInfo.suffix === '' ? 'MAIN_COLOR_IMAGE' : fileInfo.parsedInfo.suffix, 
                         originalFilename: fileInfo.file.name,
                         originalLine: fullLine 
@@ -421,9 +420,9 @@
                 }
 
                 // --- Lógica de Nomenclatura ---
-                let currentMainImage = null;
-                let currentOutfitImage = null;
-                let otherImages = [];
+                let currentMainImage = null; // La imagen principal de Mango (sin sufijo)
+                let currentOutfitImage = null; // La imagen de outfit de Mango (_99999999_01)
+                let otherImages = []; // Las demás vistas secundarias de Mango
 
                 for (const imgInfo of imagesForCurrentEntry) {
                     if (imgInfo.originalMangoSuffix === 'MAIN_COLOR_IMAGE') {
@@ -435,53 +434,57 @@
                     }
                 }
 
+                // Ordenar las "otras imágenes" basadas en la prioridad de sufijos
                 otherImages.sort((a, b) => {
                     const indexA = mangoSuffixPriority.indexOf(a.originalMangoSuffix);
                     const indexB = mangoSuffixPriority.indexOf(b.originalMangoSuffix);
-                    if (indexA === -1 && indexB === -1) return 0;
-                    if (indexA === -1) return 1;
-                    if (indexB === -1) return -1;
-                    return indexA - indexB;
+                    if (indexA === -1 && indexB === -1) return 0; // Si ambos no están en la lista, no cambiar el orden relativo
+                    if (indexA === -1) return 1; // 'a' no está en la lista, 'b' sí, 'a' va después
+                    if (indexB === -1) return -1; // 'b' no está en la lista, 'a' sí, 'b' va después
+                    return indexA - indexB; // Ordenar por índice en la lista de prioridad
                 });
 
-                let entryProcessedImages = []; // Images for this specific entry (before making filenames unique globally)
-                // 1. Añadir la imagen principal (con nombre de color)
+                let entryProcessedImages = []; 
+
+                // 1. Añadir la imagen principal (ahora SKU_FALABELLA_1)
                 if (currentMainImage) {
                     const originalExt = currentMainImage.originalFilename.split('.').pop();
-                    currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.${originalExt}`;
+                    currentMainImage.renamedFilename = `${falabellaSku}_1.${originalExt}`; // Nomenclatura Falabella: _1 para la principal
                     entryProcessedImages.push(currentMainImage);
                 } else {
                      logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo en el nombre del archivo) para el modelo ${mangoModelBase}.`);
                 }
 
-                // 2. Añadir otras imágenes con numeración secuencial
-                let currentViewNumber = 2; 
+                // 2. Añadir otras imágenes con numeración secuencial (_2 a _7)
+                let currentViewNumber = 2; // Empieza desde _2 ya que _1 es la principal
                 for (const imgInfo of otherImages) {
                     if (currentViewNumber <= 7) { 
                         const originalExt = imgInfo.originalFilename.split('.').pop();
-                        imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.${originalExt}`;
+                        currentViewNumber++; // Incrementa antes para usar el número correcto (2, 3, etc.)
+                        imgInfo.renamedFilename = `${falabellaSku}_${currentViewNumber -1}.${originalExt}`; // Usa el número ya incrementado
                         entryProcessedImages.push(imgInfo);
-                        currentViewNumber++;
                     } else {
-                        logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal para Falabella). Esta imagen no será renombrada secuencialmente.`);
+                        logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal). Esta imagen no será renombrada secuencialmente.`);
                     }
                 }
 
-                // 3. Añadir la imagen de outfit como _08 si existe
+                // 3. Añadir la imagen de outfit como _8 si existe
                 if (currentOutfitImage) {
                     const originalExt = currentOutfitImage.originalFilename.split('.').pop();
-                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.${originalExt}`; 
+                    currentOutfitImage.renamedFilename = `${falabellaSku}_8.${originalExt}`; 
                     entryProcessedImages.push(currentOutfitImage);
                 }
                 
                 // Añadir todas las imágenes procesadas de esta entrada a la lista global para el ZIP
+                // Asegurar nombres de archivo únicos en caso de colisiones (aunque poco probables con esta lógica)
                 for (const imgInfo of entryProcessedImages) {
                     let uniqueFilename = imgInfo.renamedFilename;
                     let counter = 1;
                     const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
                     const extension = uniqueFilename.split('.').pop();
                     while (processedImagesForZip.some(info => info.renamedFilename === uniqueFilename)) {
-                        uniqueFilename = `${baseName}_${counter}.${extension}`;
+                        // Si ya existe, añade un sufijo numérico para hacerlo único
+                        uniqueFilename = `${baseName}_DUP${counter}.${extension}`; 
                         counter++;
                     }
                     imgInfo.renamedFilename = uniqueFilename; 
@@ -490,15 +493,7 @@
             }
             
             // Habilitar el botón de descarga si hay imágenes para procesar, deshabilitar si no
-            if (processedImagesForZip.length > 0) {
-                $('#downloadZipBtn').prop('disabled', false);
-            } else {
-                $('#downloadZipBtn').prop('disabled', true);
-            }
-
-            if (processedImagesForZip.length > 0 && $('#errorList li').length === 0) {
-                // Solo un mensaje de éxito silencioso
-            }
+            $('#downloadZipBtn').prop('disabled', processedImagesForZip.length === 0);
         }
 
         // Función para generar el archivo ZIP
@@ -528,7 +523,6 @@
             try {
                 const content = await zip.generateAsync({ type: 'blob' });
                 saveAs(content, zipFilename);
-                // No alert, just silent success
             } catch (e) {
                 console.error("Error al generar el ZIP:", e);
                 logProcessingError('Generación ZIP', `Hubo un error al generar el archivo ZIP: ${e.message}`);
@@ -579,7 +573,6 @@
             // Evento para procesar archivos seleccionados manualmente
             fileInput.on('change', function(event) {
                 processFiles(event.target.files);
-                // fileInput.val(''); // Do not clear here, let the download function do it
             });
 
             // Evento para activar la descarga del ZIP
