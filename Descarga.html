@@ -111,7 +111,7 @@
             padding: 20px;
             box-sizing: border-box;
             background-color: #f9f9f9;
-            border-radius: 8px;
+            border-radius: 8様px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         
@@ -216,7 +216,7 @@
         <div class="container">
             <div class="title">Renombrar Imágenes Mango (Local) a Falabella</div>
 
-            <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR_MANGO-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
+            <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR_MANBO-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
             <div class="button-group">
                 <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
@@ -263,14 +263,14 @@
         ];
 
         // Mapeo de códigos de color de Mango a nombres para Falabella
-        // Este mapa se usa solo para identificar el modelo Mango, no para el nombre de archivo final.
+        // Las claves son los códigos (numéricos o de texto cortos) de Mango, los valores son los nombres de Falabella.
         const mangoColorCodeToFalabellaName = {
             "TU": "GRISOSCUROTEJANO", "91": "GRISCLAROVIGORE", "94": "GRISMEDIOVIGORE", "96": "GRISOSCUROVIGORE",
             "84": "ROSACHILE", "68": "TEJANOCLARO", "TC": "SINCOLOR", "379": "TEJANOGRIS",
             "TG": "NOINFORMADO", "-1": "ROSALIGHT", "82": "TEJANOMEDIO", "TM": "TEJANONEGRO",
             "TN": "AZULNOCHE", "57": "TEJANOOSCURO", "TO": "AMARILLOPASTEL", "11": "ROSAPASTEL",
             "81": "VERDEPASTEL", "40": "NARANJAPASTEL", "21": "TEJANOSOFT", "TS": "ROSAVIEJO",
-            "83": "ROSAVIEJO", "02": "BLANCO", "70": "ROJO", "01": "BLANCO", 
+            "83": "ROSAVIEJO", "02": "OFF WHITE", "70": "ROJO", "01": "BLANCO", 
             "87": "CORAL", "07": "ARENA", "16": "OCRE", "05": "CRUDO",
             "37": "KHAKI", "85": "ROSA", "88": "FUCSIA", "99": "NEGRO",
             "43": "VERDE", "08": "BEIGE", "12": "AMARILLO", "59": "PETROLEO",
@@ -288,6 +288,21 @@
             "18": "CANELA", "41": "CLINIQUE", "66": "CIRUELA", "TA": "TAUPE",
             "04": "MARFIL", "DC": "DIRTYCLARO"
         };
+
+        // Crear un mapa inverso para buscar código de color Mango por nombre de color (para el input de texto)
+        const falabellaNameToMangoColorCodeMap = {};
+        for (const code in mangoColorCodeToFalabellaName) {
+            const name = mangoColorCodeToFalabellaName[code].toUpperCase(); // Convertir a mayúsculas para coincidencia insensible a mayúsculas/minúsculas
+            // Manejar duplicados si un nombre de Falabella corresponde a múltiples códigos de Mango
+            // Damos prioridad al código numérico si hay un nombre duplicado.
+            if (!falabellaNameToMangoColorCodeMap[name] || !isNaN(parseInt(code))) {
+                falabellaNameToMangoColorCodeMap[name] = code;
+            }
+        }
+        // Ajuste manual para casos específicos donde los nombres pueden variar pero el código es el mismo:
+        // Asegúrate de que 'BLANCO' y 'OFF WHITE' ambos apunten a '02' si es el caso en Mango
+        falabellaNameToMangoColorCodeMap['BLANCO'] = '01'; // Si el 01 es BLANCO
+        falabellaNameToMangoColorCodeMap['OFF WHITE'] = '02'; // Si el 02 es OFF WHITE
 
         // Función para extraer el modelo base de Mango y el sufijo de vista del nombre del archivo
         function parseMangoFilename(filename) {
@@ -311,15 +326,6 @@
                 }
 
                 return { modelBase, suffix };
-            }
-            return null;
-        }
-
-        // Función para extraer el código de color de Mango de un modelo base
-        function getMangoColorCode(mangoModelBase) {
-            const parts = mangoModelBase.split('_');
-            if (parts.length > 1) {
-                return parts[parts.length - 1].toUpperCase(); 
             }
             return null;
         }
@@ -351,10 +357,29 @@
                     logProcessingError(line, 'Formato incorrecto en la entrada de texto. Se esperan al menos 3 partes (Modelo-Color-SKU).');
                     continue;
                 }
-                // Normalizar el mangoModelRaw para que coincida con lo que parseMangoFilename produce
-                const mangoModelRaw = parts[0].trim().replace(/[-_]([A-Z0-9]+)$/, '_$1'); 
+                const mangoProductId = parts[0].trim(); // Ej: "87087686" o "87087686_02"
+                const mangoColorName = parts[1].trim().toUpperCase(); // Ej: "OFF WHITE"
                 const falabellaSku = parts[2].trim();
-                inputMap.set(mangoModelRaw, { falabellaSku, fullLine: line });
+
+                let normalizedMangoModelKey;
+
+                // Intentar extraer el código de color directamente si ya está en parts[0] (ej. 87087686_02)
+                const matchProductIdWithCode = mangoProductId.match(/^(\d{8,})[_-]([A-Z0-9]+)$/);
+                if (matchProductIdWithCode) {
+                    // Ya tiene el formato correcto (ej. 87087686_02)
+                    normalizedMangoModelKey = mangoProductId.replace(/[-_]([A-Z0-9]+)$/, '_$1'); 
+                } else {
+                    // No tiene el código de color numérico al final de parts[0], intentar buscarlo por nombre
+                    const mangoColorCode = falabellaNameToMangoColorCodeMap[mangoColorName];
+                    if (mangoColorCode) {
+                        normalizedMangoModelKey = `${mangoProductId}_${mangoColorCode}`;
+                    } else {
+                        logProcessingError(line, `No se encontró un código numérico de Mango para el color '${mangoColorName}'. Verifique el diccionario de colores.`);
+                        continue;
+                    }
+                }
+                
+                inputMap.set(normalizedMangoModelKey, { falabellaSku, fullLine: line });
             }
 
             if (inputMap.size === 0) {
@@ -374,12 +399,12 @@
                     }
                     filesGroupedByModel.get(parsedInfo.modelBase).push({ file, parsedInfo });
                 } else {
-                    logProcessingError(file.name, 'No se pudo identificar el Modelo Mango o el sufijo de vista en el nombre del archivo.');
+                    logProcessingError(file.name, 'No se pudo identificar el Modelo Mango o el sufijo de vista en el nombre del archivo. Archivo ignorado.');
                 }
             }
 
             if (filesGroupedByModel.size === 0) {
-                logProcessingError('Carga de archivos', 'No se encontraron archivos con nombres que sigan la convención de Mango.');
+                logProcessingError('Carga de archivos', 'No se encontraron archivos con nombres que sigan la convención de Mango. Por favor, asegúrese que los nombres de sus archivos contienen el código de producto y color, ej. 87087686_02.');
                 $('#downloadZipBtn').prop('disabled', true);
                 return;
             }
@@ -394,8 +419,6 @@
                 }
 
                 const { falabellaSku, fullLine } = inputEntry;
-                // mangoColorCode ya no se usa para el nombre de archivo final, solo para identificar el modelo
-                // const mangoColorCode = getMangoColorCode(mangoModelBase); 
 
                 let imagesForCurrentEntry = []; 
 
@@ -460,9 +483,9 @@
                 for (const imgInfo of otherImages) {
                     if (currentViewNumber <= 7) { 
                         const originalExt = imgInfo.originalFilename.split('.').pop();
-                        currentViewNumber++; // Incrementa antes para usar el número correcto (2, 3, etc.)
-                        imgInfo.renamedFilename = `${falabellaSku}_${currentViewNumber -1}.${originalExt}`; // Usa el número ya incrementado
+                        imgInfo.renamedFilename = `${falabellaSku}_${currentViewNumber}.${originalExt}`; // Usa el número directamente (2, 3, etc.)
                         entryProcessedImages.push(imgInfo);
+                        currentViewNumber++;
                     } else {
                         logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal). Esta imagen no será renombrada secuencialmente.`);
                     }
