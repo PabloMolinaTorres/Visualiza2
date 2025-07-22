@@ -316,7 +316,6 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-
         /* Estilos para el nuevo sidebar (panel lateral) */
         .sidebar-toggle {
             position: static;
@@ -333,7 +332,6 @@
         .sidebar-toggle:hover {
             opacity: 1;
         }
-
         .sidebar {
             height: 100%;
             width: 0;
@@ -348,11 +346,9 @@
             padding-top: 60px;
             box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
         }
-
         .sidebar.open {
             width: 250px;
         }
-
         .sidebar a {
             padding: 15px 25px;
             text-decoration: none;
@@ -361,12 +357,10 @@
             display: block;
             transition: 0.3s;
         }
-
         .sidebar a:hover {
             color: #8fca00;
             background-color: #f1f1f1;
         }
-
         .sidebar .closebtn {
             position: absolute;
             top: 0;
@@ -377,11 +371,9 @@
             text-decoration: none;
             /* margin-left: 50px; eliminado porque ahora 'right' lo posiciona */
         }
-
         .sidebar .closebtn:hover {
             color: #333;
         }
-
         .overlay {
             position: fixed;
             top: 0;
@@ -440,13 +432,13 @@
             </div>
             <div class="imgContainer"></div>
             <div id="thumbnailContainer" style="display:none;">
-                </div>
+            </div>
         </div>
         <div class="rightMenu">
             <div class="intro">No tiene foto:</div>
             <div class="error-list" id="errorList">
                 <button id="copyErrors">Copiar</button>
-                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -455,6 +447,7 @@
         var useSodimac = false;
         var useTottus = false;
         var viewMode = "vista";  // Estado inicial: por vista
+
         const paisesFalabella = [
             { nombre: 'Chile', codigo: 'CL' },
             { nombre: 'Colombia', codigo: 'CO' },
@@ -595,11 +588,17 @@
                 if (sku !== "") {
                     var variants;
                     if (useFalabella || useTottus) {
+                        // Variantes para Falabella y Tottus (mantener como antes)
                         variants = ['_001', '_002', '_003', '_004', '_005', '_006', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_11', '_12', '_13', '_100', '_101', '_102', '_103', '_104', '_105', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
-                    } else if (useSodimac) {
+                    } 
+                    if (useSodimac) {
                         variants = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
+                        // Añadir _300 y _400 si es Sodimac y el país es Chile
+                        if (pais === 'CL') {
+                            variants.push('_300', '_400');
+                        }
                     }
-
+                    
                     promises.push(displayThumbnailsInOrder(sku, variants, index));
                 }
             });
@@ -633,12 +632,12 @@
                 if (useFalabella) {
                     baseUrl = 'https://media.falabella.com/falabella';
                 } else if (useSodimac) {
-                    baseUrl = 'https://media.falabella.com/falabella';
+                    baseUrl = `https://media.falabella.com/sodimac${pais}`; // URL específica para Sodimac
                 } else {
-                    baseUrl = 'https://media.falabella.com/tottus';
+                    baseUrl = `https://media.falabella.com/tottus${pais}`; // URL específica para Tottus
                 }
-                let thumbnailUrl = `${baseUrl}${pais}/${sku}/w=400,h=400,fit=pad`;
-                let originalUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500,fit=pad`;
+                let thumbnailUrl = `${baseUrl}/${sku}/w=400,h=400,fit=pad`;
+                let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`;
                 var img = new Image();
                 img.src = thumbnailUrl;
                 img.alt = sku;
@@ -676,13 +675,13 @@
                 if (useFalabella) {
                     baseUrl = 'https://media.falabella.com/falabella';
                 } else if (useSodimac) {
-                    baseUrl = 'https://media.falabella.com/falabella';
+                    baseUrl = `https://media.falabella.com/sodimac${pais}`; // URL específica para Sodimac
                 } else {
-                    baseUrl = 'https://media.falabella.com/tottus';
+                    baseUrl = `https://media.falabella.com/tottus${pais}`; // URL específica para Tottus
                 }
-                var primaryUrl = `${baseUrl}${pais}/${sku}/public`;
-                var downloadUrl = `${baseUrl}${pais}/${sku}/w=1500,h=1500`;
-                var alternateUrl = `${baseUrl}${pais}/inpage_media/${sku}/public`;
+                var primaryUrl = `${baseUrl}/${sku}/public`;
+                var downloadUrl = `${baseUrl}/${sku}/w=1500,h=1500`;
+                var alternateUrl = `${baseUrl}/inpage_media/${sku}/public`;
 
                 console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
                 var img = new Image();
