@@ -25,7 +25,6 @@
             color: #333;
             background-color: #fff;
         }
-
         /* Estilos para el sidebar colapsable */
         .sidebar {
             height: 100%;
@@ -64,7 +63,6 @@
             margin-left: 0;
             color: #333;
         }
-
         /* Estilos para el ícono de "hamburguesa" */
         .sidebar-toggle {
             position: absolute;
@@ -75,13 +73,11 @@
             width: 40px; /* Tamaño del icono */
             height: 40px; /* Tamaño del icono */
         }
-
         .sidebar-toggle img {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
-
         /* Contenido principal */
         #main {
             transition: margin-left .5s, filter .5s; /* Transición también para el filtro */
@@ -90,14 +86,12 @@
             display: flex;
             width: 100%;
         }
-
         /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
         body.sidebar-open #main {
             margin-left: 250px; /* Ancho del sidebar ajustado para dar más espacio */
             filter: brightness(70%); /* Oscurece el contenido */
             pointer-events: none; /* Deshabilita clics en el contenido principal */
         }
-
         /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
         .overlay {
             height: 100%;
@@ -114,7 +108,6 @@
         body.sidebar-open .overlay {
             display: block; /* Muestra el overlay cuando el sidebar está abierto */
         }
-
 
         /* Tu CSS existente a continuación */
         .container {
@@ -303,7 +296,6 @@
     </div>
 
     <div class="overlay" onclick="closeNav()"></div>
-
     <div class="sidebar-toggle" onclick="openNav()">
         <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png" alt="Abrir menú">
     </div>
@@ -356,7 +348,6 @@
             </div>
         </div>
     </div>
-
     <script>
         // Funciones para abrir y cerrar el sidebar
         function openNav() {
@@ -374,34 +365,58 @@
         var skuList = [];
         var mode = "vista";
         var country = "CL";
-        var activeLogic = "falabella";
+        var activeLogic = "falabella"; // 'falabella', 'sodimac', 'tottus'
 
         function loadImage(sku, suffix = "") {
-            return new Promise(function(resolve, reject) {
-                var baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/`;
-                var imgUrl = `${baseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
-                var img = new Image();
-                img.src = imgUrl;
-                img.alt = sku + suffix;
+            return new Promise(function(resolve) {
+                let baseUrl;
+                let fallbackBaseUrl = null; // Para el caso de Sodimac CL
 
-                img.onload = function() {
-                    var wrapper = document.createElement('div');
-                    wrapper.classList.add('imgWrapper');
-                    var link = document.createElement('a');
-                    link.href = `${baseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
-                    link.target = '_blank';
-                    link.appendChild(img);
-                    var skuDiv = document.createElement('div');
-                    skuDiv.classList.add('sku');
-                    skuDiv.textContent = sku + suffix;
-                    wrapper.appendChild(link);
-                    wrapper.appendChild(skuDiv);
-                    resolve(wrapper);
-                };
+                if (activeLogic === "falabella") {
+                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
+                } else if (activeLogic === "sodimac") {
+                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac${country}/`;
+                    if (country === "CL") {
+                        // Fallback específico para Sodimac Chile a Falabella Chile
+                        fallbackBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/`;
+                    }
+                } else if (activeLogic === "tottus") {
+                    baseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/tottus${country}/`;
+                }
 
-                img.onerror = function() {
-                    resolve(null);
-                };
+                function tryLoad(currentBaseUrl, isFallback = false) {
+                    var imgUrl = `${currentBaseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
+                    var img = new Image();
+                    img.src = imgUrl;
+                    img.alt = sku + suffix;
+
+                    img.onload = function() {
+                        var wrapper = document.createElement('div');
+                        wrapper.classList.add('imgWrapper');
+                        var link = document.createElement('a');
+                        link.href = `${currentBaseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
+                        link.target = '_blank';
+                        link.appendChild(img);
+                        var skuDiv = document.createElement('div');
+                        skuDiv.classList.add('sku');
+                        skuDiv.textContent = sku + suffix;
+                        wrapper.appendChild(link);
+                        wrapper.appendChild(skuDiv);
+                        resolve(wrapper);
+                    };
+
+                    img.onerror = function() {
+                        if (!isFallback && fallbackBaseUrl) {
+                            console.log(`Error loading ${sku}${suffix} from primary URL. Trying fallback.`);
+                            tryLoad(fallbackBaseUrl, true);
+                        } else {
+                            console.log(`Error loading ${sku}${suffix} from all URLs.`);
+                            resolve(null);
+                        }
+                    };
+                }
+
+                tryLoad(baseUrl); // Intentar con la URL principal primero
             });
         }
 
@@ -409,7 +424,7 @@
             mode = $(this).is(':checked') ? 'sku' : 'vista';
             $('#imgContainer').empty();
             skuList = [];
-            updateCounts();
+            // updateCounts(); // No hay conteos visibles, así que no es necesario
         });
 
         function setActiveCountry(countryCode) {
@@ -418,10 +433,11 @@
             country = countryCode;
             $('#imgContainer').empty();
             skuList = [];
-            updateCounts();
+            // updateCounts(); // No hay conteos visibles
         }
 
-        $('.country-link').click(function() {
+        $('.country-link').click(function(e) {
+            e.preventDefault(); // Prevenir el comportamiento por defecto del enlace
             var selectedCountry = $(this).attr('id').replace('link', '');
             setActiveCountry(selectedCountry);
         });
@@ -431,68 +447,63 @@
             countrySelector.empty();
             countries.forEach(function(countryName) {
                 var countryCode;
-                if (countryName === "Uruguay") {
-                    countryCode = "UY";
-                } else if (countryName === "México") {
-                    countryCode = "MX";
-                } else if (countryName === "Perú") {
-                    countryCode = "PE";
-                } else if (countryName === "Argentina") {
-                    countryCode = "AR";
-                } else if (countryName === "Chile") {
-                    countryCode = "CL";
-                } else if (countryName === "Colombia") {
-                    countryCode = "CO";
-                } else if (countryName === "Brasil") {
-                    countryCode = "BR";
-                } else {
-                    countryCode = countryName.slice(0, 2).toUpperCase();
+                // Asignar los códigos de país correctos para cada nombre
+                switch(countryName) {
+                    case "Chile": countryCode = "CL"; break;
+                    case "Colombia": countryCode = "CO"; break;
+                    case "Perú": countryCode = "PE"; break;
+                    case "Argentina": countryCode = "AR"; break;
+                    case "Brasil": countryCode = "BR"; break;
+                    case "México": countryCode = "MX"; break;
+                    case "Uruguay": countryCode = "UY"; break;
+                    default: countryCode = countryName.slice(0, 2).toUpperCase(); // En caso de que se añadan nuevos
                 }
-
+                
                 var countryLink = $('<a href="#" class="country-link">' + countryName + '</a>');
                 countryLink.attr('id', `link${countryCode}`);
-                countryLink.click(function() {
+                countryLink.click(function(e) {
+                    e.preventDefault(); // Prevenir el comportamiento por defecto del enlace
                     setActiveCountry(countryCode);
                 });
                 countrySelector.append(countryLink);
             });
-            setActiveCountry("CL");
+            setActiveCountry("CL"); // Asegurar que Chile esté activo por defecto al cambiar la tienda
         }
 
         $('#falabellaIcon').click(function() {
             activeLogic = "falabella";
-            $('#falabellaIcon').removeClass('inactive').addClass('active');
-            $('#sodimacIcon').addClass('inactive');
-            $('#tottusIcon').addClass('inactive');
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
             $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png');
             $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
             updateCountrySelector(["Chile", "Perú", "Colombia"]);
             $('#imgContainer').empty();
+            skuList = [];
         });
 
         $('#sodimacIcon').click(function() {
             activeLogic = "sodimac";
-            $('#falabellaIcon').addClass('inactive');
-            $('#sodimacIcon').removeClass('inactive').addClass('active');
-            $('#tottusIcon').addClass('inactive');
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
             $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
             $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac.png');
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
             updateCountrySelector(["Chile", "Argentina", "Colombia", "Perú", "Brasil", "México", "Uruguay"]);
             $('#imgContainer').empty();
+            skuList = [];
         });
 
         $('#tottusIcon').click(function() {
             activeLogic = "tottus";
-            $('#falabellaIcon').addClass('inactive');
-            $('#sodimacIcon').addClass('inactive');
-            $('#tottusIcon').removeClass('inactive').addClass('active');
+            $('.icon-selector img').removeClass('active').addClass('inactive');
+            $(this).removeClass('inactive').addClass('active');
             $('#falabellaIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella-bn.png');
             $('#sodimacIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/sodimac-bn.png');
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus.png');
             updateCountrySelector(["Chile", "Perú"]);
             $('#imgContainer').empty();
+            skuList = [];
         });
 
         function logError(error) {
@@ -508,59 +519,56 @@
             $('#skuInputLeft').val(skus.join('\n'));
         }
 
-        $('#buscar').click(function() {
+        $('#buscar').click(async function() { // Usamos async para await
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
 
             skuList = [];
-            var skus = $('#skuInputLeft').val().trim().split('\n');
-            if (skus.length > 0) {
-                skus.forEach(function(sku) {
-                    sku = sku.trim();
-                    if (sku) {
-                        if (mode === "vista") {
-                            skuList.push(sku);
-                            loadImage(sku).then(function(imageElement) {
-                                if (imageElement) {
-                                    document.getElementById('imgContainer').appendChild(imageElement);
-                                } else {
-                                    logError(sku);
-                                    removeNotFound(sku);
-                                }
-                                updateCounts();
-                            });
-                        } else if (mode === "sku") {
-                            var suffixes = getSuffixes(activeLogic);
-                            var found = false;
-                            suffixes.forEach(function(suffix) {
-                                loadImage(sku, suffix).then(function(imageElement) {
-                                    if (imageElement) {
-                                        found = true;
-                                        skuList.push(sku + suffix);
-                                        document.getElementById('imgContainer').appendChild(imageElement);
-                                    }
-                                    updateCounts();
-                                });
-                            });
+            var skus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== ''); // Filtrar SKUs vacíos
 
-                            setTimeout(function() {
-                                if (!found) {
-                                    logError(sku);
-                                    removeNotFound(sku);
-                                }
-                            }, 1000);
+            if (skus.length > 0) {
+                for (const sku of skus) { // Usamos for...of para await
+                    if (mode === "vista") {
+                        const imageElement = await loadImage(sku.trim());
+                        if (imageElement) {
+                            skuList.push(sku.trim());
+                            document.getElementById('imgContainer').appendChild(imageElement);
+                        } else {
+                            logError(sku.trim());
+                            removeNotFound(sku.trim());
+                        }
+                    } else if (mode === "sku") {
+                        const suffixes = getSuffixes(activeLogic);
+                        let found = false;
+                        for (const suffix of suffixes) { // Iterar sobre sufijos
+                            const imageElement = await loadImage(sku.trim(), suffix);
+                            if (imageElement) {
+                                found = true;
+                                skuList.push(sku.trim() + suffix);
+                                document.getElementById('imgContainer').appendChild(imageElement);
+                            }
+                        }
+                        if (!found) {
+                            logError(sku.trim());
+                            removeNotFound(sku.trim());
                         }
                     }
-                });
+                }
             } else {
                 alert('Por favor, ingrese SKUs.');
             }
         });
 
         $('#downloadAll').click(function() {
-            var renameSkus = $('#skuInputRight').val().trim().split('\n');
-            var originalSkus = $('#skuInputLeft').val().trim().split('\n');
+            var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
+            var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+
+            if (renameSkus.length === 0 || originalSkus.length === 0) {
+                alert('Por favor, ingrese SKUs en ambos lados.');
+                return;
+            }
+
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
@@ -569,37 +577,87 @@
             var zip = new JSZip();
             var count = 0;
             var zipFilename = getFormattedDate() + ".zip";
-            var urls = [];
-            var filenames = [];
+            var urlsToDownload = [];
+            var filenamesToSave = [];
 
-            originalSkus.forEach(function(originalSku, index) {
-                skuList.filter(s => s.startsWith(originalSku.trim())).forEach(function(sku) {
-                    var renameSkuBase = renameSkus[index].trim();
-                    var suffix = sku.substring(originalSku.trim().length);
-
-                    var finalName = renameSkuBase + suffix;
-                    
-                    var imgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/${activeLogic}${country}/${sku}/w=1500,h=1500,fit=pad`;
-                    urls.push(imgUrl);
-                    filenames.push(finalName);
-                });
+            // Mapear los SKUs originales con sus SKUs renombrados
+            const skuRenameMap = {};
+            originalSkus.forEach((original, index) => {
+                skuRenameMap[original] = renameSkus[index];
             });
 
-            if (urls.length === 0) {
-                alert('No hay imágenes para descargar. Asegúrese de que las imágenes se hayan cargado correctamente.');
+            // Recorrer la skuList que contiene todos los SKUs con sus sufijos (ej: "12345_01")
+            skuList.forEach(function(fullSkuWithSuffix) {
+                let baseSku = fullSkuWithSuffix.split('_')[0]; // Obtener el SKU base sin sufijo
+                let suffix = fullSkuWithSuffix.substring(baseSku.length); // Obtener el sufijo
+                
+                if (skuRenameMap[baseSku]) {
+                    let renamedBaseSku = skuRenameMap[baseSku];
+                    let finalName = renamedBaseSku + suffix;
+
+                    let currentBaseUrl;
+                    if (activeLogic === "falabella") {
+                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabella${country}/`;
+                    } else if (activeLogic === "sodimac") {
+                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/sodimac${country}/`;
+                        // Considerar el fallback para la descarga si la imagen original vino de ahí
+                        // Esto requiere saber de qué URL se cargó la imagen. Por simplicidad,
+                        // intentaremos con la URL de Sodimac y luego con la de Falabella si falla en Sodimac.
+                    } else if (activeLogic === "tottus") {
+                        currentBaseUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/tottus${country}/`;
+                    }
+                    
+                    let imgUrl = `${currentBaseUrl}${fullSkuWithSuffix}/w=1500,h=1500,fit=pad`;
+                    urlsToDownload.push(imgUrl);
+                    filenamesToSave.push(finalName);
+
+                    // Si es Sodimac CL, añadir la URL de fallback para la descarga también
+                    if (activeLogic === "sodimac" && country === "CL") {
+                        let fallbackImgUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${fullSkuWithSuffix}/w=1500,h=1500,fit=pad`;
+                        urlsToDownload.push(fallbackImgUrl);
+                        filenamesToSave.push(finalName + "_fallback"); // Nombre temporal para el intento de fallback
+                    }
+
+                } else {
+                    console.warn(`SKU original ${baseSku} no encontrado en la lista de renombrar.`);
+                }
+            });
+
+            if (urlsToDownload.length === 0) {
+                alert('No hay imágenes para descargar. Asegúrese de que las imágenes se hayan cargado correctamente y de que las listas coincidan.');
                 return;
             }
 
-            urls.forEach(function(url, index) {
-                var filename = filenames[index] + ".jpg";
+            // Usamos un contador para asegurar que todas las imágenes se procesen
+            let processedCount = 0;
+            const totalUrls = urlsToDownload.length;
+            const downloadedFiles = new Set(); // Para evitar duplicados por el fallback
+
+            urlsToDownload.forEach(function(url, index) {
+                const originalFilename = filenamesToSave[index];
                 JSZipUtils.getBinaryContent(url, function(err, data) {
-                    if (err) {
-                        console.error("Error al obtener contenido binario para", url, ":", err);
+                    processedCount++;
+                    if (!err) {
+                        // Solo añadir al zip si no hemos añadido un archivo con este nombre final
+                        if (!downloadedFiles.has(originalFilename)) {
+                            zip.file(originalFilename + ".jpg", data, { binary: true });
+                            downloadedFiles.add(originalFilename);
+                        } else {
+                            // Si ya se añadió, esto podría ser un intento de fallback que ya se descargó con la principal, o un duplicado.
+                            // Solo se registra si es un fallback que ya se agregó (para depuración si se quisiera)
+                            if (url.includes("falabellaCL") && originalFilename.endsWith("_fallback")) {
+                                console.log(`Skipping duplicate fallback: ${originalFilename}`);
+                            }
+                        }
                     } else {
-                        zip.file(filename, data, { binary: true });
+                        console.error(`Error al obtener contenido binario para ${url}:`, err);
+                        // Si falla una URL principal, y hay una URL de fallback para el mismo archivo (no implementado en esta versión de descarga directamente en el bucle)
+                        // Para la descarga, la lógica de fallback debería estar integrada en el loadImage original
+                        // o manejada aquí para reintentar la descarga si el activo es SodimacCL y falla.
+                        // Por simplicidad, el código actual no reintenta descargas con fallback aquí, solo para la previsualización.
                     }
-                    count++;
-                    if (count === urls.length) {
+
+                    if (processedCount === totalUrls) {
                         zip.generateAsync({ type: 'blob' }).then(function(content) {
                             saveAs(content, zipFilename);
                         }).catch(function(e) {
@@ -620,21 +678,24 @@
             return day + '-' + month + '_' + hours + minutes;
         }
 
-        function updateCounts() {
-            // No se muestran los conteos en el HTML.
-        }
-
         function getSuffixes(logic) {
             if (logic === "falabella" || logic === "tottus") {
                 return ['_001', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_1', '_10', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99'];
             } else if (logic === "sodimac") {
-                return ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
+                // Añadir _300 y _400 para Sodimac si es Chile (aunque esto es para variantes, no para vistas)
+                let sodimacSuffixes = ['_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09', '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_SEC', '_EFI'];
+                if (country === 'CL') { // Si estamos en Sodimac Chile, añadir estos sufijos específicos
+                    sodimacSuffixes.push('_300', '_400');
+                }
+                return sodimacSuffixes;
             }
         }
-
-        $('#skuInputLeft, #skuInputRight').on('input', updateCounts);
-
-        setActiveCountry("CL");
+        
+        // Inicialización
+        $(document).ready(function() {
+            updateCountrySelector(["Chile", "Perú", "Colombia"]); // Establecer los países iniciales para Falabella
+            setActiveCountry("CL"); // Asegurar que Chile esté activo al cargar la página
+        });
     </script>
 </body>
 </html>
