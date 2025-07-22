@@ -229,7 +229,8 @@
         <a href="renombre.html">Renombrador</a>
         <a href="Comparar.html">Comparador</a>
         <a href="descargar_y_renombrar.html">Descargar y Renombrar Falabella</a>
-        <a href="mango_renombrador.html">Descargar y Renombrar Mango</a> </div>
+        <a href="mango_renombrador.html">Descargar y Renombrar Mango</a>
+    </div>
 
     <div class="overlay" onclick="closeNav()"></div>
     <div class="sidebar-toggle" onclick="openNav()">
@@ -243,10 +244,10 @@
 
                 <div class="columns">
                     <div class="column">
-                        <textarea id="mangoModelInput" placeholder="Ingrese Modelos Mango (ej. 87087686_02-99999999), uno por línea"></textarea>
+                        <textarea id="mangoModelInput" placeholder="Ingrese Modelos Mango (ej. 87087686_02), uno por línea"></textarea>
                     </div>
                     <div class="column">
-                        <textarea id="falabellaSkuInput" placeholder="Ingrese SKUs Falabella para renombrar (uno por línea)"></textarea>
+                        <textarea id="falabellaSkuInput" placeholder="Ingrese SKUs Falabella para renombrar (ej. SKU_1), uno por línea"></textarea>
                     </div>
                 </div>
                 <button id="searchAndDownload">Buscar y Descargar</button>
@@ -274,41 +275,53 @@
 
         function closeNav() {
             document.getElementById("mySidebar").style.width = "0";
-            document.getElementById("main").style.marginLeft= "0";
+            document.getElementById("main").style.marginLeft = "0";
             document.body.classList.remove("sidebar-open");
         }
 
         var foundImageInfos = []; // Almacena info de imágenes encontradas para descarga
 
-        // Función para construir la URL base de Mango
-        function getMangoImageBaseUrl(mangoModelBase) {
-            // mangoModelBase es algo como "87087686_02-99999999"
+        // Función para obtener los sufijos de imagen para Mango
+        function getMangoSuffixes() {
+            return [
+                '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08',
+                '_B', '_D0', '_D1', '_D2', '_D3', '_D4', '_D5', '_D6', '_D7', '_D8', '_R',
+                // Sufijo específico para imágenes de outfit
+                '_99999999_01' 
+            ];
+        }
+
+        // Función para construir la URL base de Mango, intentando varias rutas
+        function getMangoImageUrls(mangoModelBase, suffix) {
             const mainModelPart = mangoModelBase.split('_')[0]; // "87087686"
+            const colorCodePart = mangoModelBase.split('_')[1] ? `_${mangoModelBase.split('_')[1]}` : ''; // "_02"
+            
             if (!mainModelPart || mainModelPart.length === 0) {
                 console.error("Mango model base is invalid:", mangoModelBase);
-                return null;
+                return [];
             }
             const firstDigit = mainModelPart[0]; // "8"
-            return `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/`;
+
+            let urls = [];
+            let fullModelId = `${mainModelPart}${colorCodePart}${suffix}`;
+            
+            // Ruta para imágenes estándar
+            urls.push(`https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/S/${fullModelId}.jpg`);
+            
+            // Ruta para imágenes de outfit (cuando el sufijo lo indica)
+            if (suffix === '_99999999_01') {
+                urls.push(`https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/outfit/S/${fullModelId}.jpg`);
+            }
+            return urls;
         }
 
         // Función para cargar la imagen y previsualizarla
-        async function loadImage(mangoModelId) {
+        async function loadImage(url, displayId) {
             return new Promise(function(resolve) {
-                // mangoModelId incluye el sufijo, ej: "87087686_02-99999999_01"
-                const modelBaseWithoutSuffix = mangoModelId.substring(0, mangoModelId.lastIndexOf('_')); // "87087686_02-99999999"
-                const baseUrl = getMangoImageBaseUrl(modelBaseWithoutSuffix);
-
-                if (!baseUrl) {
-                    resolve(null);
-                    return;
-                }
-
-                var imgUrl = `${baseUrl}${mangoModelId}.jpg?imwidth=1125&imdensity=1`; // Tamaño de previsualización
                 var img = new Image();
-                img.src = imgUrl;
-                img.alt = mangoModelId;
-                img.setAttribute('data-full-url', `${baseUrl}${mangoModelId}.jpg?imwidth=1500&imdensity=1`); // URL para descarga de alta calidad
+                img.src = `${url}?imwidth=1125&imdensity=1`; // URL para previsualización
+                img.alt = displayId;
+                img.setAttribute('data-full-url', `${url}?imwidth=1500&imdensity=1`); // URL para descarga de alta calidad
 
                 img.onload = function() {
                     var wrapper = document.createElement('div');
@@ -319,34 +332,22 @@
                     link.appendChild(img);
                     var skuDiv = document.createElement('div');
                     skuDiv.classList.add('sku');
-                    skuDiv.textContent = mangoModelId;
+                    skuDiv.textContent = displayId; // Mostrar el ID de Mango para el usuario
                     wrapper.appendChild(link);
                     wrapper.appendChild(skuDiv);
                     resolve(wrapper);
                 };
 
                 img.onerror = function() {
-                    console.log(`Error loading Mango image: ${mangoModelId}`);
-                    resolve(null);
+                    resolve(null); // No se pudo cargar la imagen
                 };
             });
         }
 
         // Función para registrar errores
-        function logError(errorSku) {
+        function logError(errorEntry) {
             $('#errorLog').show();
-            $('#errorList').append('<li>' + errorSku + '</li>');
-        }
-
-        // Obtener sufijos de imagen para Mango
-        function getMangoSuffixes() {
-            // Basado en el ejemplo "_01.jpg", se asume que siempre hay un sufijo numérico
-            // Se pueden añadir más si se descubren otros patrones de Mango
-            const suffixes = [];
-            for (let i = 1; i <= 10; i++) { // Intentar del _01 al _10
-                suffixes.push(`_${String(i).padStart(2, '0')}`);
-            }
-            return suffixes;
+            $('#errorList').append('<li>' + errorEntry + '</li>');
         }
 
         // Botón principal de búsqueda y descarga
@@ -370,26 +371,40 @@
             }
 
             const suffixes = getMangoSuffixes();
+            let totalImagesToDownload = 0;
 
             for (let i = 0; i < mangoModels.length; i++) {
-                const mangoModelBase = mangoModels[i]; // Ej: "87087686_02-99999999"
+                const mangoModelBase = mangoModels[i]; // Ej: "87087686_02"
                 const falabellaSku = falabellaSkus[i];
-
+                
                 let foundAnyForModel = false;
 
                 for (const suffix of suffixes) {
-                    const fullMangoModelId = mangoModelBase + suffix; // Ej: "87087686_02-99999999_01"
-                    
-                    const imgElement = await loadImage(fullMangoModelId);
+                    const candidateUrls = getMangoImageUrls(mangoModelBase, suffix);
+                    let imageFoundForSuffix = false;
 
-                    if (imgElement) {
-                        $('#imgContainer').append(imgElement);
-                        foundImageInfos.push({
-                            mangoModel: fullMangoModelId,
-                            falabellaSku: falabellaSku,
-                            downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
-                        });
-                        foundAnyForModel = true;
+                    for (const url of candidateUrls) {
+                        // Construir el ID de Mango para mostrar en la previsualización y para renombrar
+                        let displayMangoId = `${mangoModelBase}${suffix}`;
+                        if (suffix === '_99999999_01') {
+                            displayMangoId = `${mangoModelBase}${suffix}`; // Mantener el sufijo completo para outfit
+                        }
+                        
+                        const imgElement = await loadImage(url, displayMangoId);
+
+                        if (imgElement) {
+                            $('#imgContainer').append(imgElement);
+                            foundImageInfos.push({
+                                mangoModelFull: displayMangoId, // El ID completo usado para encontrar la imagen
+                                falabellaSku: falabellaSku,
+                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url')
+                            });
+                            foundAnyForModel = true;
+                            imageFoundForSuffix = true;
+                            totalImagesToDownload++;
+                            // Si se encuentra una imagen para este sufijo, no buscar más rutas para este sufijo
+                            break; 
+                        }
                     }
                 }
                 
@@ -412,13 +427,28 @@
             var processedCount = 0;
             var zipFilename = `Mango_Renombrado_${getFormattedDate()}.zip`;
 
-            const filenamesInZip = new Set(); 
+            const filenamesInZip = new Set(); // Para asegurar nombres únicos en el ZIP
 
             for (const info of imageInfos) {
                 const url = info.downloadUrl;
-                // Renombrar a Falabella SKU + sufijo de imagen Mango (ej: "SKU_01.jpg")
-                const mangoSuffix = info.mangoModel.substring(info.mangoModel.lastIndexOf('_'));
-                const originalFilename = info.falabellaSku + mangoSuffix + ".jpg";
+                
+                // Extraer el sufijo relevante para el renombrado
+                let mangoSuffixToRename = '';
+                const lastUnderscoreIndex = info.mangoModelFull.lastIndexOf('_');
+                if (lastUnderscoreIndex !== -1) {
+                    mangoSuffixToRename = info.mangoModelFull.substring(lastUnderscoreIndex);
+                }
+
+                const baseFilename = info.falabellaSku + mangoSuffixToRename;
+                let finalFilename = `${baseFilename}.jpg`;
+                let counter = 1;
+
+                // Asegurar que el nombre de archivo sea único en el ZIP si hay duplicados
+                while (filenamesInZip.has(finalFilename)) {
+                    finalFilename = `${baseFilename}_${counter}.jpg`;
+                    counter++;
+                }
+                filenamesInZip.add(finalFilename);
 
                 try {
                     const data = await new Promise((resolve, reject) => {
@@ -430,20 +460,13 @@
                             }
                         });
                     });
-
-                    let finalFilename = originalFilename;
-                    let counter = 1;
-                    // Asegurar que el nombre de archivo sea único en el ZIP si hay duplicados
-                    while (filenamesInZip.has(finalFilename)) {
-                        finalFilename = info.falabellaSku + mangoSuffix + `_${counter}.jpg`;
-                        counter++;
-                    }
-                    filenamesInZip.add(finalFilename);
+                    
                     zip.file(finalFilename, data, { binary: true });
                     console.log(`Added ${finalFilename} to zip.`);
 
                 } catch (err) {
-                    console.error(`Error downloading ${url}:`, err);
+                    console.error(`Error downloading ${url} for ${finalFilename}:`, err);
+                    logError(`Error descarga: ${info.falabellaSku} (${info.mangoModelFull})`);
                 } finally {
                     processedCount++;
                     if (processedCount === imageInfos.length) {
@@ -487,10 +510,8 @@
             }, 2000);
         });
 
-        // No se necesita inicialización específica de tienda/país para Mango
         $(document).ready(function() {
-            // El modo vista/sku no es relevante aquí ya que Mango siempre usa sufijos como _01
-            // por lo tanto, la parte de "viewToggle" se ha eliminado del HTML y JS
+            // Cualquier inicialización adicional si es necesaria, pero ya no hay selectores de tienda/país.
         });
     </script>
 </body>
