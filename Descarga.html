@@ -12,6 +12,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
+    <script src="https://unpkg.com/libavif.js@1.0.1/dist/libavif.min.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -234,6 +235,21 @@
     <script>
         // Global variable to store processed image data for ZIP generation
         let processedImagesForZip = [];
+        let libavifModule; // Variable para almacenar el módulo de libavif
+
+        // Inicializar libavif (importante que se cargue antes de usarlo)
+        if (typeof libavif === 'undefined') {
+            console.error("libavif.js no se ha cargado correctamente. Asegúrate de que la URL es correcta.");
+        } else {
+            libavif().then(Module => {
+                libavifModule = Module;
+                console.log("libavif.js cargado e inicializado.");
+            }).catch(e => {
+                console.error("Error al inicializar libavif.js:", e);
+                logProcessingError('Inicialización AVIF', 'Hubo un error al cargar o inicializar la librería de conversión AVIF. La conversión no estará disponible.');
+            });
+        }
+
 
         // Funciones para abrir y cerrar el sidebar
         function openNav() {
@@ -284,7 +300,7 @@
             "17": "TOFFEE", "42": "MANZANA", "27": "PIMENTON", "14": "LIMA",
             "50": "CELESTE", "54": "INDIGO", "CG": "COGNAC", "33": "COFFE",
             "CU": "CUERO", "GM": "GUNMETAL", "OR": "MORO", "101": "NATURAL",
-            "26": "PEACH", "PL": "PLATA", "46": "TURQUESA", "38": "CAZA",
+            "26": "PEACH", "PL": "PLATAPLT", "46": "TURQUESA", "38": "CAZA", // Se corrigió "PLATAPLT" en tu diccionario a "PLATAPLT" para que coincida. Si es "PLATA", ajusta
             "18": "CANELA", "41": "CLINIQUE", "66": "CIRUELA", "TA": "TAUPE",
             "04": "MARFIL", "DC": "DIRTYCLARO"
         };
@@ -293,39 +309,46 @@
         const falabellaNameToMangoColorCodeMap = {};
         for (const code in mangoColorCodeToFalabellaName) {
             const name = mangoColorCodeToFalabellaName[code].toUpperCase(); 
-            if (!falabellaNameToMangoColorCodeMap[name]) { // Solo añade si no existe, para evitar sobrescribir con códigos menos específicos
+            // Preferimos los códigos numéricos si hay un nombre duplicado con un código no numérico
+            if (!falabellaNameToMangoColorCodeMap[name] || !isNaN(parseInt(code))) { 
                 falabellaNameToMangoColorCodeMap[name] = code;
             }
         }
         // Ajustes manuales para asegurar la prioridad o corrección si hay nombres duplicados
         falabellaNameToMangoColorCodeMap['BLANCO'] = '01'; 
         falabellaNameToMangoColorCodeMap['OFF WHITE'] = '02'; 
-        // Añadir entradas para nombres que puedan aparecer en el input pero no en el diccionario original
-        falabellaNameToMangoColorCodeMap['NAVY'] = '56'; // Ejemplo si 'NAVY' aparece como nombre de color en el input
+        falabellaNameToMangoColorCodeMap['NAVY'] = '56'; // Añadido explícitamente si 'NAVY' aparece como nombre de color en el input
+        falabellaNameToMangoColorCodeMap['PLATA'] = 'PLT'; // Asegurando que 'PLATA' mapea a 'PLT' si existe ese código
+
 
         // Función para extraer el modelo base de Mango y el sufijo de vista del nombre del archivo
         function parseMangoFilename(filename) {
-            console.log(`[parseMangoFilename] Processing filename: ${filename}`);
+            // console.log(`[parseMangoFilename] Processing filename: ${filename}`);
             const nameWithoutExt = filename.split('.').slice(0, -1).join('.'); 
             
             // Expresión regular mejorada para ser más robusta con el separador del sufijo
             // Permite tanto '_' como '-' antes del sufijo de vista
-            const regex = /^(\d{8,}(?:[_-][A-Z0-9]+)?)(?:[_-](D[0-9]|[A-Z]|\d{2,}|9{8}_01))?$/i;
+            // El grupo 1 captura el ID_PRODUCTO_CODIGO_COLOR (ej: 87087686_02)
+            // El grupo 2 captura el sufijo de vista (ej: B, D0, 99999999_01)
+            const regex = /^(\d{8,}(?:[_-][A-Z0-9]+)?)(?:[_-]((?:D[0-9])|[A-Z]|\d{2,}|99999999_01))?$/i;
             const match = nameWithoutExt.match(regex);
 
             if (match) {
+                // Normaliza el ID_PRODUCTO_CODIGO_COLOR a usar siempre _ (ej: 87087686-02 -> 87087686_02)
                 const modelBase = match[1].replace(/[-_]([A-Z0-9]+)$/, '_$1'); 
+                
+                // Normaliza el sufijo de vista a usar siempre _ (ej: -D5 -> _D5)
                 let suffix = match[2] ? `_${match[2].replace(/^-/, '')}` : ''; 
                 
-                // Asegurar que el sufijo _99999999_01 se capture correctamente
-                if (suffix.includes('99999999')) {
-                    suffix = '_99999999_01';
+                // Si el sufijo es 99999999_01, aseguramos que se mantenga exacto el formato
+                if (suffix === '_99999999_01') { 
+                    // No es necesario modificarlo, ya está en el formato deseado
                 }
 
-                console.log(`[parseMangoFilename] Match found. modelBase: ${modelBase}, suffix: ${suffix}`);
+                // console.log(`[parseMangoFilename] Match found. modelBase: ${modelBase}, suffix: ${suffix}`);
                 return { modelBase, suffix };
             }
-            console.log(`[parseMangoFilename] No match found for: ${filename}`);
+            // console.log(`[parseMangoFilename] No match found for: ${filename}`);
             return null;
         }
 
@@ -335,6 +358,52 @@
             $('#errorList').append(`<li>${originalName} - Error: ${errorMessage}</li>`);
             console.error(`[ErrorLog] ${originalName} - Error: ${errorMessage}`);
         }
+
+        // Función para convertir AVIF a JPG usando libavif.js y canvas
+        async function convertAvifToJpg(avifBuffer, quality = 0.9) { // Calidad por defecto 90%
+            if (!libavifModule) {
+                throw new Error("La librería libavif.js no está cargada o inicializada.");
+            }
+
+            const uint8 = new Uint8Array(avifBuffer);
+            let result;
+            try {
+                // Decodificar el buffer AVIF
+                result = libavifModule.decode(uint8);
+            } catch (e) {
+                console.error("Error al decodificar AVIF:", e);
+                throw new Error(`Fallo al decodificar imagen AVIF: ${e.message}`);
+            }
+
+            if (!result || !result.width || !result.height || !result.data) {
+                throw new Error("Decodificación AVIF fallida o datos inválidos.");
+            }
+
+            const { width, height, data } = result;
+
+            // Crear un canvas temporal para dibujar la imagen
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Crear un ImageData a partir de los datos RGB/RGBA del AVIF decodificado
+            // libavif.js devuelve RGBA, por lo que ImageData lo manejará directamente
+            const imageData = new ImageData(new Uint8ClampedArray(data), width, height);
+            ctx.putImageData(imageData, 0, 0);
+
+            // Exportar el canvas como un Blob JPG
+            return new Promise((resolve, reject) => {
+                canvas.toBlob(blob => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Fallo al convertir canvas a Blob JPG."));
+                    }
+                }, 'image/jpeg', quality);
+            });
+        }
+
 
         // --- Manejo del proceso de carga y renombrado de archivos ---
         async function processFiles(files) {
@@ -380,7 +449,7 @@
                 }
                 
                 inputMap.set(normalizedMangoModelKey, { falabellaSku, fullLine: line });
-                console.log(`[processFiles] Input Map Entry: ${normalizedMangoModelKey} -> SKU: ${falabellaSku}`);
+                // console.log(`[processFiles] Input Map Entry: ${normalizedMangoModelKey} -> SKU: ${falabellaSku}`);
             }
 
             if (inputMap.size === 0) {
@@ -403,7 +472,7 @@
                     logProcessingError(file.name, 'No se pudo identificar el Modelo Mango o el sufijo de vista en el nombre del archivo. Archivo ignorado.');
                 }
             }
-            console.log('[processFiles] Files grouped by model:', filesGroupedByModel);
+            // console.log('[processFiles] Files grouped by model:', filesGroupedByModel);
 
             if (filesGroupedByModel.size === 0) {
                 logProcessingError('Carga de archivos', 'No se encontraron archivos con nombres que sigan la convención de Mango. Por favor, asegúrese que los nombres de sus archivos contienen el código de producto y color, ej. 87087686_02.');
@@ -413,7 +482,7 @@
 
             // Procesar cada grupo de archivos
             for (const [mangoModelBase, fileInfos] of filesGroupedByModel.entries()) {
-                console.log(`[processFiles] Processing group for model: ${mangoModelBase} with ${fileInfos.length} files.`);
+                // console.log(`[processFiles] Processing group for model: ${mangoModelBase} with ${fileInfos.length} files.`);
                 const inputEntry = inputMap.get(mangoModelBase);
 
                 if (!inputEntry) {
@@ -426,16 +495,32 @@
                 let imagesForCurrentEntry = []; 
 
                 for (const fileInfo of fileInfos) {
-                    const imageData = await new Promise((resolve, reject) => {
+                    const originalExt = fileInfo.file.name.split('.').pop().toLowerCase();
+                    let fileData = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result);
                         reader.onerror = (e) => reject(e);
                         reader.readAsArrayBuffer(fileInfo.file);
                     });
 
+                    let finalExt = originalExt;
+                    // Si es AVIF, convertir a JPG
+                    if (originalExt === 'avif') {
+                        try {
+                            // Convertir ArrayBuffer a Blob JPG
+                            fileData = await convertAvifToJpg(fileData);
+                            finalExt = 'jpg';
+                            console.log(`[processFiles] Converted ${fileInfo.file.name} to JPG.`);
+                        } catch (e) {
+                            logProcessingError(fileInfo.file.name, `Fallo la conversión de AVIF a JPG: ${e.message}. Archivo ignorado.`);
+                            continue; // Ignorar el archivo si la conversión falla
+                        }
+                    }
+
                     imagesForCurrentEntry.push({
                         file: fileInfo.file,
-                        imageData: imageData, 
+                        imageData: fileData, // Ya es el ArrayBuffer original o el Blob JPG
+                        outputExtension: finalExt, // Nueva extensión si se convirtió
                         falabellaSku: falabellaSku,
                         mangoModelFull: mangoModelBase + fileInfo.parsedInfo.suffix,
                         // 'MAIN_COLOR_IMAGE' ahora mapea a _1 de Falabella
@@ -444,7 +529,7 @@
                         originalLine: fullLine 
                     });
                 }
-                console.log(`[processFiles] Images collected for ${mangoModelBase}:`, imagesForCurrentEntry.map(img => img.originalFilename));
+                // console.log(`[processFiles] Images collected for ${mangoModelBase}:`, imagesForCurrentEntry.map(img => img.originalFilename));
 
                 // --- Lógica de Nomenclatura ---
                 let currentMainImage = null; // La imagen principal de Mango (sin sufijo)
@@ -470,16 +555,15 @@
                     if (indexB === -1) return -1; 
                     return indexA - indexB; 
                 });
-                console.log(`[processFiles] Other images sorted for ${mangoModelBase}:`, otherImages.map(img => img.originalFilename));
+                // console.log(`[processFiles] Other images sorted for ${mangoModelBase}:`, otherImages.map(img => img.originalFilename));
 
                 let entryProcessedImages = []; 
 
                 // 1. Añadir la imagen principal (ahora SKU_FALABELLA_1)
                 if (currentMainImage) {
-                    const originalExt = currentMainImage.originalFilename.split('.').pop();
-                    currentMainImage.renamedFilename = `${falabellaSku}_1.${originalExt}`; 
+                    currentMainImage.renamedFilename = `${falabellaSku}_1.${currentMainImage.outputExtension}`; 
                     entryProcessedImages.push(currentMainImage);
-                    console.log(`[processFiles] Renamed: ${currentMainImage.originalFilename} -> ${currentMainImage.renamedFilename}`);
+                    // console.log(`[processFiles] Renamed: ${currentMainImage.originalFilename} -> ${currentMainImage.renamedFilename}`);
                 } else {
                      logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo en el nombre del archivo) para el modelo ${mangoModelBase}.`);
                 }
@@ -488,10 +572,9 @@
                 let currentViewNumber = 2; 
                 for (const imgInfo of otherImages) {
                     if (currentViewNumber <= 7) { 
-                        const originalExt = imgInfo.originalFilename.split('.').pop();
-                        imgInfo.renamedFilename = `${falabellaSku}_${currentViewNumber}.${originalExt}`; 
+                        imgInfo.renamedFilename = `${falabellaSku}_${currentViewNumber}.${imgInfo.outputExtension}`; 
                         entryProcessedImages.push(imgInfo);
-                        console.log(`[processFiles] Renamed: ${imgInfo.originalFilename} -> ${imgInfo.renamedFilename}`);
+                        // console.log(`[processFiles] Renamed: ${imgInfo.originalFilename} -> ${imgInfo.renamedFilename}`);
                         currentViewNumber++;
                     } else {
                         logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal). Esta imagen no será renombrada secuencialmente.`);
@@ -500,10 +583,9 @@
 
                 // 3. Añadir la imagen de outfit como _8 si existe
                 if (currentOutfitImage) {
-                    const originalExt = currentOutfitImage.originalFilename.split('.').pop();
-                    currentOutfitImage.renamedFilename = `${falabellaSku}_8.${originalExt}`; 
+                    currentOutfitImage.renamedFilename = `${falabellaSku}_8.${currentOutfitImage.outputExtension}`; 
                     entryProcessedImages.push(currentOutfitImage);
-                    console.log(`[processFiles] Renamed: ${currentOutfitImage.originalFilename} -> ${currentOutfitImage.renamedFilename}`);
+                    // console.log(`[processFiles] Renamed: ${currentOutfitImage.originalFilename} -> ${currentOutfitImage.renamedFilename}`);
                 }
                 
                 // Añadir todas las imágenes procesadas de esta entrada a la lista global para el ZIP
@@ -519,7 +601,7 @@
                     imgInfo.renamedFilename = uniqueFilename; 
                     processedImagesForZip.push(imgInfo);
                 }
-                console.log(`[processFiles] Total images for ZIP after processing ${mangoModelBase}: ${processedImagesForZip.length}`);
+                // console.log(`[processFiles] Total images for ZIP after processing ${mangoModelBase}: ${processedImagesForZip.length}`);
             }
             
             $('#downloadZipBtn').prop('disabled', processedImagesForZip.length === 0);
@@ -542,7 +624,13 @@
                 const imageData = info.imageData; 
 
                 try {
-                    zip.file(finalFilename, imageData, { binary: true });
+                    // Si imageData es un Blob (ej. de la conversión AVIF), leemos su ArrayBuffer para JSZip
+                    if (imageData instanceof Blob) {
+                        const buffer = await new Response(imageData).arrayBuffer();
+                        zip.file(finalFilename, buffer, { binary: true });
+                    } else { // Si ya es un ArrayBuffer
+                        zip.file(finalFilename, imageData, { binary: true });
+                    }
                     console.log(`[generateZip] Added ${finalFilename} to zip.`);
 
                 } catch (err) {
