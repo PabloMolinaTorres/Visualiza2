@@ -138,6 +138,17 @@
             font-size: 12px;
             cursor: pointer;
             text-transform: uppercase;
+            /* Estilos para Drag & Drop */
+            transition: background-color 0.2s ease-in-out, border 0.2s ease-in-out;
+            border: 2px dashed transparent; /* Borde para drag & drop */
+            padding: 0 15px; /* Ajuste de padding si es necesario */
+        }
+        button:hover {
+            background-color: #76a700;
+        }
+        button.drag-over {
+            background-color: #a7e03c; /* Color cuando se arrastra sobre él */
+            border: 2px dashed #4CAF50; /* Borde para indicar zona de drop */
         }
         button:last-of-type {
             margin-bottom: 10px;
@@ -202,7 +213,7 @@
             <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
             <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png" multiple style="display: none;">
-            <button id="renameAndDownloadBtn">Cargar y Renombrar Imágenes (ZIP)</button>
+            <button id="renameAndDownloadBtn">Cargar y Renombrar Imágenes (Arrastra o Haz Clic)</button>
             
             <div id="errorLog">
                 <strong>Errores de procesamiento:</strong>
@@ -331,34 +342,35 @@
         };
 
         // Función para extraer el modelo base de Mango y el sufijo de vista del nombre del archivo
-        // Ej: "87087686_02_D5.jpg" -> { modelBase: "87087686_02", suffix: "_D5" }
-        // Ej: "87087686_02.jpg" -> { modelBase: "87087686_02", suffix: "" } (para la imagen principal)
-        // Ej: "87087686_02_99999999_01.jpg" -> { modelBase: "87087686_02", suffix: "_99999999_01" }
         function parseMangoFilename(filename) {
-            const nameWithoutExt = filename.split('.').slice(0, -1).join('.'); // Remove extension
+            const nameWithoutExt = filename.split('.').slice(0, -1).join('.'); 
             
-            // Regex para buscar el patrón del modelo Mango y un sufijo opcional
-            // Intenta capturar 8 o más dígitos, seguido de un posible _ y 2 dígitos/letras (el color)
-            // Luego, opcionalmente, un sufijo de vista como _D5, _B, _01, o el _99999999_01
-            const regex = /^(\d{8,}(?:_[A-Z0-9]+)?)(_D[0-9]|_[A-Z]|\_\d{2,}|_99999999_01)?$/i;
+            // Regex ajustada para ser más flexible con el código de color y capturar sufijos de vista comunes.
+            // Permite un modelo base como "87087686" o "87087686_02"
+            // y sufijos como "_D5", "_B", "_R", "_D1", "_D8", "_D0", "_01" a "_10", o "_99999999_01"
+            const regex = /^(\d{8,}(?:_[A-Z0-9]+)?)(?:_(D[0-9]|[A-Z]|\d{2,}|99999999_01))?$/i;
             const match = nameWithoutExt.match(regex);
 
             if (match) {
-                const modelBase = match[1]; // Ej: "87087686_02"
-                const suffix = match[2] || ''; // Ej: "_D5" o "" si es la principal
+                const modelBase = match[1]; // Ej: "87087686_02" o "87087686"
+                let suffix = match[2] ? `_${match[2]}` : ''; // Ej: "_D5" o ""
+
+                // Asegurar que el sufijo _99999999_01 se capture correctamente si es el caso
+                if (suffix.includes('99999999')) {
+                    suffix = '_99999999_01';
+                }
+
                 return { modelBase, suffix };
             }
-
-            return null; // No coincide con el patrón esperado
+            return null;
         }
 
 
         // Función para extraer el código de color de Mango de un modelo base
-        // Ej: "87087686_02" -> "02"
         function getMangoColorCode(mangoModelBase) {
             const parts = mangoModelBase.split('_');
             if (parts.length > 1) {
-                return parts[parts.length - 1].toUpperCase(); // Convert to uppercase for map lookup
+                return parts[parts.length - 1].toUpperCase(); 
             }
             return null;
         }
@@ -369,22 +381,11 @@
             $('#errorList').append(`<li>${originalName} - Error: ${errorMessage}</li>`);
         }
 
-        // Event listener para el botón "Cargar y Renombrar Imágenes (ZIP)"
-        $('#renameAndDownloadBtn').click(function() {
-            $('#uploadImagesInput').click(); // Abre el selector de archivos
-        });
-
-        // Event listener cuando los archivos son seleccionados
-        $('#uploadImagesInput').change(async function(event) {
+        // --- Manejo del proceso de carga y renombrado de archivos ---
+        async function processFiles(files) {
             $('#errorLog').hide();
             $('#errorList').empty();
-            let allImagesToZip = []; // Almacena los archivos renombrados y sus datos
-
-            const files = event.target.files;
-            if (files.length === 0) {
-                alert('No se seleccionaron archivos.');
-                return;
-            }
+            let allImagesToZip = []; 
 
             const inputLines = $('#dataInput').val().trim().split('\n').filter(s => s.trim() !== '');
             if (inputLines.length === 0) {
@@ -393,7 +394,7 @@
             }
 
             // Crear un mapa de info de entrada por Mango Model Base para acceso rápido
-            const inputMap = new Map(); // Key: mangoModelBase (e.g., "87087686_02"), Value: { falabellaSku, fullLine }
+            const inputMap = new Map(); 
             for (const line of inputLines) {
                 const parts = line.split('-');
                 if (parts.length < 3) {
@@ -411,7 +412,7 @@
             }
 
             // Agrupar archivos por su 'mangoModelBase'
-            const filesGroupedByModel = new Map(); // Key: mangoModelBase, Value: Array of { file, parsedInfo }
+            const filesGroupedByModel = new Map(); 
 
             for (const file of files) {
                 const parsedInfo = parseMangoFilename(file.name);
@@ -441,15 +442,14 @@
 
                 const { falabellaSku, fullLine } = inputEntry;
                 const mangoColorCode = getMangoColorCode(mangoModelBase);
-                let falabellaColorName = "COLOR"; // Default if not found
+                let falabellaColorName = "COLOR"; 
                 if (mangoColorCode && mangoColorCodeToFalabellaName[mangoColorCode]) {
                     falabellaColorName = mangoColorCodeToFalabellaName[mangoColorCode];
                 }
 
-                let imagesForCurrentEntry = []; // Para las imágenes ya leídas (File objects)
+                let imagesForCurrentEntry = []; 
 
                 for (const fileInfo of fileInfos) {
-                    // Lee el contenido del archivo
                     const imageData = await new Promise((resolve, reject) => {
                         const reader = new FileReader();
                         reader.onload = (e) => resolve(e.target.result);
@@ -459,12 +459,12 @@
 
                     imagesForCurrentEntry.push({
                         file: fileInfo.file,
-                        imageData: imageData, // El ArrayBuffer del archivo
+                        imageData: imageData, 
                         falabellaSku: falabellaSku,
                         mangoModelFull: mangoModelBase + fileInfo.parsedInfo.suffix,
-                        originalMangoSuffix: fileInfo.parsedInfo.suffix === '' ? 'MAIN_COLOR_IMAGE' : fileInfo.parsedInfo.suffix, // Identificador para la imagen principal
+                        originalMangoSuffix: fileInfo.parsedInfo.suffix === '' ? 'MAIN_COLOR_IMAGE' : fileInfo.parsedInfo.suffix, 
                         originalFilename: fileInfo.file.name,
-                        originalLine: fullLine // Para referencia en errores
+                        originalLine: fullLine 
                     });
                 }
 
@@ -486,7 +486,6 @@
                 otherImages.sort((a, b) => {
                     const indexA = mangoSuffixPriority.indexOf(a.originalMangoSuffix);
                     const indexB = mangoSuffixPriority.indexOf(b.originalMangoSuffix);
-                    // Manejar sufijos no encontrados al final
                     if (indexA === -1 && indexB === -1) return 0;
                     if (indexA === -1) return 1;
                     if (indexB === -1) return -1;
@@ -499,16 +498,19 @@
                     currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.${currentMainImage.originalFilename.split('.').pop()}`;
                     processedImagesForZip.push(currentMainImage);
                 } else {
-                     logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo) para el modelo ${mangoModelBase}.`);
+                     logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo en el nombre del archivo) para el modelo ${mangoModelBase}.`);
                 }
 
                 // 2. Añadir otras imágenes con numeración secuencial
-                let currentViewNumber = 2; // Inicia en 2 porque la principal es 1
+                let currentViewNumber = 2; 
                 for (const imgInfo of otherImages) {
                     if (currentViewNumber <= 7) { 
                         imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.${imgInfo.originalFilename.split('.').pop()}`;
                         processedImagesForZip.push(imgInfo);
                         currentViewNumber++;
+                    } else {
+                        // Si hay más de 7 vistas (sin contar la principal y outfit), se ignoran o se les asigna un sufijo genérico
+                        logProcessingError(imgInfo.originalFilename, `Se excedió el número de vistas secundarias (máx 6 después de la principal). Esta imagen no será renombrada secuencialmente.`);
                     }
                 }
 
@@ -520,7 +522,6 @@
                 
                 // Añadir todas las imágenes procesadas de esta entrada a la lista global para el ZIP
                 for (const imgInfo of processedImagesForZip) {
-                    // Asegurar nombre de archivo único dentro del ZIP global
                     let uniqueFilename = imgInfo.renamedFilename;
                     let counter = 1;
                     const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
@@ -536,12 +537,12 @@
             
             // Generar y descargar el ZIP
             if (allImagesToZip.length === 0) {
-                alert('No se pudo procesar ninguna imagen con la información proporcionada. Verifique los nombres de los archivos y el formato de entrada.');
+                alert('No se pudo procesar ninguna imagen. Verifique los nombres de los archivos y el formato de entrada.');
                 return;
             }
 
             await generateZip(allImagesToZip);
-        });
+        }
 
         // Función para generar el archivo ZIP
         async function generateZip(imageInfos) {
@@ -600,7 +601,45 @@
         });
 
         $(document).ready(function() {
-            // Cualquier inicialización adicional si es necesaria.
+            const uploadBtn = $('#renameAndDownloadBtn');
+            const fileInput = $('#uploadImagesInput');
+
+            // Evento para abrir el selector de archivos al hacer clic en el botón
+            uploadBtn.on('click', function() {
+                fileInput.click();
+            });
+
+            // Evento para procesar archivos seleccionados manualmente
+            fileInput.on('change', function(event) {
+                processFiles(event.target.files);
+                fileInput.val(''); // Limpiar el input para permitir recargar los mismos archivos
+            });
+
+            // --- Eventos de Drag & Drop ---
+            uploadBtn.on('dragover', function(e) {
+                e.preventDefault(); // Previene la acción por defecto (abrir el archivo en el navegador)
+                e.stopPropagation();
+                $(this).addClass('drag-over');
+            });
+
+            uploadBtn.on('dragleave', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $(this).removeClass('drag-over');
+            });
+
+            uploadBtn.on('drop', function(e) {
+                e.preventDefault(); // Previene la acción por defecto
+                e.stopPropagation();
+                $(this).removeClass('drag-over');
+
+                const files = e.originalEvent.dataTransfer.files;
+                if (files.length > 0) {
+                    processFiles(files);
+                } else {
+                    alert('No se detectaron archivos para cargar.');
+                }
+            });
         });
     </script>
 </body>
