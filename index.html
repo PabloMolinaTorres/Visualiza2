@@ -671,49 +671,68 @@
 
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
-                var baseUrl;
+                let primaryBaseUrl;
+                let fallbackBaseUrl; // Solo para Sodimac CL
+
                 if (useFalabella) {
-                    baseUrl = 'https://media.falabella.com/falabella';
+                    primaryBaseUrl = 'https://media.falabella.com/falabella';
                 } else if (useSodimac) {
-                    baseUrl = `https://media.falabella.com/sodimac${pais}`; // URL específica para Sodimac
-                } else {
-                    baseUrl = `https://media.falabella.com/tottus${pais}`; // URL específica para Tottus
+                    primaryBaseUrl = `https://media.falabella.com/sodimac${pais}`;
+                    if (pais === 'CL') {
+                        fallbackBaseUrl = 'https://media.falabella.com/falabella'; // Fallback a Falabella CL
+                    }
+                } else { // Tottus
+                    primaryBaseUrl = `https://media.falabella.com/tottus${pais}`;
                 }
-                var primaryUrl = `${baseUrl}/${sku}/public`;
-                var downloadUrl = `${baseUrl}/${sku}/w=1500,h=1500`;
-                var alternateUrl = `${baseUrl}/inpage_media/${sku}/public`;
 
-                console.log("Loading image for SKU: " + sku + " from URL: " + primaryUrl);
-                var img = new Image();
-                img.src = primaryUrl;
-                img.alt = sku;
-                img.setAttribute('data-download-src', downloadUrl);
+                const primaryUrl = `${primaryBaseUrl}/${sku}/public`;
+                const primaryDownloadUrl = `${primaryBaseUrl}/${sku}/w=1500,h=1500`;
+                const primaryAlternateUrl = `${primaryBaseUrl}/inpage_media/${sku}/public`;
 
-                img.onload = function() {
-                    var wrapper = $('<div class="imgWrapper"><a href="' + primaryUrl + '" target="_blank"></a></div>');
-                    wrapper.find('a').append(img);
-                    resolve({ element: wrapper, sku: sku });
-                };
+                const fallbackUrl = fallbackBaseUrl ? `${fallbackBaseUrl}/${sku}/public` : null;
+                const fallbackDownloadUrl = fallbackBaseUrl ? `${fallbackBaseUrl}/${sku}/w=1500,h=1500` : null;
+                const fallbackAlternateUrl = fallbackBaseUrl ? `${fallbackBaseUrl}/inpage_media/${sku}/public` : null;
 
-                img.onerror = function() {
-                    if (sku.includes('-')) {
-                        console.log("Trying alternate URL for SKU: " + sku);
-                        img.src = alternateUrl;
-                        img.setAttribute('data-download-src', alternateUrl);
-                        img.onload = function() {
-                            var wrapper = $('<div class="imgWrapper"><a href="' + alternateUrl + '" target="_blank"></a></div>');
-                            wrapper.find('a').append(img);
-                            resolve({ element: wrapper, sku: sku });
-                        };
-                        img.onerror = function() {
+                function tryLoadImage(url, downloadUrl, altUrl, isFallback = false) {
+                    console.log(`Loading image for SKU: ${sku} from URL: ${url} (Fallback: ${isFallback})`);
+                    var img = new Image();
+                    img.src = url;
+                    img.alt = sku;
+                    img.setAttribute('data-download-src', downloadUrl);
+
+                    img.onload = function() {
+                        var wrapper = $('<div class="imgWrapper"><a href="' + url + '" target="_blank"></a></div>');
+                        wrapper.find('a').append(img);
+                        resolve({ element: wrapper, sku: sku });
+                    };
+
+                    img.onerror = function() {
+                        if (!isFallback && fallbackUrl) {
+                            console.log(`Primary image failed for ${sku} from ${url}. Trying fallback URL.`);
+                            tryLoadImage(fallbackUrl, fallbackDownloadUrl, fallbackAlternateUrl, true);
+                        } else if (sku.includes('-') && altUrl) {
+                            console.log(`Trying alternate URL for SKU: ${sku} from URL: ${altUrl}`);
+                            // En este punto, si es fallback, ya no intentamos el alternate de la URL primaria, sino el del fallback
+                            // Si no hay fallback, es el alternate de la URL primaria.
+                            img.src = altUrl;
+                            img.setAttribute('data-download-src', altUrl);
+                            img.onload = function() {
+                                var wrapper = $('<div class="imgWrapper"><a href="' + altUrl + '" target="_blank"></a></div>');
+                                wrapper.find('a').append(img);
+                                resolve({ element: wrapper, sku: sku });
+                            };
+                            img.onerror = function() {
+                                console.log("Error loading image for SKU: " + sku);
+                                resolve({ error: true, sku: sku });
+                            };
+                        } else {
                             console.log("Error loading image for SKU: " + sku);
                             resolve({ error: true, sku: sku });
-                        };
-                    } else {
-                        console.log("Error loading image for SKU: " + sku);
-                        resolve({ error: true, sku: sku });
-                    }
-                };
+                        }
+                    };
+                }
+
+                tryLoadImage(primaryUrl, primaryDownloadUrl, primaryAlternateUrl);
             });
         }
 
