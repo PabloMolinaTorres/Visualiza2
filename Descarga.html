@@ -78,6 +78,9 @@
             height: 100%;
             display: flex;
             width: 100%;
+            justify-content: center; /* Centrar el contenido */
+            align-items: center; /* Centrar verticalmente */
+            padding: 20px; /* Añadir padding para espacio */
         }
         body.sidebar-open #main {
             margin-left: 250px;
@@ -102,53 +105,16 @@
 
         .container {
             display: flex;
-            flex-grow: 1;
-            height: 100%;
-        }
-        .leftContainer {
-            width: 40%; 
-            display: flex;
+            flex-direction: column; /* Cambiado a columna para apilar elementos */
+            width: 50%; /* Ancho fijo para el contenedor central */
+            max-width: 600px; /* Ancho máximo para mejor legibilidad */
             padding: 20px;
             box-sizing: border-box;
-            flex-direction: column;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        .rightContainer {
-            width: 60%;
-            padding: 20px;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
-        .imgContainer {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        .imgWrapper {
-            width: 120px;
-            height: 120px;
-            position: relative;
-            display: block;
-            overflow: hidden;
-            border: 1px solid #eeeeee;
-            text-align: center;
-        }
-        .imgWrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .sku {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            text-align: center;
-            font-size: 10px;
-            padding: 2px;
-        }
+        
         textarea {
             width: 100%;
             margin: 10px 0;
@@ -231,24 +197,18 @@
 
     <div id="main">
         <div class="container">
-            <div class="leftContainer">
-                <div class="title">Descargar y Renombrar Imágenes Mango</div>
+            <div class="title">Descargar y Renombrar Imágenes Mango</div>
 
-                <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
-                
-                <button id="previewImages">Previsualizar Imágenes</button>
-                <button id="downloadImages">Descargar Imágenes (ZIP)</button>
-                
-                <div id="errorLog">
-                    <strong>Errores de descarga:</strong>
-                    <button id="copyErrors">Copiar</button>
-                    <ul id="errorList"></ul>
-                </div>
-            </div>
-
-            <div class="rightContainer">
-                <div class="title">Previsualización</div>
-                <div class="imgContainer" id="imgContainer"></div>
+            <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
+            
+            <button id="downloadImages">Descargar y Renombrar Imágenes (ZIP)</button>
+            <input type="file" id="uploadImages" accept="image/*" multiple style="display: none;">
+            <button id="uploadImagesBtn">Cargar Imágenes Desde Computador (Funcionalidad pendiente)</button>
+            
+            <div id="errorLog">
+                <strong>Errores de descarga:</strong>
+                <button id="copyErrors">Copiar</button>
+                <ul id="errorList"></ul>
             </div>
         </div>
     </div>
@@ -266,13 +226,10 @@
             document.body.classList.remove("sidebar-open");
         }
 
-        var foundImageInfos = []; // Almacena info de imágenes encontradas para descarga
-
         // Define el orden de prioridad de los sufijos de Mango para la numeración de Falabella
         const mangoSuffixPriority = [
-            // The "main" image will be handled by color code, not _01.
-            // _01 is still a valid Mango suffix, but it won't be "_01" in the Falabella name
-            '_01', // Example: 87087686_02_01.jpg -> will become SKU_FALABELLA_02.jpg (if it's the second image found)
+            // The "main" image is handled by color code.
+            '_01', // Standard _01 image (if exists, will get a sequential number like _02, _03 etc.)
             '_02',
             '_03',
             '_04',
@@ -315,9 +272,9 @@
             "21": "TEJANOSOFT",
             "TS": "ROSAVIEJO",
             "83": "ROSAVIEJO", // Consistency for 83
-            "02": "BLANCO", // Prioritizing BLANCO for 02 (was OFF WHITE, CORAL)
+            "02": "BLANCO", // Prioritizing BLANCO for 02
             "70": "ROJO",
-            "01": "BLANCO", // Consistency for 01 (was BLANCO, then OFFWHITE)
+            "01": "BLANCO", // Consistency for 01
             "87": "CORAL", // Consistency for 87
             "07": "ARENA",
             "16": "OCRE",
@@ -393,29 +350,25 @@
         }
 
         // Function to build Mango image URLs
-        // Note: The main image for a MODELO_COLOR (e.g., 87087686_02) often doesn't have an additional suffix like _01.
-        // It's the base URL of that model itself.
-        function getMangoImageUrls(mangoModelBase, suffix = '') { // suffix is now optional for the main image
+        function getMangoImageUrls(mangoModelBase, suffix = '') {
             const parts = mangoModelBase.split('_');
-            const mainModelNumber = parts[0]; // "87087686"
-            const colorVariantCode = parts[1] ? `_${parts[1]}` : ''; // "_02" if exists
+            const mainModelNumber = parts[0]; 
+            const colorVariantCode = parts[1] ? `_${parts[1]}` : '';
 
             if (!mainModelNumber || mainModelNumber.length === 0) {
                 console.error("Mango model base number is invalid:", mangoModelBase);
                 return [];
             }
-            const firstDigit = mainModelNumber[0]; // "8"
+            const firstDigit = mainModelNumber[0]; 
 
             let urls = [];
-            let fullModelId = `${mainModelNumber}${colorVariantCode}${suffix}`; // For example: 87087686_02 or 87087686_02_D5
+            let fullModelId = `${mainModelNumber}${colorVariantCode}${suffix}`;
 
-            // Primary route for standard and detail images
             urls.push({
                 type: 'standard',
                 url: `https://shop.mango.com/assets/rcs/pics/static/T${firstDigit}/fotos/S/${fullModelId}.jpg`
             });
-
-            // Special route for outfit images
+            
             if (suffix === '_99999999_01') {
                 urls.push({
                     type: 'outfit',
@@ -425,31 +378,35 @@
             return urls;
         }
 
-        // Function to load image and provide preview
-        async function loadImage(url, displayId) {
-            return new Promise(function(resolve) {
-                var img = new Image();
-                img.src = `${url}?imwidth=300&imdensity=1`; 
-                img.alt = displayId;
-                img.setAttribute('data-full-url', `${url}?imwidth=1500&imdensity=1`); 
+        // Function to load image (no longer used for preview, but for actual download data)
+        async function loadImageData(url) {
+            return new Promise(function(resolve, reject) {
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // Required for tainted canvas/blob from external domains
+                img.src = `${url}?imwidth=1500&imdensity=1`; // Use high quality for download
 
                 img.onload = function() {
-                    var wrapper = document.createElement('div');
-                    wrapper.classList.add('imgWrapper');
-                    var link = document.createElement('a');
-                    link.href = img.getAttribute('data-full-url');
-                    link.target = '_blank';
-                    link.appendChild(img);
-                    var skuDiv = document.createElement('div');
-                    skuDiv.classList.add('sku');
-                    skuDiv.textContent = displayId;
-                    wrapper.appendChild(link);
-                    wrapper.appendChild(skuDiv);
-                    resolve(wrapper);
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+
+                    canvas.toBlob(function(blob) {
+                        if (blob) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => resolve(reader.result);
+                            reader.onerror = reject;
+                            reader.readAsArrayBuffer(blob);
+                        } else {
+                            reject(new Error('Failed to create Blob from image.'));
+                        }
+                    }, 'image/jpeg', 0.9); // Use JPEG with quality 0.9
+
                 };
 
                 img.onerror = function() {
-                    resolve(null);
+                    reject(new Error(`Failed to load image at ${url}`));
                 };
             });
         }
@@ -460,12 +417,11 @@
             $('#errorList').append(`<li>${originalLine} - Error: ${errorMessage}</li>`);
         }
 
-        // "Previsualizar Imágenes" button logic
-        $('#previewImages').click(async function() {
-            $('#imgContainer').empty();
+        // "Descargar y Renombrar Imágenes (ZIP)" button logic
+        $('#downloadImages').click(async function() {
             $('#errorLog').hide();
             $('#errorList').empty();
-            foundImageInfos = []; // Reset list
+            let allImagesForZip = []; // Collect all images to add to ZIP
 
             const inputLines = $('#dataInput').val().trim().split('\n').filter(s => s.trim() !== '');
 
@@ -481,40 +437,38 @@
                     continue;
                 }
 
-                const mangoModelRaw = parts[0].trim(); // Ej: "87016341" o "87087686_02"
-                const falabellaSku = parts[2].trim();  // Ej: "17458661"
+                const mangoModelRaw = parts[0].trim();
+                const falabellaSku = parts[2].trim();
 
-                let imagesForCurrentEntry = []; // Temp storage for images found for this entry
-                let mainImageFound = false; // Flag for the main color image
+                let imagesForCurrentEntry = []; 
+                let mainImageFound = false;
 
-                // 1. Try to find the MAIN image (based on mangoModelRaw itself, no extra suffix)
+                // Determine Falabella Color Name for the main image
                 const mangoColorCode = getMangoColorCode(mangoModelRaw);
-                let falabellaColorName = "UNKNCOLOR"; // Default if not found
+                let falabellaColorName = "COLOR"; // Default if not found in map
                 if (mangoColorCode && mangoColorCodeToFalabellaName[mangoColorCode.toUpperCase()]) {
                     falabellaColorName = mangoColorCodeToFalabellaName[mangoColorCode.toUpperCase()];
-                } else if (mangoModelRaw.includes(' ')) { // Try to parse if color code is part of model name directly
-                     // Example: "MODELO COLORGRIS"
-                     // This part needs adjustment based on how the color name is embedded if not _XX
-                     // For now, assume it's like 87087686_02
                 }
                 
-                // Construct URL for the main image (without additional suffixes)
+                // 1. Try to find the MAIN image (based on mangoModelRaw itself)
                 const mainImageUrlObjects = getMangoImageUrls(mangoModelRaw);
                 let mainImageInfo = null;
 
                 for (const urlObj of mainImageUrlObjects) {
-                    const imgElement = await loadImage(urlObj.url, `${mangoModelRaw} (MAIN)`);
-                    if (imgElement) {
+                    try {
+                        const imageData = await loadImageData(urlObj.url);
                         mainImageInfo = {
                             originalLine: line,
                             falabellaSku: falabellaSku,
                             mangoModelFull: mangoModelRaw,
-                            downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
-                            originalMangoSuffix: 'MAIN_COLOR_IMAGE' // Special identifier for main image
+                            imageData: imageData, // Store image data directly
+                            originalMangoSuffix: 'MAIN_COLOR_IMAGE' // Special identifier
                         };
                         imagesForCurrentEntry.push(mainImageInfo);
                         mainImageFound = true;
-                        break; // Found the main image, move on
+                        break;
+                    } catch (e) {
+                        // console.warn(`Main image for ${mangoModelRaw} not found at ${urlObj.url}: ${e.message}`);
                     }
                 }
                 
@@ -523,56 +477,59 @@
                 }
 
                 // 2. Try to find other views based on mangoSuffixPriority
-                // We add a dummy '_main_placeholder' to mangoSuffixPriority internally to keep the actual MAIN image always first
-                const tempSuffixPriority = ['_main_placeholder', ...mangoSuffixPriority];
-
-                for (const suffix of tempSuffixPriority) {
-                    if (suffix === '_main_placeholder') continue; // Skip placeholder, already handled
-
+                for (const suffix of mangoSuffixPriority) {
                     // Handle outfit separately as it has a specific suffix and target name
                     if (suffix === '_99999999_01') {
                         const outfitUrlObjects = getMangoImageUrls(mangoModelRaw, suffix);
                         let outfitImageInfo = null;
                         for (const urlObj of outfitUrlObjects) {
-                            const imgElement = await loadImage(urlObj.url, `${mangoModelRaw}${suffix} (OUTFIT)`);
-                            if (imgElement) {
+                            try {
+                                const imageData = await loadImageData(urlObj.url);
                                 outfitImageInfo = {
                                     originalLine: line,
                                     falabellaSku: falabellaSku,
                                     mangoModelFull: `${mangoModelRaw}${suffix}`, 
-                                    downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
-                                    originalMangoSuffix: suffix // Keep original suffix for later ordering
+                                    imageData: imageData,
+                                    originalMangoSuffix: suffix 
                                 };
                                 imagesForCurrentEntry.push(outfitImageInfo);
                                 break;
+                            } catch (e) {
+                                // console.warn(`Outfit image for ${mangoModelRaw}${suffix} not found at ${urlObj.url}: ${e.message}`);
                             }
                         }
-                        continue; // Move to next suffix
+                        continue; 
                     }
 
                     const candidateUrlObjects = getMangoImageUrls(mangoModelRaw, suffix);
                     for (const urlObj of candidateUrlObjects) {
-                        const imgElement = await loadImage(urlObj.url, `${mangoModelRaw}${suffix}`);
-                        if (imgElement) {
+                        try {
+                            const imageData = await loadImageData(urlObj.url);
                             imagesForCurrentEntry.push({
                                 originalLine: line,
                                 falabellaSku: falabellaSku,
                                 mangoModelFull: `${mangoModelRaw}${suffix}`, 
-                                downloadUrl: imgElement.querySelector('img').getAttribute('data-full-url'),
+                                imageData: imageData,
                                 originalMangoSuffix: suffix
                             });
                             break; 
+                        } catch (e) {
+                            // console.warn(`Image for ${mangoModelRaw}${suffix} not found at ${urlObj.url}: ${e.message}`);
                         }
                     }
                 }
 
-                // --- Lógica de ordenamiento y renumeración ---
+                // --- Naming Logic ---
                 if (imagesForCurrentEntry.length === 0) {
-                    logDownloadError(line, 'No se encontraron imágenes para este modelo Mango.');
+                    if (mainImageFound) { // If main image was found but other views not
+                         // This is already logged if mainImageFound is false.
+                         // No additional error for "no other images" if main image exists.
+                    } else {
+                        logDownloadError(line, 'No se encontró ninguna imagen (principal o vistas) para este modelo Mango.');
+                    }
                     continue; 
                 }
 
-                // Separate main and outfit images for precise numbering
                 let currentMainImage = null;
                 let currentOutfitImage = null;
                 let otherImages = [];
@@ -587,78 +544,79 @@
                     }
                 }
 
-                // Sort 'otherImages' based on the defined priority
                 otherImages.sort((a, b) => {
                     const indexA = mangoSuffixPriority.indexOf(a.originalMangoSuffix);
                     const indexB = mangoSuffixPriority.indexOf(b.originalMangoSuffix);
                     return indexA - indexB;
                 });
 
-                let processedImages = [];
-                // 1. Add the main image if found, with its color name
+                let processedImagesForZip = [];
+                // 1. Add the main image (with its color name)
                 if (currentMainImage) {
                     currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.jpg`;
-                    processedImages.push(currentMainImage);
+                    processedImagesForZip.push(currentMainImage);
                 }
 
                 // 2. Add other images with sequential numbering
                 let currentViewNumber = 2; // Start from 2 because main image is 1
                 for (const imgInfo of otherImages) {
-                    // Ensure we don't exceed view 7 before the outfit image, if outfit image exists
                     if (currentViewNumber <= 7) { 
                         imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.jpg`;
-                        processedImages.push(imgInfo);
+                        processedImagesForZip.push(imgInfo);
                         currentViewNumber++;
                     }
                 }
 
                 // 3. Add the outfit image as _08 if it exists
                 if (currentOutfitImage) {
-                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.jpg`; // Always vista 8
-                    processedImages.push(currentOutfitImage);
+                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.jpg`; 
+                    processedImagesForZip.push(currentOutfitImage);
                 }
                 
-                // Add to DOM and global list for download
-                for (const imgInfo of processedImages) {
-                    const imgElement = await loadImage(imgInfo.downloadUrl, `${imgInfo.renamedFilename} (Mango: ${imgInfo.mangoModelFull})`);
-                    if (imgElement) {
-                        $('#imgContainer').append(imgElement);
-                        // Ensure unique filename in the final ZIP
-                        let uniqueFilename = imgInfo.renamedFilename;
-                        let counter = 1;
-                        const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
-                        const extension = uniqueFilename.split('.').pop();
-                        while (foundImageInfos.some(info => info.renamedFilename === uniqueFilename)) {
-                            uniqueFilename = `${baseName}_${counter}.${extension}`;
-                            counter++;
-                        }
-                        imgInfo.renamedFilename = uniqueFilename; 
-                        foundImageInfos.push(imgInfo);
-                    } else {
-                        logDownloadError(imgInfo.originalLine, `No se pudo previsualizar la imagen: ${imgInfo.mangoModelFull}`);
+                // Add all processed images for this entry to the global list for ZIP
+                for (const imgInfo of processedImagesForZip) {
+                    // Ensure unique filename within the overall ZIP
+                    let uniqueFilename = imgInfo.renamedFilename;
+                    let counter = 1;
+                    const baseName = uniqueFilename.split('.').slice(0, -1).join('.');
+                    const extension = uniqueFilename.split('.').pop();
+                    while (allImagesForZip.some(info => info.renamedFilename === uniqueFilename)) {
+                        uniqueFilename = `${baseName}_${counter}.${extension}`;
+                        counter++;
                     }
+                    imgInfo.renamedFilename = uniqueFilename; 
+                    allImagesForZip.push(imgInfo);
                 }
             }
             
-            if (foundImageInfos.length === 0) {
-                alert('No se encontraron imágenes para ninguna de las entradas. Verifique los modelos y el formato de entrada.');
-            } else {
-                alert(`Previsualización completada. ${foundImageInfos.length} imágenes encontradas.`);
-            }
-        });
-
-        // "Descargar Imágenes (ZIP)" button logic (remains mostly unchanged)
-        $('#downloadImages').click(async function() {
-            if (foundImageInfos.length === 0) {
-                alert('No hay imágenes previsualizadas para descargar. Por favor, haga clic en "Previsualizar Imágenes" primero.');
+            // Now, proceed with ZIP generation using allImagesForZip
+            if (allImagesForZip.length === 0) {
+                alert('No se encontró ninguna imagen para descargar. Verifique los modelos y el formato de entrada, o si las imágenes existen en Mango.');
                 return;
             }
 
-            $('#errorLog').hide();
-            $('#errorList').empty();
-
-            await downloadImagesAsZip(foundImageInfos);
+            await downloadImagesAsZip(allImagesForZip);
         });
+
+        // "Cargar Imágenes Desde Computador" button logic
+        // Esta funcionalidad requiere una definición de cómo se mapearán los archivos locales a los SKUs y vistas.
+        // Por ahora, el botón abre el selector de archivos pero no realiza renombrado.
+        $('#uploadImagesBtn').click(function() {
+            alert('Esta funcionalidad aún está en desarrollo. Necesitamos definir cómo se nombrarán los archivos locales. Por favor, usa la descarga desde Mango por ahora.');
+            // $('#uploadImages').click(); // This would open the file dialog
+        });
+
+        // Example for how to handle files selected via input[type="file"]
+        // $('#uploadImages').change(function(event) {
+        //     const files = event.target.files;
+        //     if (files.length > 0) {
+        //         // Here you would process the files for renaming
+        //         // This is a complex task as you'd need to map local file names to SKUs/views
+        //         console.log('Archivos seleccionados:', files);
+        //         alert(`Se seleccionaron ${files.length} archivos. La lógica de renombrado para archivos locales aún no está implementada.`);
+        //     }
+        // });
+
 
         // Function to download images as ZIP
         async function downloadImagesAsZip(imageInfos) {
@@ -667,29 +625,16 @@
             var zipFilename = `Mango_Renombrado_Falabella_${getFormattedDate()}.zip`;
 
             for (const info of imageInfos) {
-                const url = info.downloadUrl;
                 const finalFilename = info.renamedFilename; 
+                const imageData = info.imageData; // Use pre-fetched image data
 
                 try {
-                    const response = await fetch(url, {mode: 'cors'});
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    const blob = await response.blob();
-                    
-                    const data = await new Promise((resolve, reject) => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => resolve(reader.result);
-                        reader.onerror = reject;
-                        reader.readAsArrayBuffer(blob);
-                    });
-                    
-                    zip.file(finalFilename, data, { binary: true });
+                    zip.file(finalFilename, imageData, { binary: true });
                     console.log(`Added ${finalFilename} to zip.`);
 
                 } catch (err) {
-                    console.error(`Error downloading ${url} for ${finalFilename}:`, err);
-                    logDownloadError(info.originalLine || info.falabellaSku, `Error al descargar ${info.mangoModelFull}: ${err.message}`);
+                    console.error(`Error adding ${finalFilename} to zip:`, err);
+                    logDownloadError(info.originalLine || info.falabellaSku, `Error al añadir ${finalFilename} al ZIP: ${err.message}`);
                 } finally {
                     processedCount++;
                     if (processedCount === imageInfos.length) {
