@@ -212,7 +212,7 @@
 
             <textarea id="dataInput" placeholder="Ingrese cada línea con el formato: MODELO_MANGO-COLOR-SKU_FALABELLA-LO_DEMAS (ej. 87016341-NAVY-17458661-J05030202-MANGO TEENS)"></textarea>
             
-            <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png" multiple style="display: none;">
+            <input type="file" id="uploadImagesInput" accept="image/jpeg, image/png, image/avif" multiple style="display: none;">
             <button id="renameAndDownloadBtn">Cargar y Renombrar Imágenes (Arrastra o Haz Clic)</button>
             
             <div id="errorLog">
@@ -495,7 +495,8 @@
                 let processedImagesForZip = [];
                 // 1. Añadir la imagen principal (con nombre de color)
                 if (currentMainImage) {
-                    currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.${currentMainImage.originalFilename.split('.').pop()}`;
+                    const originalExt = currentMainImage.originalFilename.split('.').pop();
+                    currentMainImage.renamedFilename = `${falabellaSku}_${falabellaColorName}.${originalExt}`;
                     processedImagesForZip.push(currentMainImage);
                 } else {
                      logProcessingError(fullLine, `No se encontró la imagen principal (sin sufijo en el nombre del archivo) para el modelo ${mangoModelBase}.`);
@@ -505,7 +506,8 @@
                 let currentViewNumber = 2; 
                 for (const imgInfo of otherImages) {
                     if (currentViewNumber <= 7) { 
-                        imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.${imgInfo.originalFilename.split('.').pop()}`;
+                        const originalExt = imgInfo.originalFilename.split('.').pop();
+                        imgInfo.renamedFilename = `${falabellaSku}_${String(currentViewNumber).padStart(2, '0')}.${originalExt}`;
                         processedImagesForZip.push(imgInfo);
                         currentViewNumber++;
                     } else {
@@ -516,7 +518,8 @@
 
                 // 3. Añadir la imagen de outfit como _08 si existe
                 if (currentOutfitImage) {
-                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.${currentOutfitImage.originalFilename.split('.').pop()}`; 
+                    const originalExt = currentOutfitImage.originalFilename.split('.').pop();
+                    currentOutfitImage.renamedFilename = `${falabellaSku}_08.${originalExt}`; 
                     processedImagesForZip.push(currentOutfitImage);
                 }
                 
