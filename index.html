@@ -547,7 +547,7 @@
             // Re-ejecutar la búsqueda para que se reordenen las vistas, si es necesario.
             // Esto solo tiene efecto si buscarPorSKU() se ha llamado antes y las miniaturas existen.
             if (viewMode === "sku") {
-                buscarPorSKU(); 
+                buscarPorSKU();
             }
         });
 
@@ -612,7 +612,7 @@
                             variants.push('_300', '_400');
                         }
                     }
-                    
+
                     // Ordenar las variantes para asegurar una visualización coherente
                     // Esto es importante para el botón "Ordenar Vistas"
                     variants.sort((a, b) => {
@@ -630,7 +630,7 @@
                         // Si ninguno es número, ordenar alfabéticamente
                         return a.localeCompare(b);
                     });
-                                        
+
                     promises.push(displayThumbnailsInOrder(sku, variants, index));
                 }
             });
@@ -661,9 +661,8 @@
         function getBaseUrl() {
             let baseUrl;
             if (useFalabella) {
-                // CORRECCIÓN AQUÍ: Para Chile (CL), el sufijo de país no se agrega a la URL base de Falabella.
-                // Para otros países de Falabella (CO, PE), sí se agrega el sufijo.
-                baseUrl = `https://media.falabella.com/falabella${pais === 'CL' ? '' : pais}`;
+                // CORRECCIÓN FINAL AQUÍ: Siempre se añade el sufijo de país para Falabella
+                baseUrl = `https://media.falabella.com/falabella${pais}`;
             } else if (useSodimac) {
                 baseUrl = `https://media.falabella.com/sodimac${pais}`;
             } else { // Tottus
@@ -677,7 +676,7 @@
                 const baseUrl = getBaseUrl();
                 let thumbnailUrl = `${baseUrl}/${sku}/w=400,h=400,fit=pad`;
                 let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`; // URL para la imagen original / descarga
-                
+
                 var img = new Image();
                 img.src = thumbnailUrl;
                 img.alt = sku;
@@ -715,7 +714,7 @@
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
                 const baseUrl = getBaseUrl();
-                
+
                 // URLs para visualizar la imagen
                 const primaryUrl = `${baseUrl}/${sku}/public`; // URL principal para visualización
                 const primaryAlternateUrl = `${baseUrl}/inpage_media/${sku}/public`; // URL alternativa (si el SKU tiene guiones)
@@ -766,11 +765,11 @@
             } else { // viewMode === "sku"
                 $(".thumbnail img").each(function() {
                     // La URL de descarga ya está en el 'href' del padre 'a'
-                    urlsToDownload.push($(this).parent().attr('href')); 
+                    urlsToDownload.push($(this).parent().attr('href'));
                     skuNamesToDownload.push($(this).attr('alt'));
                 });
             }
-            
+
             if (urlsToDownload.length === 0) {
                 alert("No hay imágenes para descargar. Realice una búsqueda primero.");
                 return;
@@ -871,7 +870,7 @@
         $(document).ready(function() {
             actualizarPaises();
             // Asegúrate de que el botón de ordenar vistas esté deshabilitado al inicio, a menos que ya haya contenido
-            $('#ordenarVistas').attr('disabled', true); 
+            $('#ordenarVistas').attr('disabled', true);
         });
     </script>
 </body>
