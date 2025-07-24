@@ -658,17 +658,20 @@
             }
         }
 
-        function getBaseUrl() {
-            let baseUrl;
-            if (useFalabella) {
-                // CORRECCIÓN FINAL AQUÍ: Siempre se añade el sufijo de país para Falabella
-                baseUrl = `https://media.falabella.com/falabella${pais}`;
-            } else if (useSodimac) {
-                baseUrl = `https://media.falabella.com/sodimac${pais}`;
-            } else { // Tottus
-                baseUrl = `https://media.falabella.com/tottus${pais}`;
+        function getBaseUrl(storeType = null) {
+            let base = "https://media.falabella.com/";
+            if (storeType === null) { // Si no se especifica, usa el valor global
+                storeType = useFalabella ? 'falabella' : (useSodimac ? 'sodimac' : 'tottus');
             }
-            return baseUrl;
+
+            if (storeType === 'falabella') {
+                return `${base}falabella${pais}`;
+            } else if (storeType === 'sodimac') {
+                return `${base}sodimac${pais}`;
+            } else if (storeType === 'tottus') {
+                return `${base}tottus${pais}`;
+            }
+            return base; // Fallback, aunque no debería usarse
         }
 
         function createThumbnail(sku) {
@@ -713,40 +716,56 @@
 
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
-                const baseUrl = getBaseUrl();
+                let primaryBaseUrl = getBaseUrl();
+                let alternateBaseUrl = null; // Para el fallback
 
-                // URLs para visualizar la imagen
-                const primaryUrl = `${baseUrl}/${sku}/public`; // URL principal para visualización
-                const primaryAlternateUrl = `${baseUrl}/inpage_media/${sku}/public`; // URL alternativa (si el SKU tiene guiones)
+                if (useSodimac && pais === 'CL') {
+                    // Si estamos en Sodimac Chile, el fallback es a Falabella Chile
+                    alternateBaseUrl = getBaseUrl('falabella');
+                }
 
-                // URL para descargar la imagen a tamaño completo
-                const downloadUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`;
+                // URL principal para visualizar la imagen
+                const primaryUrl = `${primaryBaseUrl}/${sku}/public`;
+                // URL alternativa si el SKU tiene guiones (dentro de la misma base)
+                const primaryAlternateInpageUrl = `${primaryBaseUrl}/inpage_media/${sku}/public`;
+                // URL para descargar la imagen a tamaño completo (de la base donde se encontró)
+                let downloadUrl = `${primaryBaseUrl}/${sku}/w=1500,h=1500,fit=pad`;
 
-                function tryLoadImageInternal(urlToLoad, isAlternateAttempt = false) {
-                    console.log(`Loading image for SKU: ${sku} from URL: ${urlToLoad} (Alternate attempt: ${isAlternateAttempt})`);
+                function tryLoadImageInternal(urlToLoad, currentBaseUrl, isAlternateAttempt = false, isFalabellaFallback = false) {
+                    console.log(`Intentando cargar imagen para SKU: ${sku} desde URL: ${urlToLoad} (Intento alterno: ${isAlternateAttempt}, Fallback Falabella: ${isFalabellaFallback})`);
                     var img = new Image();
                     img.src = urlToLoad;
+                    // Ajustar la URL de descarga para que coincida con la base de la que se cargó la imagen
+                    img.setAttribute('data-download-src', `${currentBaseUrl}/${sku}/w=1500,h=1500,fit=pad`);
                     img.alt = sku;
-                    img.setAttribute('data-download-src', downloadUrl); // Guarda la URL de descarga completa
 
                     img.onload = function() {
-                        var wrapper = $('<div class="imgWrapper"><a href="' + downloadUrl + '" target="_blank"></a></div>'); // Link para abrir en nueva pestaña (original size)
+                        var wrapper = $('<div class="imgWrapper"><a href="' + img.getAttribute('data-download-src') + '" target="_blank"></a></div>');
                         wrapper.find('a').append(img);
                         resolve({ element: wrapper, sku: sku });
                     };
 
                     img.onerror = function() {
-                        if (!isAlternateAttempt && sku.includes('-') && primaryAlternateUrl) {
-                            console.log(`Primary image failed for ${sku} from ${urlToLoad}. Trying alternate URL: ${primaryAlternateUrl}`);
-                            tryLoadImageInternal(primaryAlternateUrl, true);
-                        } else {
-                            console.log("Error loading image for SKU: " + sku);
+                        // Primero, intentar la URL inpage_media si el SKU tiene guiones y aún no se ha intentado
+                        if (!isAlternateAttempt && sku.includes('-') && `${currentBaseUrl}/inpage_media/${sku}/public` !== urlToLoad) {
+                            console.log(`Fallo imagen principal para ${sku} en ${currentBaseUrl}. Intentando inpage_media.`);
+                            tryLoadImageInternal(`${currentBaseUrl}/inpage_media/${sku}/public`, currentBaseUrl, true, isFalabellaFallback);
+                        }
+                        // Segundo, si es SodimacCL y hay una URL de fallback a FalabellaCL y aún no se ha intentado
+                        else if (!isFalabellaFallback && alternateBaseUrl) {
+                            console.log(`Fallo para ${sku} en SodimacCL. Intentando fallback a FalabellaCL.`);
+                            // Intentar la URL primaria de Falabella
+                            tryLoadImageInternal(`${alternateBaseUrl}/${sku}/public`, alternateBaseUrl, false, true);
+                        }
+                        // Si todas las opciones fallan
+                        else {
+                            console.log("Error al cargar la imagen para SKU: " + sku + " después de todos los intentos.");
                             resolve({ error: true, sku: sku });
                         }
                     };
                 }
 
-                tryLoadImageInternal(primaryUrl);
+                tryLoadImageInternal(primaryUrl, primaryBaseUrl);
             });
         }
 
@@ -759,6 +778,7 @@
 
             if (viewMode === "vista") {
                 $(".imgWrapper img").each(function() {
+                    // Ahora usamos data-download-src que apunta a la URL correcta de descarga (Sodimac o Falabella)
                     urlsToDownload.push($(this).attr('data-download-src'));
                     skuNamesToDownload.push($(this).attr('alt'));
                 });
