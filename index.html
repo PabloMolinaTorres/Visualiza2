@@ -661,7 +661,8 @@
         function getBaseUrl() {
             let baseUrl;
             if (useFalabella) {
-                // Falabella Chile es 'falabella', otros países son 'falabellaCO', 'falabellaPE'
+                // CORRECCIÓN AQUÍ: Para Chile (CL), el sufijo de país no se agrega a la URL base de Falabella.
+                // Para otros países de Falabella (CO, PE), sí se agrega el sufijo.
                 baseUrl = `https://media.falabella.com/falabella${pais === 'CL' ? '' : pais}`;
             } else if (useSodimac) {
                 baseUrl = `https://media.falabella.com/sodimac${pais}`;
