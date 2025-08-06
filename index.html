@@ -388,7 +388,6 @@
 </head>
 <body>
     <div class="overlay" id="overlay"></div>
-
     <div id="mySidebar" class="sidebar">
         <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
         <a href="index.html">Visualizador</a>
@@ -396,7 +395,6 @@
         <a href="renombre.html">Renombrador</a>
         <a href="Comparar.html">Comparador</a>
     </div>
-
     <div class="container">
         <div class="leftMenu">
             <div class="icon-switch">
@@ -579,7 +577,7 @@
 
             $('#ordenarVistas').attr('disabled', true); // Se mantiene deshabilitado para el modo vista, ya que no hay orden específico aquí.
         }
-
+        
         function buscarPorSKU() {
             $('#thumbnailContainer').empty(); // Limpiar el contenedor de miniaturas
             $('#errorList').empty();  // Limpiar lista de errores
@@ -601,16 +599,15 @@
                             '_100', '_101', '_102', '_103', '_104', '_105'
                         ];
                     } else if (useSodimac) {
+                        // Vistas actualizadas para Sodimac, aplicando a todos los países de la BU
                         variants = [
                             '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9',
                             '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09',
-                            '_12', '_13', '_14', '_15', '_17', '_18', '_19', '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28',
-                            '_SEC', '_EFI'
+                            '_10', '_11', '_12', '_13', '_14', '_15', '_16', '_17', '_18', '_19',
+                            '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30',
+                            '_001', '_002', '_003', '_004', '_005', '_006', '_007', '_008', '_009',
+                            '_300', '_400'
                         ];
-                        // Añadir _300 y _400 si es Sodimac y el país es Chile
-                        if (pais === 'CL') {
-                            variants.push('_300', '_400');
-                        }
                     }
 
                     // Ordenar las variantes para asegurar una visualización coherente
