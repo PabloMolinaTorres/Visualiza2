@@ -24,7 +24,7 @@
             padding: 0;
             color: #333;
             background-color: #fff;
-            overflow-x: hidden; /* Evita el scroll horizontal cuando el sidebar está oculto */
+            overflow-x: hidden;
         }
         .container {
             display: flex;
@@ -167,7 +167,7 @@
             margin: 0;
         }
         .setBar button:hover {
-            background-color: #76a700; /* Darker green on hover */
+            background-color: #76a700;
             color: white;
         }
         .pais.seleccionado {
@@ -316,12 +316,10 @@
         input:checked + .slider:before {
             transform: translateX(26px);
         }
-        /* Estilos para el nuevo sidebar (panel lateral) */
         .sidebar-toggle {
             position: static;
             margin-right: 10px;
             cursor: pointer;
-            /* AUMENTADO EL TAMAÑO DEL ICONO */
             width: 40px;
             height: 40px;
             background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
@@ -337,14 +335,13 @@
             width: 0;
             position: fixed;
             z-index: 1000;
-            /* CAMBIO CLAVE: AHORA APARECE DESDE LA IZQUIERDA */
             top: 0;
             left: 0;
             background-color: #fff;
             overflow-x: hidden;
             transition: 0.5s;
             padding-top: 60px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
         }
         .sidebar.open {
             width: 250px;
@@ -364,12 +361,10 @@
         .sidebar .closebtn {
             position: absolute;
             top: 0;
-            /* AJUSTE PARA QUE LA "X" SIGA EN LA ESQUINA SUPERIOR DERECHA DEL SIDEBAR */
             right: 25px;
             font-size: 36px;
             color: #aaa;
             text-decoration: none;
-            /* margin-left: 50px; eliminado porque ahora 'right' lo posiciona */
         }
         .sidebar .closebtn:hover {
             color: #333;
@@ -440,11 +435,11 @@
         </div>
     </div>
     <script>
-        var pais = "CL";  // Por defecto, Chile
-        var useFalabella = true;  // Estado inicial: usar Falabella
+        var pais = "CL";
+        var useFalabella = true;
         var useSodimac = false;
         var useTottus = false;
-        var viewMode = "vista";  // Estado inicial: por vista
+        var viewMode = "vista";
 
         const paisesFalabella = [
             { nombre: 'Chile', codigo: 'CL' },
@@ -533,7 +528,7 @@
         });
 
         $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true);  // Deshabilitar botón de ordenar
+            $('#ordenarVistas').attr('disabled', true);
             if (viewMode === "vista") {
                 buscarPorVista();
             } else {
@@ -542,8 +537,6 @@
         });
 
         $('#ordenarVistas').click(function() {
-            // Re-ejecutar la búsqueda para que se reordenen las vistas, si es necesario.
-            // Esto solo tiene efecto si buscarPorSKU() se ha llamado antes y las miniaturas existen.
             if (viewMode === "sku") {
                 buscarPorSKU();
             }
@@ -552,7 +545,7 @@
         async function buscarPorVista() {
             $('.imgContainer').empty();
             $('#error').text('');
-            $('#errorList').empty(); // Limpiar lista de errores
+            $('#errorList').empty();
             $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
@@ -575,13 +568,13 @@
                 }
             });
 
-            $('#ordenarVistas').attr('disabled', true); // Se mantiene deshabilitado para el modo vista, ya que no hay orden específico aquí.
+            $('#ordenarVistas').attr('disabled', true);
         }
-        
+
         function buscarPorSKU() {
-            $('#thumbnailContainer').empty(); // Limpiar el contenedor de miniaturas
-            $('#errorList').empty();  // Limpiar lista de errores
-            $('#errorList').append('<button id="copyErrors">Copiar</button>'); // Volver a agregar el botón de copiar
+            $('#thumbnailContainer').empty();
+            $('#errorList').empty();
+            $('#errorList').append('<button id="copyErrors">Copiar</button>');
             var skus = $('#skus').val().split('\n');
             var promises = [];
 
@@ -589,7 +582,6 @@
                 sku = sku.trim();
                 if (sku !== "") {
                     var variants;
-                    // Definir variantes según la tienda
                     if (useFalabella || useTottus) {
                         variants = [
                             '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12', '_13',
@@ -599,7 +591,6 @@
                             '_100', '_101', '_102', '_103', '_104', '_105'
                         ];
                     } else if (useSodimac) {
-                        // Vistas actualizadas para Sodimac, aplicando a todos los países de la BU
                         variants = [
                             '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9',
                             '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09',
@@ -610,21 +601,15 @@
                         ];
                     }
 
-                    // Ordenar las variantes para asegurar una visualización coherente
-                    // Esto es importante para el botón "Ordenar Vistas"
                     variants.sort((a, b) => {
-                        // Extraer el número de la variante (ej. '_001' -> 1, '_10' -> 10, '_SEC' -> NaN)
                         const numA = parseInt(a.replace(/[^0-9]/g, ''));
                         const numB = parseInt(b.replace(/[^0-9]/g, ''));
 
-                        // Si ambos son números, ordenar numéricamente
                         if (!isNaN(numA) && !isNaN(numB)) {
                             return numA - numB;
                         }
-                        // Si uno es número y el otro no, el número va primero
                         if (!isNaN(numA)) return -1;
                         if (!isNaN(numB)) return 1;
-                        // Si ninguno es número, ordenar alfabéticamente
                         return a.localeCompare(b);
                     });
 
@@ -633,7 +618,7 @@
             });
 
             Promise.all(promises).then(() => {
-                $('#ordenarVistas').removeAttr('disabled');  // Habilitar botón de ordenar
+                $('#ordenarVistas').removeAttr('disabled');
             });
         }
 
@@ -642,22 +627,22 @@
 
             const results = await Promise.all(promises);
 
-            const thumbnails = results.filter(result => result !== null); // Filtrar los que no tienen imagen
+            const thumbnails = results.filter(result => result !== null);
             if (thumbnails.length > 0) {
-                var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
-                thumbnails.forEach(thumbnail => row.append(thumbnail)); // Añadir cada miniatura a la fila
-                $('#thumbnailContainer').append(row); // Añadir la fila al contenedor
+                var row = $('<div class="thumbnail-row"></div>');
+                thumbnails.forEach(thumbnail => row.append(thumbnail));
+                $('#thumbnailContainer').append(row);
                 if (index > 0) {
-                    $('#thumbnailContainer').append('<div class="divider"></div>'); // Añadir un divisor si no es el primer SKU
+                    $('#thumbnailContainer').append('<div class="divider"></div>');
                 }
             } else {
-                $('#errorList').append('<div>' + sku + '</div>'); // Si no se encuentra ninguna imagen, añadir SKU a la lista de errores
+                $('#errorList').append('<div>' + sku + '</div>');
             }
         }
 
         function getBaseUrl(storeType = null) {
             let base = "https://media.falabella.com/";
-            if (storeType === null) { // Si no se especifica, usa el valor global
+            if (storeType === null) {
                 storeType = useFalabella ? 'falabella' : (useSodimac ? 'sodimac' : 'tottus');
             }
 
@@ -668,34 +653,34 @@
             } else if (storeType === 'tottus') {
                 return `${base}tottus${pais}`;
             }
-            return base; // Fallback, aunque no debería usarse
+            return base;
         }
 
         function createThumbnail(sku) {
             return new Promise((resolve) => {
                 const baseUrl = getBaseUrl();
                 let thumbnailUrl = `${baseUrl}/${sku}/w=400,h=400,fit=pad`;
-                let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`; // URL para la imagen original / descarga
+                let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`;
 
                 var img = new Image();
                 img.src = thumbnailUrl;
                 img.alt = sku;
                 img.onload = function() {
                     var thumbnail = $('<div class="thumbnail"></div>');
-                    var link = $('<a href="' + originalUrl + '" target="_blank"></a>'); // Link para abrir en nueva pestaña (original size)
+                    var link = $('<a href="' + originalUrl + '" target="_blank"></a>');
                     link.append(img);
                     var downloadIcon = $('<div class="download-icon"></div>');
                     downloadIcon.click(function(e) {
-                        e.preventDefault(); // Evitar que el clic en el ícono también abra el link
+                        e.preventDefault();
                         downloadImage(originalUrl, sku);
                     });
                     thumbnail.append(link);
                     thumbnail.append('<div class="sku">' + sku + '</div>');
                     thumbnail.append(downloadIcon);
-                    resolve(thumbnail); // Resolver la promesa con el elemento miniatura
+                    resolve(thumbnail);
                 };
                 img.onerror = function() {
-                    resolve(null); // Si no se encuentra la imagen, resolver con null
+                    resolve(null);
                 };
             });
         }
@@ -714,25 +699,19 @@
         function loadImage(sku) {
             return new Promise(function(resolve, reject) {
                 let primaryBaseUrl = getBaseUrl();
-                let alternateBaseUrl = null; // Para el fallback
+                let alternateBaseUrl = null;
 
                 if (useSodimac && pais === 'CL') {
-                    // Si estamos en Sodimac Chile, el fallback es a Falabella Chile
                     alternateBaseUrl = getBaseUrl('falabella');
                 }
 
-                // URL principal para visualizar la imagen
                 const primaryUrl = `${primaryBaseUrl}/${sku}/public`;
-                // URL alternativa si el SKU tiene guiones (dentro de la misma base)
                 const primaryAlternateInpageUrl = `${primaryBaseUrl}/inpage_media/${sku}/public`;
-                // URL para descargar la imagen a tamaño completo (de la base donde se encontró)
-                let downloadUrl = `${primaryBaseUrl}/${sku}/w=1500,h=1500,fit=pad`;
 
                 function tryLoadImageInternal(urlToLoad, currentBaseUrl, isAlternateAttempt = false, isFalabellaFallback = false) {
-                    console.log(`Intentando cargar imagen para SKU: ${sku} desde URL: ${urlToLoad} (Intento alterno: ${isAlternateAttempt}, Fallback Falabella: ${isFalabellaFallback})`);
+                    console.log(`Intentando cargar imagen para SKU: ${sku} desde URL: ${urlToLoad}`);
                     var img = new Image();
                     img.src = urlToLoad;
-                    // Ajustar la URL de descarga para que coincida con la base de la que se cargó la imagen
                     img.setAttribute('data-download-src', `${currentBaseUrl}/${sku}/w=1500,h=1500,fit=pad`);
                     img.alt = sku;
 
@@ -743,45 +722,37 @@
                     };
 
                     img.onerror = function() {
-                        // Primero, intentar la URL inpage_media si el SKU tiene guiones y aún no se ha intentado
                         if (!isAlternateAttempt && sku.includes('-') && `${currentBaseUrl}/inpage_media/${sku}/public` !== urlToLoad) {
                             console.log(`Fallo imagen principal para ${sku} en ${currentBaseUrl}. Intentando inpage_media.`);
                             tryLoadImageInternal(`${currentBaseUrl}/inpage_media/${sku}/public`, currentBaseUrl, true, isFalabellaFallback);
                         }
-                        // Segundo, si es SodimacCL y hay una URL de fallback a FalabellaCL y aún no se ha intentado
                         else if (!isFalabellaFallback && alternateBaseUrl) {
                             console.log(`Fallo para ${sku} en SodimacCL. Intentando fallback a FalabellaCL.`);
-                            // Intentar la URL primaria de Falabella
                             tryLoadImageInternal(`${alternateBaseUrl}/${sku}/public`, alternateBaseUrl, false, true);
                         }
-                        // Si todas las opciones fallan
                         else {
                             console.log("Error al cargar la imagen para SKU: " + sku + " después de todos los intentos.");
                             resolve({ error: true, sku: sku });
                         }
                     };
                 }
-
                 tryLoadImageInternal(primaryUrl, primaryBaseUrl);
             });
         }
-
-        $('#descargartodo').click(function() {
-            var zip = new JSZip();
-            var count = 0;
-            var zipFilename = `Imagenes_Falabella_${getFormattedDate()}.zip`; // Nombre más descriptivo
-            var urlsToDownload = [];
-            var skuNamesToDownload = [];
+        
+        $('#descargartodo').click(async function() {
+            const zip = new JSZip();
+            const zipFilename = `Imagenes_Falabella_${getFormattedDate()}.zip`;
+            const urlsToDownload = [];
+            const skuNamesToDownload = [];
 
             if (viewMode === "vista") {
                 $(".imgWrapper img").each(function() {
-                    // Ahora usamos data-download-src que apunta a la URL correcta de descarga (Sodimac o Falabella)
                     urlsToDownload.push($(this).attr('data-download-src'));
                     skuNamesToDownload.push($(this).attr('alt'));
                 });
-            } else { // viewMode === "sku"
+            } else {
                 $(".thumbnail img").each(function() {
-                    // La URL de descarga ya está en el 'href' del padre 'a'
                     urlsToDownload.push($(this).parent().attr('href'));
                     skuNamesToDownload.push($(this).attr('alt'));
                 });
@@ -792,51 +763,47 @@
                 return;
             }
 
-            // Deshabilitar el botón mientras se descarga
             $('#descargartodo').prop('disabled', true).text('Preparando descarga...');
 
-            var fetchPromises = urlsToDownload.map((url, index) => {
-                return new Promise((resolve, reject) => {
+            const fetchPromises = urlsToDownload.map((url, index) => {
+                return new Promise((resolve) => {
                     JSZipUtils.getBinaryContent(url, function (err, data) {
                         if (err) {
-                            console.error(`Error al obtener ${skuNamesToDownload[index]}: ${err}`);
-                            // En lugar de detener todo, logueamos el error y resolvemos para que el Promise.all continúe
-                            resolve({ success: false, sku: skuNamesToDownload[index], error: err.message });
+                            // Este es el punto clave para evitar el error. En lugar de fallar,
+                            // devolvemos un objeto de "rechazo" para que Promise.allSettled lo capture.
+                            resolve({ status: 'rejected', reason: err.message, sku: skuNamesToDownload[index] });
                         } else {
                             zip.file(skuNamesToDownload[index] + ".jpg", data, { binary: true });
-                            resolve({ success: true });
+                            resolve({ status: 'fulfilled' });
                         }
                     });
                 });
             });
 
-            Promise.all(fetchPromises).then(results => {
-                let failedDownloads = results.filter(r => !r.success);
-                if (failedDownloads.length > 0) {
-                    alert(`Algunas imágenes no pudieron descargarse. Consulte la consola para más detalles.`);
-                    failedDownloads.forEach(f => console.error(`Failed to download ${f.sku}: ${f.error}`));
-                }
+            // Promise.allSettled espera a que todas las promesas finalicen, ya sea con éxito o con error.
+            const results = await Promise.allSettled(fetchPromises);
+            
+            const failedDownloads = results.filter(r => r.status === 'rejected');
+            if (failedDownloads.length > 0) {
+                const failSkus = failedDownloads.map(f => f.reason.sku).join(', ');
+                alert(`Algunas imágenes no pudieron descargarse: ${failSkus}. Consulte la consola para más detalles.`);
+                failedDownloads.forEach(f => console.error(`Failed to download ${f.reason.sku}: ${f.reason.reason}`));
+            }
 
-                if (zip.files.length > 0) {
-                    zip.generateAsync({ type: 'blob' }).then(function (content) {
-                        saveAs(content, zipFilename);
-                        alert(`Descarga completada. Archivo: ${zipFilename}`);
-                    }).catch(function(e) {
-                        console.error("Error al generar el ZIP:", e);
-                        alert("Error al generar el archivo ZIP. Intente de nuevo.");
-                    }).finally(function() {
-                        // Siempre re-habilitar y resetear el texto
-                        $('#descargartodo').prop('disabled', false).text('DESCARGAR TODO');
-                    });
-                } else {
-                    alert("No se pudieron descargar imágenes válidas para incluir en el ZIP.");
+            if (zip.files.length > 0) {
+                zip.generateAsync({ type: 'blob' }).then(function (content) {
+                    saveAs(content, zipFilename);
+                    alert(`Descarga completada. Archivo: ${zipFilename}`);
+                }).catch(function(e) {
+                    console.error("Error al generar el ZIP:", e);
+                    alert("Error al generar el archivo ZIP. Intente de nuevo.");
+                }).finally(function() {
                     $('#descargartodo').prop('disabled', false).text('DESCARGAR TODO');
-                }
-            }).catch(function(e) {
-                console.error("Error general en las promesas de descarga:", e);
-                alert("Ocurrió un error inesperado durante la descarga.");
+                });
+            } else {
+                alert("No se pudieron descargar imágenes válidas para incluir en el ZIP.");
                 $('#descargartodo').prop('disabled', false).text('DESCARGAR TODO');
-            });
+            }
         });
 
         function getFormattedDate() {
@@ -845,7 +812,7 @@
             var month = String(date.getMonth() + 1).padStart(2, '0');
             var hours = String(date.getHours()).padStart(2, '0');
             var minutes = String(date.getMinutes()).padStart(2, '0');
-            return day + '-' + month + '_' + hours + minutes; // Cambiado a guion para nombre de archivo
+            return day + '-' + month + '_' + hours + minutes;
         }
 
         $(document).on('click', '#copyErrors', function() {
@@ -864,7 +831,6 @@
             }, 2000);
         });
 
-        // Lógica para el sidebar
         $('#sidebarToggle').click(function() {
             openNav();
         });
@@ -883,10 +849,8 @@
             document.getElementById("overlay").style.display = "none";
         }
 
-        // Inicializar al cargar la página
         $(document).ready(function() {
             actualizarPaises();
-            // Asegúrate de que el botón de ordenar vistas esté deshabilitado al inicio, a menos que ya haya contenido
             $('#ordenarVistas').attr('disabled', true);
         });
     </script>
