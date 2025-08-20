@@ -13,12 +13,12 @@
             font-family: sans-serif;
             padding: 40px;
             background: #fafafa;
-            margin: 0; /* Asegura que no haya márgenes por defecto */
-            padding-top: 60px; /* Espacio para el icono de hamburguesa */
+            margin: 0;
+            padding-top: 60px;
         }
         h1 {
             margin-bottom: 20px;
-            text-align: center; /* Centrar el título */
+            text-align: center;
         }
         .upload-box {
             border: 2px dashed #8fca00;
@@ -90,31 +90,31 @@
         /* Estilos para el sidebar colapsable */
         .sidebar {
             height: 100%;
-            width: 0; /* Ancho inicial: colapsado */
+            width: 0;
             position: fixed;
-            z-index: 100; /* Asegura que esté por encima de otros elementos */
+            z-index: 100;
             top: 0;
-            left: 0; /* Sale desde la izquierda */
-            background-color: #ffffff; /* FONDO BLANCO */
+            left: 0;
+            background-color: #ffffff;
             overflow-x: hidden;
-            transition: 0.5s; /* Transición suave al abrir/cerrar */
-            padding-top: 60px; /* Espacio para el botón de cerrar */
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2); /* Sombra hacia la derecha */
+            transition: 0.5s;
+            padding-top: 60px;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
         }
 
         /* ESTILO AJUSTADO PARA LOS ENLACES DEL SIDEBAR */
         .sidebar a {
-            padding: 15px 8px 15px 32px; /* Aumentado el padding vertical para más espacio */
+            padding: 15px 8px 15px 32px;
             text-decoration: none;
-            font-size: 20px; /* Tamaño de fuente ligeramente más grande */
-            color: #333; /* Color de texto oscuro */
+            font-size: 20px;
+            color: #333;
             display: block;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
-            color: #8fca00; /* Color verde al pasar el ratón */
-            background-color: #f1f1f1; /* Fondo ligeramente gris al pasar el ratón */
+            color: #8fca00;
+            background-color: #f1f1f1;
         }
 
         .sidebar .closebtn {
@@ -132,9 +132,9 @@
             top: 15px;
             left: 15px;
             cursor: pointer;
-            z-index: 101; /* Para asegurar que esté sobre el contenido */
-            width: 40px; /* Tamaño del icono */
-            height: 40px; /* Tamaño del icono */
+            z-index: 101;
+            width: 40px;
+            height: 40px;
         }
 
         .sidebar-toggle img {
@@ -145,19 +145,19 @@
 
         /* Contenido principal */
         #main {
-            transition: margin-left .5s, filter .5s; /* Transición también para el filtro */
-            margin-left: 0; /* Sin margen inicial */
+            transition: margin-left .5s, filter .5s;
+            margin-left: 0;
             height: 100%;
             width: 100%;
-            padding: 0 20px; /* Añadido padding horizontal para centrar el contenido */
-            box-sizing: border-box; /* Incluye padding en el ancho */
+            padding: 0 20px;
+            box-sizing: border-box;
         }
 
         /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
         body.sidebar-open #main {
-            margin-left: 250px; /* Ancho del sidebar ajustado para dar más espacio */
-            filter: brightness(70%); /* Oscurece el contenido */
-            pointer-events: none; /* Deshabilita clics en el contenido principal */
+            margin-left: 250px;
+            filter: brightness(70%);
+            pointer-events: none;
         }
 
         /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
@@ -165,16 +165,16 @@
             height: 100%;
             width: 100%;
             position: fixed;
-            z-index: 99; /* Por debajo del sidebar, pero por encima del contenido */
+            z-index: 99;
             top: 0;
             left: 0;
-            background-color: rgba(0,0,0,0.4); /* Color gris semitransparente */
+            background-color: rgba(0,0,0,0.4);
             overflow-x: hidden;
             transition: 0.5s;
-            display: none; /* Oculto por defecto */
+            display: none;
         }
         body.sidebar-open .overlay {
-            display: block; /* Muestra el overlay cuando el sidebar está abierto */
+            display: block;
         }
     </style>
 </head>
@@ -213,7 +213,7 @@
 
         function closeNav() {
             document.getElementById("mySidebar").style.width = "0";
-            document.getElementById("main").style.marginLeft= "0";
+            document.getElementById("main").style.marginLeft = "0";
             document.body.classList.remove("sidebar-open");
         }
 
@@ -221,7 +221,7 @@
         const fileInput = document.getElementById('fileInput');
         const container = document.getElementById('comparisonContainer');
         const exportButton = document.getElementById('exportButton');
-        let resultados = {};
+        let resultados = {}; // CAMBIO: Ahora es 'let'
 
         // Evento para hacer clic en el área de carga y abrir el selector de archivos
         uploadBox.addEventListener('click', () => {
@@ -249,20 +249,18 @@
         });
 
         function handleFiles(fileList) {
-            const files = Array.from(fileList);
+            let files = Array.from(fileList); // CAMBIO: Ahora es 'let'
             container.innerHTML = '';
-            resultados = {}; // Reset resultados para nuevas cargas
+            resultados = {};
             files.forEach(file => {
-                const match = file.name.match(/^(\d+)(_.*)?\./); // Ajuste regex para capturar sufijos si existen
+                const match = file.name.match(/^(\d+)(_.*)?\./);
                 if (!match) {
                     console.warn(`Archivo ignorado (no coincide el patrón SKU): ${file.name}`);
                     return;
                 }
 
                 const sku = match[1];
-                const suffix = match[2] || ''; // Captura el sufijo o un string vacío si no hay
-                // Asumiendo Falabella CL por defecto para la imagen remota, puedes hacer esto dinámico
-                // si quieres seleccionar la lógica de tienda/país como en Replicador.html
+                const suffix = match[2] || '';
                 const remoteUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${sku}${suffix}/public`;
                 const pairDiv = document.createElement('div');
                 pairDiv.className = 'pair';
@@ -292,7 +290,6 @@
             wrapper.appendChild(img);
             wrapper.appendChild(caption);
 
-            // Lupa dinámica solo al entrar
             img.addEventListener('mouseenter', () => {
                 const magnifier = document.createElement('div');
                 magnifier.style.position = 'absolute';
