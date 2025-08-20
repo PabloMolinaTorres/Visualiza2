@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <title>Comparar</title>
-    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png"> <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet"> <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script> <style>
+    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/falabella.png" type="image/png"> 
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet"> 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script> 
+    <style>
         /* Estilos generales (los tuyos) */
         body {
             font-family: sans-serif;
@@ -218,7 +221,7 @@
         const fileInput = document.getElementById('fileInput');
         const container = document.getElementById('comparisonContainer');
         const exportButton = document.getElementById('exportButton');
-        const resultados = {};
+        let resultados = {};
 
         // Evento para hacer clic en el área de carga y abrir el selector de archivos
         uploadBox.addEventListener('click', () => {
@@ -249,7 +252,6 @@
             const files = Array.from(fileList);
             container.innerHTML = '';
             resultados = {}; // Reset resultados para nuevas cargas
-
             files.forEach(file => {
                 const match = file.name.match(/^(\d+)(_.*)?\./); // Ajuste regex para capturar sufijos si existen
                 if (!match) {
@@ -259,11 +261,9 @@
 
                 const sku = match[1];
                 const suffix = match[2] || ''; // Captura el sufijo o un string vacío si no hay
-
                 // Asumiendo Falabella CL por defecto para la imagen remota, puedes hacer esto dinámico
                 // si quieres seleccionar la lógica de tienda/país como en Replicador.html
                 const remoteUrl = `https://imagedelivery.net/4fYuQyy-r8_rpBpcY7lH_A/falabellaCL/${sku}${suffix}/public`;
-
                 const pairDiv = document.createElement('div');
                 pairDiv.className = 'pair';
 
