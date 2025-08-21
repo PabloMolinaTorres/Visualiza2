@@ -1,858 +1,1140 @@
+
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Visualiza</title>
-    <link rel="icon" href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700" rel="stylesheet">
-    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
-    <meta http-equiv="Pragma" content="no-cache">
-    <meta http-equiv="Expires" content="0">
-    <meta http-equiv="Last-Modified" content="0">
+    <link
+      rel="icon"
+      href="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png"
+      type="image/png"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Lato:300,400,700"
+      rel="stylesheet"
+    />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-store, no-cache, must-revalidate, max-age=0"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <meta http-equiv="Last-Modified" content="0" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip-utils/0.1.0/jszip-utils.min.js?v=1.0"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js?v=1.0"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Lato', sans-serif;
-        }
-        html, body {
-            height: 100%;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-color: #fff;
-            overflow-x: hidden;
-        }
-        .container {
-            display: flex;
-            height: 100%;
-            width: 100%;
-        }
-        .leftMenu, .rightMenu {
-            width: 320px;
-            min-width: 320px;
-            background-color: #fff;
-            overflow-y: auto;
-            position: relative;
-        }
-        .leftMenu {
-            border-right: 1px solid #eeeeee;
-        }
-        .rightMenu {
-            border-left: 1px solid #eeeeee;
-        }
-        .leftMenu .intro, .rightMenu .intro {
-            font-size: 12px;
-            padding: 20px 20px 0;
-        }
-        .leftMenu textarea, .rightMenu .error-list {
-            width: calc(100% - 40px);
-            border: 1px solid #eee;
-            margin: 20px;
-            height: 400px;
-        }
-        .leftMenu button, .rightMenu button {
-            width: calc(100% - 40px);
-            border: none;
-            margin: 0 20px 20px;
-            background-color: #8fca00;
-            height: 50px;
-            line-height: 50px;
-            padding: 0;
-            border-radius: 5px;
-            color: white;
-            font-size: 12px;
-            letter-spacing: .075em;
-            cursor: pointer;
-        }
-        .rightMenu button[disabled] {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-        .error-list {
-            height: calc(100% - 100px);
-            padding: 20px;
-            margin: 20px;
-            border: 1px solid #eee;
-            background-color: #f9f9f9;
-            overflow-y: auto;
-        }
-        .error-list button {
-            display: block;
-            margin-bottom: 10px;
-            background-color: #ccc;
-            border: none;
-            color: white;
-            padding: 3px 5px;
-            cursor: pointer;
-            border-radius: 5px;
-            font-size: 10px;
-        }
-        .error-list button:hover {
-            background-color: #bbb;
-        }
-        .error-list button.copied {
-            background-color: #8fca00;
-        }
-        .error-list button.copied:hover {
-            background-color: #76a700;
-        }
-        .error-list div {
-            margin-bottom: 5px;
-            color: red;
-        }
-        .rightContainer {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
-            background-color: #fff;
-        }
-        .imgContainer {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .imgContainer .imgWrapper {
-            width: 200px;
-            height: 200px;
-            position: relative;
-            display: block;
-            overflow: hidden;
-            border: 1px solid #eeeeee;
-        }
-        .imgContainer .imgWrapper img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .download-icon {
-            position: absolute;
-            top: 0px;
-            right: 0px;
-            width: 24px;
-            height: 24px;
-            opacity: 0.8;
-            cursor: pointer;
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/descarga.png');
-            background-size: cover;
-        }
-        .download-icon:hover {
-            opacity: 1;
-        }
-        .setBar {
-            background-color: #fff;
-            padding: 20px;
-            width: 100%;
-            margin-bottom: 20px;
-            display: flex;
-            gap: 10px;
-        }
-        .setBar button {
-            padding: 0;
-            background-color: #8fca00;
-            border: none;
-            font-size: 12px;
-            text-transform: uppercase;
-            line-height: 30px;
-            height: 30px;
-            padding: 0 15px;
-            color: white;
-            font-weight: 700;
-            letter-spacing: .075em;
-            cursor: pointer;
-            border-radius: 5px;
-            margin: 0;
-        }
-        .setBar button:hover {
-            background-color: #76a700;
-            color: white;
-        }
-        .pais.seleccionado {
-            font-weight: 700;
-            text-decoration: underline;
-            color: #333;
-        }
-        .pais {
-            display: inline-block;
-            padding-right: 10px;
-            cursor: pointer;
-            color: #bbbbbb;
-        }
-        .error {
-            color: red;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-        .icon-switch {
-            display: flex;
-            align-items: center;
-            margin: 20px;
-            position: relative;
-        }
-        .icon-switch img {
-            width: 40px;
-            height: 40px;
-            cursor: pointer;
-            margin-right: 10px;
-        }
-        .icon-switch img.inactive {
-            filter: grayscale(100%);
-        }
-        .skus-container {
-            padding: 20px;
-        }
-        .thumbnail-row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-bottom: 20px;
-        }
-        .thumbnail {
-            display: inline-block;
-            width: 120px;
-            height: 140px;
-            margin: 5px;
-            position: relative;
-            background-color: #f0f0f0;
-            border: 1px solid #ccc;
-            text-align: center;
-            overflow: hidden;
-        }
-        .thumbnail img {
-            width: 100%;
-            height: 100px;
-            object-fit: cover;
-            cursor: zoom-in;
-        }
-        .zoom {
-            position: absolute;
-            display: none;
-            width: 500px;
-            height: 500px;
-            border: 2px solid #8fca00;
-            background-repeat: no-repeat;
-            z-index: 10;
-        }
-        .thumbnail .sku {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0, 0, 0, 0.5);
-            color: #fff;
-            text-align: center;
-            font-size: 10px;
-            padding: 2px;
-            height: 18px;
-        }
-        .thumbnail .no-image {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            width: 100%;
-            height: 100px;
-            background-color: #e0e0e0;
-            color: #888;
-            font-size: 14px;
-            text-align: center;
-        }
-        .divider {
-            width: 100%;
-            height: 1px;
-            background-color: #ccc;
-            margin: 20px 0;
-        }
-        .toggle-switch {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: calc(100% - 40px);
-        }
-        .toggle-switch span {
-            font-size: 12px;
-            font-weight: 700;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 50px;
-            height: 24px;
-        }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 24px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            left: 3px;
-            bottom: 3px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #8fca00;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-        .sidebar-toggle {
-            position: static;
-            margin-right: 10px;
-            cursor: pointer;
-            width: 40px;
-            height: 40px;
-            background-image: url('https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png');
-            background-size: cover;
-            opacity: 0.8;
-            z-index: 1001;
-        }
-        .sidebar-toggle:hover {
-            opacity: 1;
-        }
-        .sidebar {
-            height: 100%;
-            width: 0;
-            position: fixed;
-            z-index: 1000;
-            top: 0;
-            left: 0;
-            background-color: #fff;
-            overflow-x: hidden;
-            transition: 0.5s;
-            padding-top: 60px;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
-        }
-        .sidebar.open {
-            width: 250px;
-        }
-        .sidebar a {
-            padding: 15px 25px;
-            text-decoration: none;
-            font-size: 18px;
-            color: #333;
-            display: block;
-            transition: 0.3s;
-        }
-        .sidebar a:hover {
-            color: #8fca00;
-            background-color: #f1f1f1;
-        }
-        .sidebar .closebtn {
-            position: absolute;
-            top: 0;
-            right: 25px;
-            font-size: 36px;
-            color: #aaa;
-            text-decoration: none;
-        }
-        .sidebar .closebtn:hover {
-            color: #333;
-        }
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            z-index: 999;
-            display: none;
-        }
+      * {
+        box-sizing: border-box;
+        font-family: "Lato", sans-serif;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        background-color: #fff;
+        overflow-x: hidden; /* Evita el scroll horizontal cuando el sidebar está oculto */
+      }
+      .container {
+        display: flex;
+        height: 100%;
+        width: 100%;
+      }
+      .leftMenu,
+      .rightMenu {
+        width: 320px;
+        min-width: 320px;
+        background-color: #fff;
+        overflow-y: auto;
+        position: relative;
+      }
+      .leftMenu {
+        border-right: 1px solid #eeeeee;
+      }
+      .rightMenu {
+        border-left: 1px solid #eeeeee;
+      }
+      .leftMenu .intro,
+      .rightMenu .intro {
+        font-size: 12px;
+        padding: 20px 20px 0;
+      }
+      .leftMenu textarea,
+      .rightMenu .error-list {
+        width: calc(100% - 40px);
+        border: 1px solid #eee;
+        margin: 20px;
+        height: 400px;
+      }
+      .leftMenu button,
+      .rightMenu button {
+        width: calc(100% - 40px);
+        border: none;
+        margin: 0 20px 20px;
+        background-color: #8fca00;
+        height: 50px;
+        line-height: 50px;
+        padding: 0;
+        border-radius: 5px;
+        color: white;
+        font-size: 12px;
+        letter-spacing: 0.075em;
+        cursor: pointer;
+      }
+      .rightMenu button[disabled] {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+      .error-list {
+        height: calc(100% - 100px);
+        padding: 20px;
+        margin: 20px;
+        border: 1px solid #eee;
+        background-color: #f9f9f9;
+        overflow-y: auto;
+      }
+      .error-list button {
+        display: block;
+        margin-bottom: 10px;
+        background-color: #ccc;
+        border: none;
+        color: white;
+        padding: 3px 5px;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 10px;
+      }
+      .error-list button:hover {
+        background-color: #bbb;
+      }
+      .error-list button.copied {
+        background-color: #8fca00;
+      }
+      .error-list button.copied:hover {
+        background-color: #76a700;
+      }
+      .error-list div {
+        margin-bottom: 5px;
+        color: red;
+      }
+      .rightContainer {
+        flex-grow: 1;
+        overflow-y: auto;
+        padding: 20px;
+        background-color: #fff;
+      }
+      .imgContainer {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .imgContainer .imgWrapper {
+        width: 200px;
+        height: 200px;
+        position: relative;
+        display: block;
+        overflow: hidden;
+        border: 1px solid #eeeeee;
+      }
+      .imgContainer .imgWrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .download-icon {
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        width: 24px;
+        height: 24px;
+        opacity: 0.8;
+        cursor: pointer;
+        background-image: url("https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/descarga.png");
+        background-size: cover;
+      }
+      .download-icon:hover {
+        opacity: 1;
+      }
+      .setBar {
+        background-color: #fff;
+        padding: 20px;
+        width: 100%;
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+      }
+      .setBar button {
+        padding: 0;
+        background-color: #8fca00;
+        border: none;
+        font-size: 12px;
+        text-transform: uppercase;
+        line-height: 30px;
+        height: 30px;
+        padding: 0 15px;
+        color: white;
+        font-weight: 700;
+        letter-spacing: 0.075em;
+        cursor: pointer;
+        border-radius: 5px;
+        margin: 0;
+      }
+      .setBar button:hover {
+        background-color: #76a700; /* Darker green on hover */
+        color: white;
+      }
+      .pais.seleccionado {
+        font-weight: 700;
+        text-decoration: underline;
+        color: #333;
+      }
+      .pais {
+        display: inline-block;
+        padding-right: 10px;
+        cursor: pointer;
+        color: #bbbbbb;
+      }
+      .error {
+        color: red;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+      .icon-switch {
+        display: flex;
+        align-items: center;
+        margin: 20px;
+        position: relative;
+      }
+      .icon-switch img {
+        width: 40px;
+        height: 40px;
+        cursor: pointer;
+        margin-right: 10px;
+      }
+      .icon-switch img.inactive {
+        filter: grayscale(100%);
+      }
+      .skus-container {
+        padding: 20px;
+      }
+      .thumbnail-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+      }
+      .thumbnail {
+        display: inline-block;
+        width: 120px;
+        height: 140px;
+        margin: 5px;
+        position: relative;
+        background-color: #f0f0f0;
+        border: 1px solid #ccc;
+        text-align: center;
+        overflow: hidden;
+      }
+      .thumbnail img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        cursor: zoom-in;
+      }
+      .zoom {
+        position: absolute;
+        display: none;
+        width: 500px;
+        height: 500px;
+        border: 2px solid #8fca00;
+        background-repeat: no-repeat;
+        z-index: 10;
+      }
+      .thumbnail .sku {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0, 0, 0, 0.5);
+        color: #fff;
+        text-align: center;
+        font-size: 10px;
+        padding: 2px;
+        height: 18px;
+      }
+      .thumbnail .no-image {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        height: 100px;
+        background-color: #e0e0e0;
+        color: #888;
+        font-size: 14px;
+        text-align: center;
+      }
+      .divider {
+        width: 100%;
+        height: 1px;
+        background-color: #ccc;
+        margin: 20px 0;
+      }
+      .toggle-switch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        width: calc(100% - 40px);
+      }
+      .toggle-switch span {
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+      }
+      .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+      }
+      .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: 0.4s;
+        border-radius: 24px;
+      }
+      .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: 0.4s;
+        border-radius: 50%;
+      }
+      input:checked + .slider {
+        background-color: #8fca00;
+      }
+      input:checked + .slider:before {
+        transform: translateX(26px);
+      }
+      /* Estilos para el nuevo sidebar (panel lateral) */
+      .sidebar-toggle {
+        position: static;
+        margin-right: 10px;
+        cursor: pointer;
+        /* AUMENTADO EL TAMAÑO DEL ICONO */
+        width: 40px;
+        height: 40px;
+        background-image: url("https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/icon.png");
+        background-size: cover;
+        opacity: 0.8;
+        z-index: 1001;
+      }
+      .sidebar-toggle:hover {
+        opacity: 1;
+      }
+      .sidebar {
+        height: 100%;
+        width: 0;
+        position: fixed;
+        z-index: 1000;
+        /* CAMBIO CLAVE: AHORA APARECE DESDE LA IZQUIERDA */
+        top: 0;
+        left: 0;
+        background-color: #fff;
+        overflow-x: hidden;
+        transition: 0.5s;
+        padding-top: 60px;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); /* Sombra hacia la derecha */
+      }
+      .sidebar.open {
+        width: 250px;
+      }
+      .sidebar a {
+        padding: 15px 25px;
+        text-decoration: none;
+        font-size: 18px;
+        color: #333;
+        display: block;
+        transition: 0.3s;
+      }
+      .sidebar a:hover {
+        color: #8fca00;
+        background-color: #f1f1f1;
+      }
+      .sidebar .closebtn {
+        position: absolute;
+        top: 0;
+        /* AJUSTE PARA QUE LA "X" SIGA EN LA ESQUINA SUPERIOR DERECHA DEL SIDEBAR */
+        right: 25px;
+        font-size: 36px;
+        color: #aaa;
+        text-decoration: none;
+        /* margin-left: 50px; eliminado porque ahora 'right' lo posiciona */
+      }
+      .sidebar .closebtn:hover {
+        color: #333;
+      }
+      .overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        display: none;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="overlay" id="overlay"></div>
     <div id="mySidebar" class="sidebar">
-        <a href="javascript:void(0)" class="closebtn" id="closeSidebar">&times;</a>
-        <a href="index.html">Visualizador</a>
-        <a href="Replicador.html">Replicador</a>
-        <a href="renombre.html">Renombrador</a>
-        <a href="Comparar.html">Comparador</a>
+      <a href="javascript:void(0)" class="closebtn" id="closeSidebar"
+        >&times;</a
+      >
+      <a href="index.html">Visualizador</a>
+      <a href="Replicador.html">Replicador</a>
+      <a href="renombre.html">Renombrador</a>
+      <a href="Comparar.html">Comparador</a>
     </div>
     <div class="container">
-        <div class="leftMenu">
-            <div class="icon-switch">
-                <div class="sidebar-toggle" id="sidebarToggle"></div>
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png" id="falabellaIcon" class="active">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png" id="sodimacIcon" class="inactive">
-                <img src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png" id="tottusIcon" class="inactive">
-            </div>
-            <div class="intro paises" id="paisesContainer">
-                <div>Descargar imágenes desde:</div><br>
-                <div class="pais seleccionado" data-pais="CL">Chile</div>
-                <div class="pais" data-pais="CO">Colombia</div>
-                <div class="pais" data-pais="PE">Perú</div>
-            </div>
-            <div class="skus-container">
-                <textarea name="skus" id="skus" cols="30" rows="15" placeholder="Seleccione VISTA e ingrese SKU_VISTA, uno debajo del otro sin comas. Seleccione SKU e ingrese los SKUs uno debajo del otro sin comas"></textarea>
-                <button id="buscar">BUSCAR</button>
-            </div>
-            <div class="toggle-switch">
-                <span>Vista</span>
-                <label class="switch">
-                    <input type="checkbox" id="viewToggle">
-                    <span class="slider"></span>
-                </label>
-                <span>SKU</span>
-            </div>
-            <div class="error" id="error"></div>
+      <div class="leftMenu">
+        <div class="icon-switch">
+          <div class="sidebar-toggle" id="sidebarToggle"></div>
+          <img
+            src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png"
+            id="falabellaIcon"
+            class="active"
+          />
+          <img
+            src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png"
+            id="sodimacIcon"
+            class="inactive"
+          />
+          <img
+            src="https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png"
+            id="tottusIcon"
+            class="inactive"
+          />
         </div>
-        <div class="rightContainer">
-            <div class="setBar">
-                <button id="descargartodo">DESCARGAR TODO</button>
-                <button id="ordenarVistas" disabled>ORDENAR VISTAS</button>
-            </div>
-            <div class="imgContainer"></div>
-            <div id="thumbnailContainer" style="display:none;">
-            </div>
+        <div class="intro paises" id="paisesContainer">
+          <div>Descargar imágenes desde:</div>
+          <br />
+          <div class="pais seleccionado" data-pais="CL">Chile</div>
+          <div class="pais" data-pais="CO">Colombia</div>
+          <div class="pais" data-pais="PE">Perú</div>
         </div>
-        <div class="rightMenu">
-            <div class="intro">No tiene foto:</div>
-            <div class="error-list" id="errorList">
-                <button id="copyErrors">Copiar</button>
-            </div>
+        <div class="skus-container">
+          <textarea
+            name="skus"
+            id="skus"
+            cols="30"
+            rows="15"
+            placeholder="Seleccione VISTA e ingrese SKU_VISTA, uno debajo del otro sin comas. Seleccione SKU e ingrese los SKUs uno debajo del otro sin comas"
+          ></textarea>
+          <button id="buscar">BUSCAR</button>
         </div>
+        <div class="toggle-switch">
+          <span>Vista</span>
+          <label class="switch">
+            <input type="checkbox" id="viewToggle" />
+            <span class="slider"></span>
+          </label>
+          <span>SKU</span>
+        </div>
+        <div class="error" id="error"></div>
+      </div>
+      <div class="rightContainer">
+        <div class="setBar">
+          <button id="descargartodo">DESCARGAR TODO</button>
+          <button id="ordenarVistas" disabled>ORDENAR VISTAS</button>
+        </div>
+        <div class="imgContainer"></div>
+        <div id="thumbnailContainer" style="display: none"></div>
+      </div>
+      <div class="rightMenu">
+        <div class="intro">No tiene foto:</div>
+        <div class="error-list" id="errorList">
+          <button id="copyErrors">Copiar</button>
+        </div>
+      </div>
     </div>
     <script>
-        var pais = "CL";
-        var useFalabella = true;
-        var useSodimac = false;
-        var useTottus = false;
-        var viewMode = "vista";
+      var pais = "CL"; // Por defecto, Chile
+      var useFalabella = true; // Estado inicial: usar Falabella
+      var useSodimac = false;
+      var useTottus = false;
+      var viewMode = "vista"; // Estado inicial: por vista
 
-        const paisesFalabella = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' }
-        ];
+      const paisesFalabella = [
+        { nombre: "Chile", codigo: "CL" },
+        { nombre: "Colombia", codigo: "CO" },
+        { nombre: "Perú", codigo: "PE" },
+      ];
 
-        const paisesSodimac = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Argentina', codigo: 'AR' },
-            { nombre: 'Colombia', codigo: 'CO' },
-            { nombre: 'Perú', codigo: 'PE' },
-            { nombre: 'Brasil', codigo: 'BR' },
-            { nombre: 'México', codigo: 'MX' },
-            { nombre: 'Uruguay', codigo: 'UY' }
-        ];
+      const paisesSodimac = [
+        { nombre: "Chile", codigo: "CL" },
+        { nombre: "Argentina", codigo: "AR" },
+        { nombre: "Colombia", codigo: "CO" },
+        { nombre: "Perú", codigo: "PE" },
+        { nombre: "Brasil", codigo: "BR" },
+        { nombre: "México", codigo: "MX" },
+        { nombre: "Uruguay", codigo: "UY" },
+      ];
 
-        const paisesTottus = [
-            { nombre: 'Chile', codigo: 'CL' },
-            { nombre: 'Perú', codigo: 'PE' }
-        ];
+      const paisesTottus = [
+        { nombre: "Chile", codigo: "CL" },
+        { nombre: "Perú", codigo: "PE" },
+      ];
 
-        function actualizarPaises() {
-            const contenedor = $('#paisesContainer');
-            contenedor.empty();
-            contenedor.append('<div>Descargar imágenes desde:</div><br>');
-            let paises;
-            if (useFalabella) {
-                paises = paisesFalabella;
+      function actualizarPaises() {
+        const contenedor = $("#paisesContainer");
+        contenedor.empty();
+        contenedor.append("<div>Descargar imágenes desde:</div><br>");
+        let paises;
+        if (useFalabella) {
+          paises = paisesFalabella;
+        } else if (useSodimac) {
+          paises = paisesSodimac;
+        } else {
+          paises = paisesTottus;
+        }
+        paises.forEach((p) => {
+          const div = $("<div>")
+            .addClass("pais")
+            .attr("data-pais", p.codigo)
+            .text(p.nombre);
+          if (p.codigo === pais) div.addClass("seleccionado");
+          contenedor.append(div);
+        });
+        $(".pais").click(function () {
+          pais = $(this).data("pais");
+          $(".pais").removeClass("seleccionado");
+          $(this).addClass("seleccionado");
+        });
+      }
+
+      $("#falabellaIcon").click(function () {
+        useFalabella = true;
+        useSodimac = false;
+        useTottus = false;
+        $("#falabellaIcon")
+          .removeClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png"
+          );
+        $("#sodimacIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png"
+          );
+        $("#tottusIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png"
+          );
+        actualizarPaises();
+      });
+
+      $("#sodimacIcon").click(function () {
+        useFalabella = false;
+        useSodimac = true;
+        useTottus = false;
+        $("#sodimacIcon")
+          .removeClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png"
+          );
+        $("#falabellaIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png"
+          );
+        $("#tottusIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png"
+          );
+        actualizarPaises();
+      });
+
+      $("#tottusIcon").click(function () {
+        useFalabella = false;
+        useSodimac = false;
+        useTottus = true;
+        $("#tottusIcon")
+          .removeClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus.png"
+          );
+        $("#falabellaIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png"
+          );
+        $("#sodimacIcon")
+          .addClass("inactive")
+          .attr(
+            "src",
+            "https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png"
+          );
+        actualizarPaises();
+      });
+
+      $("#viewToggle").change(function () {
+        viewMode = $(this).is(":checked") ? "sku" : "vista";
+        if (viewMode === "vista") {
+          $(".imgContainer").show();
+          $("#thumbnailContainer").hide();
+        } else {
+          $(".imgContainer").hide();
+          $("#thumbnailContainer").show();
+        }
+      });
+
+      $("#buscar").click(function () {
+        $("#ordenarVistas").attr("disabled", true); // Deshabilitar botón de ordenar
+        if (viewMode === "vista") {
+          buscarPorVista();
+        } else {
+          buscarPorSKU();
+        }
+      });
+
+      $("#ordenarVistas").click(function () {
+        // Re-ejecutar la búsqueda para que se reordenen las vistas, si es necesario.
+        // Esto solo tiene efecto si buscarPorSKU() se ha llamado antes y las miniaturas existen.
+        if (viewMode === "sku") {
+          buscarPorSKU();
+        }
+      });
+
+      async function buscarPorVista() {
+        $(".imgContainer").empty();
+        $("#error").text("");
+        $("#errorList").empty(); // Limpiar lista de errores
+        $("#errorList").append('<button id="copyErrors">Copiar</button>');
+        var skus = $("#skus").val().split("\n");
+        var promises = [];
+
+        for (let sku of skus) {
+          sku = sku.trim();
+          if (sku !== "") {
+            promises.push(loadImage(sku));
+          }
+        }
+
+        const images = await Promise.all(promises);
+
+        images.forEach((image) => {
+          if (image && !image.error) {
+            $(".imgContainer").append(image.element);
+          }
+          if (image && image.error) {
+            $("#errorList").append("<div>" + image.sku + "</div>");
+          }
+        });
+
+        $("#ordenarVistas").attr("disabled", true); // Se mantiene deshabilitado para el modo vista, ya que no hay orden específico aquí.
+      }
+
+      function buscarPorSKU() {
+        $("#thumbnailContainer").empty(); // Limpiar el contenedor de miniaturas
+        $("#errorList").empty(); // Limpiar lista de errores
+        $("#errorList").append('<button id="copyErrors">Copiar</button>'); // Volver a agregar el botón de copiar
+        var skus = $("#skus").val().split("\n");
+        var promises = [];
+
+        skus.forEach(function (sku, index) {
+          sku = sku.trim();
+          if (sku !== "") {
+            var variants;
+            // Definir variantes según la tienda
+            if (useFalabella || useTottus) {
+              variants = [
+                "_1",
+                "_2",
+                "_3",
+                "_4",
+                "_5",
+                "_6",
+                "_7",
+                "_8",
+                "_9",
+                "_10",
+                "_11",
+                "_12",
+                "_13",
+                "_001",
+                "_002",
+                "_003",
+                "_004",
+                "_005",
+                "_006",
+                "_007",
+                "_008",
+                "_009",
+                "_01",
+                "_02",
+                "_03",
+                "_04",
+                "_05",
+                "_06",
+                "_07",
+                "_08",
+                "_09",
+                "_90",
+                "_91",
+                "_92",
+                "_93",
+                "_94",
+                "_95",
+                "_96",
+                "_97",
+                "_98",
+                "_99",
+                "_100",
+                "_101",
+                "_102",
+                "_103",
+                "_104",
+                "_105",
+              ];
             } else if (useSodimac) {
-                paises = paisesSodimac;
-            } else {
-                paises = paisesTottus;
-            }
-            paises.forEach(p => {
-                const div = $('<div>').addClass('pais').attr('data-pais', p.codigo).text(p.nombre);
-                if (p.codigo === pais) div.addClass('seleccionado');
-                contenedor.append(div);
-            });
-            $('.pais').click(function() {
-                pais = $(this).data('pais');
-                $('.pais').removeClass('seleccionado');
-                $(this).addClass('seleccionado');
-            });
-        }
-
-        $('#falabellaIcon').click(function() {
-            useFalabella = true;
-            useSodimac = false;
-            useTottus = false;
-            $('#falabellaIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella.png');
-            $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
-            $('#tottusIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png');
-            actualizarPaises();
-        });
-
-        $('#sodimacIcon').click(function() {
-            useFalabella = false;
-            useSodimac = true;
-            useTottus = false;
-            $('#sodimacIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac.png');
-            $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
-            $('#tottusIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus-bn.png');
-            actualizarPaises();
-        });
-
-        $('#tottusIcon').click(function() {
-            useFalabella = false;
-            useSodimac = false;
-            useTottus = true;
-            $('#tottusIcon').removeClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/tottus.png');
-            $('#falabellaIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/falabella-bn.png');
-            $('#sodimacIcon').addClass('inactive').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/Visualiza2/main/sodimac-bn.png');
-            actualizarPaises();
-        });
-
-        $('#viewToggle').change(function() {
-            viewMode = $(this).is(':checked') ? 'sku' : 'vista';
-            if (viewMode === 'vista') {
-                $('.imgContainer').show();
-                $('#thumbnailContainer').hide();
-            } else {
-                $('.imgContainer').hide();
-                $('#thumbnailContainer').show();
-            }
-        });
-
-        $('#buscar').click(function() {
-            $('#ordenarVistas').attr('disabled', true);
-            if (viewMode === "vista") {
-                buscarPorVista();
-            } else {
-                buscarPorSKU();
-            }
-        });
-
-        $('#ordenarVistas').click(function() {
-            if (viewMode === "sku") {
-                buscarPorSKU();
-            }
-        });
-
-        async function buscarPorVista() {
-            $('.imgContainer').empty();
-            $('#error').text('');
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
-
-            for (let sku of skus) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    promises.push(loadImage(sku));
-                }
+              // Vistas actualizadas para Sodimac, aplicando a todos los países de la BU
+              variants = [
+                "_1",
+                "_2",
+                "_3",
+                "_4",
+                "_5",
+                "_6",
+                "_7",
+                "_8",
+                "_9",
+                "_01",
+                "_02",
+                "_03",
+                "_04",
+                "_05",
+                "_06",
+                "_07",
+                "_08",
+                "_09",
+                "_10",
+                "_11",
+                "_12",
+                "_13",
+                "_14",
+                "_15",
+                "_16",
+                "_17",
+                "_18",
+                "_19",
+                "_20",
+                "_21",
+                "_22",
+                "_23",
+                "_24",
+                "_25",
+                "_26",
+                "_27",
+                "_28",
+                "_29",
+                "_30",
+                "_001",
+                "_002",
+                "_003",
+                "_004",
+                "_005",
+                "_006",
+                "_007",
+                "_008",
+                "_009",
+                "_300",
+                "_400",
+              ];
             }
 
-            const images = await Promise.all(promises);
+            // Ordenar las variantes para asegurar una visualización coherente
+            // Esto es importante para el botón "Ordenar Vistas"
+            variants.sort((a, b) => {
+              // Extraer el número de la variante (ej. '_001' -> 1, '_10' -> 10, '_SEC' -> NaN)
+              const numA = parseInt(a.replace(/[^0-9]/g, ""));
+              const numB = parseInt(b.replace(/[^0-9]/g, ""));
 
-            images.forEach(image => {
-                if (image && !image.error) {
-                    $('.imgContainer').append(image.element);
-                }
-                if (image && image.error) {
-                    $('#errorList').append('<div>' + image.sku + '</div>');
-                }
+              // Si ambos son números, ordenar numéricamente
+              if (!isNaN(numA) && !isNaN(numB)) {
+                return numA - numB;
+              }
+              // Si uno es número y el otro no, el número va primero
+              if (!isNaN(numA)) return -1;
+              if (!isNaN(numB)) return 1;
+              // Si ninguno es número, ordenar alfabéticamente
+              return a.localeCompare(b);
             });
 
-            $('#ordenarVistas').attr('disabled', true);
+            promises.push(displayThumbnailsInOrder(sku, variants, index));
+          }
+        });
+
+        Promise.all(promises).then(() => {
+          $("#ordenarVistas").removeAttr("disabled"); // Habilitar botón de ordenar
+        });
+      }
+
+      async function displayThumbnailsInOrder(sku, variants, index) {
+        const promises = variants.map((variant) =>
+          createThumbnail(sku + variant)
+        );
+
+        const results = await Promise.all(promises);
+
+        const thumbnails = results.filter((result) => result !== null); // Filtrar los que no tienen imagen
+        if (thumbnails.length > 0) {
+          var row = $('<div class="thumbnail-row"></div>'); // Crear una fila de miniaturas
+          thumbnails.forEach((thumbnail) => row.append(thumbnail)); // Añadir cada miniatura a la fila
+          $("#thumbnailContainer").append(row); // Añadir la fila al contenedor
+          if (index > 0) {
+            $("#thumbnailContainer").append('<div class="divider"></div>'); // Añadir un divisor si no es el primer SKU
+          }
+        } else {
+          $("#errorList").append("<div>" + sku + "</div>"); // Si no se encuentra ninguna imagen, añadir SKU a la lista de errores
+        }
+      }
+
+      function getBaseUrl(storeType = null) {
+        let base = "https://media.falabella.com/";
+        if (storeType === null) {
+          // Si no se especifica, usa el valor global
+          storeType = useFalabella
+            ? "falabella"
+            : useSodimac
+            ? "sodimac"
+            : "tottus";
         }
 
-        function buscarPorSKU() {
-            $('#thumbnailContainer').empty();
-            $('#errorList').empty();
-            $('#errorList').append('<button id="copyErrors">Copiar</button>');
-            var skus = $('#skus').val().split('\n');
-            var promises = [];
+        if (storeType === "falabella") {
+          return `${base}falabella${pais}`;
+        } else if (storeType === "sodimac") {
+          return `${base}sodimac${pais}`;
+        } else if (storeType === "tottus") {
+          return `${base}tottus${pais}`;
+        }
+        return base; // Fallback, aunque no debería usarse
+      }
 
-            skus.forEach(function(sku, index) {
-                sku = sku.trim();
-                if (sku !== "") {
-                    var variants;
-                    if (useFalabella || useTottus) {
-                        variants = [
-                            '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9', '_10', '_11', '_12', '_13',
-                            '_001', '_002', '_003', '_004', '_005', '_006', '_007', '_008', '_009',
-                            '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09',
-                            '_90', '_91', '_92', '_93', '_94', '_95', '_96', '_97', '_98', '_99',
-                            '_100', '_101', '_102', '_103', '_104', '_105'
-                        ];
-                    } else if (useSodimac) {
-                        variants = [
-                            '_1', '_2', '_3', '_4', '_5', '_6', '_7', '_8', '_9',
-                            '_01', '_02', '_03', '_04', '_05', '_06', '_07', '_08', '_09',
-                            '_10', '_11', '_12', '_13', '_14', '_15', '_16', '_17', '_18', '_19',
-                            '_20', '_21', '_22', '_23', '_24', '_25', '_26', '_27', '_28', '_29', '_30',
-                            '_001', '_002', '_003', '_004', '_005', '_006', '_007', '_008', '_009',
-                            '_300', '_400'
-                        ];
-                    }
+      function createThumbnail(sku) {
+        return new Promise((resolve) => {
+          const baseUrl = getBaseUrl();
+          let thumbnailUrl = `${baseUrl}/${sku}/w=400,h=400,fit=pad`;
+          let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`; // URL para la imagen original / descarga
 
-                    variants.sort((a, b) => {
-                        const numA = parseInt(a.replace(/[^0-9]/g, ''));
-                        const numB = parseInt(b.replace(/[^0-9]/g, ''));
-
-                        if (!isNaN(numA) && !isNaN(numB)) {
-                            return numA - numB;
-                        }
-                        if (!isNaN(numA)) return -1;
-                        if (!isNaN(numB)) return 1;
-                        return a.localeCompare(b);
-                    });
-
-                    promises.push(displayThumbnailsInOrder(sku, variants, index));
-                }
+          var img = new Image();
+          img.src = thumbnailUrl;
+          img.alt = sku;
+          img.onload = function () {
+            var thumbnail = $('<div class="thumbnail"></div>');
+            var link = $('<a href="' + originalUrl + '" target="_blank"></a>'); // Link para abrir en nueva pestaña (original size)
+            link.append(img);
+            var downloadIcon = $('<div class="download-icon"></div>');
+            downloadIcon.click(function (e) {
+              e.preventDefault(); // Evitar que el clic en el ícono también abra el link
+              downloadImage(originalUrl, sku);
             });
+            thumbnail.append(link);
+            thumbnail.append('<div class="sku">' + sku + "</div>");
+            thumbnail.append(downloadIcon);
+            resolve(thumbnail); // Resolver la promesa con el elemento miniatura
+          };
+          img.onerror = function () {
+            resolve(null); // Si no se encuentra la imagen, resolver con null
+          };
+        });
+      }
 
-            Promise.all(promises).then(() => {
-                $('#ordenarVistas').removeAttr('disabled');
-            });
+      function downloadImage(url, sku) {
+        JSZipUtils.getBinaryContent(url, function (err, data) {
+          if (err) {
+            console.error("Error al descargar la imagen para ZIP: " + url, err);
+            alert(
+              "Error al descargar la imagen: " +
+                sku +
+                ". Por favor, intente de nuevo."
+            );
+            return;
+          }
+          saveAs(new Blob([data], { type: "image/jpeg" }), sku + ".jpg");
+        });
+      }
+
+      function loadImage(sku) {
+        return new Promise(function (resolve, reject) {
+          let primaryBaseUrl = getBaseUrl();
+          let alternateBaseUrl = null; // Para el fallback
+
+          if (useSodimac && pais === "CL") {
+            // Si estamos en Sodimac Chile, el fallback es a Falabella Chile
+            alternateBaseUrl = getBaseUrl("falabella");
+          }
+
+          // URL principal para visualizar la imagen
+          const primaryUrl = `${primaryBaseUrl}/${sku}/public`;
+          // URL alternativa si el SKU tiene guiones (dentro de la misma base)
+          const primaryAlternateInpageUrl = `${primaryBaseUrl}/inpage_media/${sku}/public`;
+          // URL para descargar la imagen a tamaño completo (de la base donde se encontró)
+          let downloadUrl = `${primaryBaseUrl}/${sku}/w=1500,h=1500,fit=pad`;
+
+          function tryLoadImageInternal(
+            urlToLoad,
+            currentBaseUrl,
+            isAlternateAttempt = false,
+            isFalabellaFallback = false
+          ) {
+            console.log(
+              `Intentando cargar imagen para SKU: ${sku} desde URL: ${urlToLoad} (Intento alterno: ${isAlternateAttempt}, Fallback Falabella: ${isFalabellaFallback})`
+            );
+            var img = new Image();
+            img.src = urlToLoad;
+            // Ajustar la URL de descarga para que coincida con la base de la que se cargó la imagen
+            img.setAttribute(
+              "data-download-src",
+              `${currentBaseUrl}/${sku}/w=1500,h=1500,fit=pad`
+            );
+            img.alt = sku;
+
+            img.onload = function () {
+              var wrapper = $(
+                '<div class="imgWrapper"><a href="' +
+                  img.getAttribute("data-download-src") +
+                  '" target="_blank"></a></div>'
+              );
+              wrapper.find("a").append(img);
+              resolve({ element: wrapper, sku: sku });
+            };
+
+            img.onerror = function () {
+              // Primero, intentar la URL inpage_media si el SKU tiene guiones y aún no se ha intentado
+              if (
+                !isAlternateAttempt &&
+                sku.includes("-") &&
+                `${currentBaseUrl}/inpage_media/${sku}/public` !== urlToLoad
+              ) {
+                console.log(
+                  `Fallo imagen principal para ${sku} en ${currentBaseUrl}. Intentando inpage_media.`
+                );
+                tryLoadImageInternal(
+                  `${currentBaseUrl}/inpage_media/${sku}/public`,
+                  currentBaseUrl,
+                  true,
+                  isFalabellaFallback
+                );
+              }
+              // Segundo, si es SodimacCL y hay una URL de fallback a FalabellaCL y aún no se ha intentado
+              else if (!isFalabellaFallback && alternateBaseUrl) {
+                console.log(
+                  `Fallo para ${sku} en SodimacCL. Intentando fallback a FalabellaCL.`
+                );
+                // Intentar la URL primaria de Falabella
+                tryLoadImageInternal(
+                  `${alternateBaseUrl}/${sku}/public`,
+                  alternateBaseUrl,
+                  false,
+                  true
+                );
+              }
+              // Si todas las opciones fallan
+              else {
+                console.log(
+                  "Error al cargar la imagen para SKU: " +
+                    sku +
+                    " después de todos los intentos."
+                );
+                resolve({ error: true, sku: sku });
+              }
+            };
+          }
+
+          tryLoadImageInternal(primaryUrl, primaryBaseUrl);
+        });
+      }
+
+      $("#descargartodo").click(function () {
+        var zip = new JSZip();
+        var count = 0;
+        var zipFilename = `Imagenes_Falabella_${getFormattedDate()}.zip`; // Nombre más descriptivo
+        var urlsToDownload = [];
+        var skuNamesToDownload = [];
+
+        if (viewMode === "vista") {
+          $(".imgWrapper img").each(function () {
+            // Ahora usamos data-download-src que apunta a la URL correcta de descarga (Sodimac o Falabella)
+            urlsToDownload.push($(this).attr("data-download-src"));
+            skuNamesToDownload.push($(this).attr("alt"));
+          });
+        } else {
+          // viewMode === "sku"
+          $(".thumbnail img").each(function () {
+            // La URL de descarga ya está en el 'href' del padre 'a'
+            urlsToDownload.push($(this).parent().attr("href"));
+            skuNamesToDownload.push($(this).attr("alt"));
+          });
         }
 
-        async function displayThumbnailsInOrder(sku, variants, index) {
-            const promises = variants.map(variant => createThumbnail(sku + variant));
-
-            const results = await Promise.all(promises);
-
-            const thumbnails = results.filter(result => result !== null);
-            if (thumbnails.length > 0) {
-                var row = $('<div class="thumbnail-row"></div>');
-                thumbnails.forEach(thumbnail => row.append(thumbnail));
-                $('#thumbnailContainer').append(row);
-                if (index > 0) {
-                    $('#thumbnailContainer').append('<div class="divider"></div>');
-                }
-            } else {
-                $('#errorList').append('<div>' + sku + '</div>');
-            }
+        if (urlsToDownload.length === 0) {
+          alert(
+            "No hay imágenes para descargar. Realice una búsqueda primero."
+          );
+          return;
         }
 
-        function getBaseUrl(storeType = null) {
-            let base = "https://media.falabella.com/";
-            if (storeType === null) {
-                storeType = useFalabella ? 'falabella' : (useSodimac ? 'sodimac' : 'tottus');
-            }
+        // Deshabilitar el botón mientras se descarga
+        $("#descargartodo")
+          .prop("disabled", true)
+          .text("Preparando descarga...");
 
-            if (storeType === 'falabella') {
-                return `${base}falabella${pais}`;
-            } else if (storeType === 'sodimac') {
-                return `${base}sodimac${pais}`;
-            } else if (storeType === 'tottus') {
-                return `${base}tottus${pais}`;
-            }
-            return base;
-        }
-
-        function createThumbnail(sku) {
-            return new Promise((resolve) => {
-                const baseUrl = getBaseUrl();
-                let thumbnailUrl = `${baseUrl}/${sku}/w=400,h=400,fit=pad`;
-                let originalUrl = `${baseUrl}/${sku}/w=1500,h=1500,fit=pad`;
-
-                var img = new Image();
-                img.src = thumbnailUrl;
-                img.alt = sku;
-                img.onload = function() {
-                    var thumbnail = $('<div class="thumbnail"></div>');
-                    var link = $('<a href="' + originalUrl + '" target="_blank"></a>');
-                    link.append(img);
-                    var downloadIcon = $('<div class="download-icon"></div>');
-                    downloadIcon.click(function(e) {
-                        e.preventDefault();
-                        downloadImage(originalUrl, sku);
-                    });
-                    thumbnail.append(link);
-                    thumbnail.append('<div class="sku">' + sku + '</div>');
-                    thumbnail.append(downloadIcon);
-                    resolve(thumbnail);
-                };
-                img.onerror = function() {
-                    resolve(null);
-                };
-            });
-        }
-
-        function downloadImage(url, sku) {
+        var fetchPromises = urlsToDownload.map((url, index) => {
+          return new Promise((resolve, reject) => {
             JSZipUtils.getBinaryContent(url, function (err, data) {
-                if (err) {
-                    console.error("Error al descargar la imagen para ZIP: " + url, err);
-                    alert("Error al descargar la imagen: " + sku + ". Por favor, intente de nuevo.");
-                    return;
-                }
-                saveAs(new Blob([data], { type: 'image/jpeg' }), sku + ".jpg");
-            });
-        }
-
-        function loadImage(sku) {
-            return new Promise(function(resolve, reject) {
-                let primaryBaseUrl = getBaseUrl();
-                let alternateBaseUrl = null;
-
-                if (useSodimac && pais === 'CL') {
-                    alternateBaseUrl = getBaseUrl('falabella');
-                }
-
-                const primaryUrl = `${primaryBaseUrl}/${sku}/public`;
-                const primaryAlternateInpageUrl = `${primaryBaseUrl}/inpage_media/${sku}/public`;
-
-                function tryLoadImageInternal(urlToLoad, currentBaseUrl, isAlternateAttempt = false, isFalabellaFallback = false) {
-                    console.log(`Intentando cargar imagen para SKU: ${sku} desde URL: ${urlToLoad}`);
-                    var img = new Image();
-                    img.src = urlToLoad;
-                    img.setAttribute('data-download-src', `${currentBaseUrl}/${sku}/w=1500,h=1500,fit=pad`);
-                    img.alt = sku;
-
-                    img.onload = function() {
-                        var wrapper = $('<div class="imgWrapper"><a href="' + img.getAttribute('data-download-src') + '" target="_blank"></a></div>');
-                        wrapper.find('a').append(img);
-                        resolve({ element: wrapper, sku: sku });
-                    };
-
-                    img.onerror = function() {
-                        if (!isAlternateAttempt && sku.includes('-') && `${currentBaseUrl}/inpage_media/${sku}/public` !== urlToLoad) {
-                            console.log(`Fallo imagen principal para ${sku} en ${currentBaseUrl}. Intentando inpage_media.`);
-                            tryLoadImageInternal(`${currentBaseUrl}/inpage_media/${sku}/public`, currentBaseUrl, true, isFalabellaFallback);
-                        }
-                        else if (!isFalabellaFallback && alternateBaseUrl) {
-                            console.log(`Fallo para ${sku} en SodimacCL. Intentando fallback a FalabellaCL.`);
-                            tryLoadImageInternal(`${alternateBaseUrl}/${sku}/public`, alternateBaseUrl, false, true);
-                        }
-                        else {
-                            console.log("Error al cargar la imagen para SKU: " + sku + " después de todos los intentos.");
-                            resolve({ error: true, sku: sku });
-                        }
-                    };
-                }
-                tryLoadImageInternal(primaryUrl, primaryBaseUrl);
-            });
-        }
-        
-        $('#descargartodo').click(async function() {
-            const zip = new JSZip();
-            const zipFilename = `Imagenes_Falabella_${getFormattedDate()}.zip`;
-            const urlsToDownload = [];
-            const skuNamesToDownload = [];
-
-            if (viewMode === "vista") {
-                $(".imgWrapper img").each(function() {
-                    urlsToDownload.push($(this).attr('data-download-src'));
-                    skuNamesToDownload.push($(this).attr('alt'));
+              if (err) {
+                console.error(
+                  `Error al obtener ${skuNamesToDownload[index]}: ${err}`
+                );
+                // En lugar de detener todo, logueamos el error y resolvemos para que el Promise.all continúe
+                resolve({
+                  success: false,
+                  sku: skuNamesToDownload[index],
+                  error: err.message,
                 });
-            } else {
-                $(".thumbnail img").each(function() {
-                    urlsToDownload.push($(this).parent().attr('href'));
-                    skuNamesToDownload.push($(this).attr('alt'));
+              } else {
+                zip.file(skuNamesToDownload[index] + ".jpg", data, {
+                  binary: true,
                 });
-            }
-
-            if (urlsToDownload.length === 0) {
-                alert("No hay imágenes para descargar. Realice una búsqueda primero.");
-                return;
-            }
-
-            $('#descargartodo').prop('disabled', true).text('Preparando descarga...');
-
-            const fetchPromises = urlsToDownload.map((url, index) => {
-                return new Promise((resolve) => {
-                    JSZipUtils.getBinaryContent(url, function (err, data) {
-                        if (err) {
-                            // Este es el punto clave para evitar el error. En lugar de fallar,
-                            // devolvemos un objeto de "rechazo" para que Promise.allSettled lo capture.
-                            resolve({ status: 'rejected', reason: err.message, sku: skuNamesToDownload[index] });
-                        } else {
-                            zip.file(skuNamesToDownload[index] + ".jpg", data, { binary: true });
-                            resolve({ status: 'fulfilled' });
-                        }
-                    });
-                });
+                resolve({ success: true });
+              }
             });
+          });
+        });
 
-            // Promise.allSettled espera a que todas las promesas finalicen, ya sea con éxito o con error.
-            const results = await Promise.allSettled(fetchPromises);
-            
-            const failedDownloads = results.filter(r => r.status === 'rejected');
+        Promise.all(fetchPromises)
+          .then((results) => {
+            let failedDownloads = results.filter((r) => !r.success);
             if (failedDownloads.length > 0) {
-                const failSkus = failedDownloads.map(f => f.reason.sku).join(', ');
-                alert(`Algunas imágenes no pudieron descargarse: ${failSkus}. Consulte la consola para más detalles.`);
-                failedDownloads.forEach(f => console.error(`Failed to download ${f.reason.sku}: ${f.reason.reason}`));
+              alert(
+                `Algunas imágenes no pudieron descargarse. Consulte la consola para más detalles.`
+              );
+              failedDownloads.forEach((f) =>
+                console.error(`Failed to download ${f.sku}: ${f.error}`)
+              );
             }
 
-            if (zip.files.length > 0) {
-                zip.generateAsync({ type: 'blob' }).then(function (content) {
-                    saveAs(content, zipFilename);
-                    alert(`Descarga completada. Archivo: ${zipFilename}`);
-                }).catch(function(e) {
-                    console.error("Error al generar el ZIP:", e);
-                    alert("Error al generar el archivo ZIP. Intente de nuevo.");
-                }).finally(function() {
-                    $('#descargartodo').prop('disabled', false).text('DESCARGAR TODO');
+            if (Object.keys(zip.files).length > 0) {
+              zip
+                .generateAsync({ type: "blob" })
+                .then(function (content) {
+                  saveAs(content, zipFilename);
+                  alert(`Descarga completada. Archivo: ${zipFilename}`);
+                })
+                .catch(function (e) {
+                  console.error("Error al generar el ZIP:", e);
+                  alert("Error al generar el archivo ZIP. Intente de nuevo.");
+                })
+                .finally(function () {
+                  // Siempre re-habilitar y resetear el texto
+                  $("#descargartodo")
+                    .prop("disabled", false)
+                    .text("DESCARGAR TODO");
                 });
             } else {
-                alert("No se pudieron descargar imágenes válidas para incluir en el ZIP.");
-                $('#descargartodo').prop('disabled', false).text('DESCARGAR TODO');
+              alert(
+                "No se pudieron descargar imágenes válidas para incluir en el ZIP."
+              );
+              $("#descargartodo")
+                .prop("disabled", false)
+                .text("DESCARGAR TODO");
             }
+          })
+          .catch(function (e) {
+            console.error("Error general en las promesas de descarga:", e);
+            alert("Ocurrió un error inesperado durante la descarga.");
+            $("#descargartodo").prop("disabled", false).text("DESCARGAR TODO");
+          });
+      });
+
+      function getFormattedDate() {
+        var date = new Date();
+        var day = String(date.getDate()).padStart(2, "0");
+        var month = String(date.getMonth() + 1).padStart(2, "0");
+        var hours = String(date.getHours()).padStart(2, "0");
+        var minutes = String(date.getMinutes()).padStart(2, "0");
+        return day + "-" + month + "_" + hours + minutes; // Cambiado a guion para nombre de archivo
+      }
+
+      $(document).on("click", "#copyErrors", function () {
+        var errors = [];
+        $("#errorList div").each(function () {
+          errors.push($(this).text());
         });
+        var tempInput = $("<textarea>");
+        $("body").append(tempInput);
+        tempInput.val(errors.join("\n")).select();
+        document.execCommand("copy");
+        tempInput.remove();
+        $(this).text("Copiado").addClass("copied");
+        setTimeout(function () {
+          $("#copyErrors").text("Copiar").removeClass("copied");
+        }, 2000);
+      });
 
-        function getFormattedDate() {
-            var date = new Date();
-            var day = String(date.getDate()).padStart(2, '0');
-            var month = String(date.getMonth() + 1).padStart(2, '0');
-            var hours = String(date.getHours()).padStart(2, '0');
-            var minutes = String(date.getMinutes()).padStart(2, '0');
-            return day + '-' + month + '_' + hours + minutes;
-        }
+      // Lógica para el sidebar
+      $("#sidebarToggle").click(function () {
+        openNav();
+      });
 
-        $(document).on('click', '#copyErrors', function() {
-            var errors = [];
-            $('#errorList div').each(function() {
-                errors.push($(this).text());
-            });
-            var tempInput = $('<textarea>');
-            $('body').append(tempInput);
-            tempInput.val(errors.join('\n')).select();
-            document.execCommand('copy');
-            tempInput.remove();
-            $(this).text('Copiado').addClass('copied');
-            setTimeout(function() {
-                $('#copyErrors').text('Copiar').removeClass('copied');
-            }, 2000);
-        });
+      $("#closeSidebar, #overlay").click(function () {
+        closeNav();
+      });
 
-        $('#sidebarToggle').click(function() {
-            openNav();
-        });
+      function openNav() {
+        document.getElementById("mySidebar").classList.add("open");
+        document.getElementById("overlay").style.display = "block";
+      }
 
-        $('#closeSidebar, #overlay').click(function() {
-            closeNav();
-        });
+      function closeNav() {
+        document.getElementById("mySidebar").classList.remove("open");
+        document.getElementById("overlay").style.display = "none";
+      }
 
-        function openNav() {
-            document.getElementById("mySidebar").classList.add('open');
-            document.getElementById("overlay").style.display = "block";
-        }
-
-        function closeNav() {
-            document.getElementById("mySidebar").classList.remove('open');
-            document.getElementById("overlay").style.display = "none";
-        }
-
-        $(document).ready(function() {
-            actualizarPaises();
-            $('#ordenarVistas').attr('disabled', true);
-        });
+      // Inicializar al cargar la página
+      $(document).ready(function () {
+        actualizarPaises();
+        // Asegúrate de que el botón de ordenar vistas esté deshabilitado al inicio, a menos que ya haya contenido
+        $("#ordenarVistas").attr("disabled", true);
+      });
     </script>
-</body>
+  </body>
 </html>
