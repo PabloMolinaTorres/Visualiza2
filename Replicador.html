@@ -594,17 +594,26 @@
                 const results = await Promise.all(searchPromises);
                 const foundBaseSkus = new Set();
                 const notFoundBaseSkus = new Set(inputSkus);
-
+                
+                const foundImages = [];
                 results.forEach(result => {
                     if (result.element) {
-                        const originalFullSku = result.element.querySelector('img').alt;
-                        foundSkusLeft.push(originalFullSku);
-                        const newName = renameSkusInput[inputSkus.indexOf(result.originalBaseSku)] || '';
-                        foundSkusRight.push(newName);
-                        document.getElementById('imgContainer').appendChild(result.element);
+                        foundImages.push(result.element);
                         foundBaseSkus.add(result.originalBaseSku);
                         notFoundBaseSkus.delete(result.originalBaseSku);
                     }
+                });
+
+                // Ordenar las imágenes encontradas por SKU completo
+                foundImages.sort((a, b) => a.querySelector('img').alt.localeCompare(b.querySelector('img').alt));
+
+                foundImages.forEach(element => {
+                    const originalFullSku = element.querySelector('img').alt;
+                    foundSkusLeft.push(originalFullSku);
+                    const baseSku = originalFullSku.split('_')[0];
+                    const newName = renameSkusInput[inputSkus.indexOf(baseSku)] || '';
+                    foundSkusRight.push(newName);
+                    document.getElementById('imgContainer').appendChild(element);
                 });
 
                 notFoundBaseSkus.forEach(sku => notFoundSkus.push(sku));
@@ -651,7 +660,7 @@
                 } else if (mode === "sku") {
                     const originalBaseSku = fullSkuToDownload.split('_')[0];
                     const suffix = fullSkuToDownload.substring(originalBaseSku.length);
-                    const newBaseName = skuRenameMap[fullSkuToDownload];
+                    const newBaseName = skuRenameMap[originalBaseSku] || skuRenameMap[fullSkuToDownload];
                     
                     if (newBaseName) {
                         finalName = newBaseName + suffix;
