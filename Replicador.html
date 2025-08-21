@@ -391,7 +391,8 @@
         function getImageBaseUrl(logic, countryCode) {
             return `https://media.falabella.com/${logic}${countryCode}/`;
         }
-
+        
+        // Función general para cargar imágenes, soporta base SKU + sufijo
         async function loadImage(sku, suffix = "") {
             return new Promise(function(resolve) {
                 let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
@@ -405,7 +406,7 @@
                     var imgUrl = `${currentBaseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
                     var img = new Image();
                     img.src = imgUrl;
-                    img.alt = sku + suffix;
+                    img.alt = sku + suffix; // Almacena el SKU completo con sufijo
 
                     img.onload = function() {
                         var wrapper = document.createElement('div');
@@ -542,40 +543,79 @@
             $('#errorList').append('<li>' + error + '</li>');
         }
 
+        // Función para buscar y sincronizar listas
         $('#buscar').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
 
-            var skus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+            var inputSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+            var renameSkusInput = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
 
-            if (skus.length === 0) {
+            if (inputSkus.length === 0) {
                 alert('Por favor, ingrese SKUs.');
                 return;
             }
 
-            const promises = skus.map(sku => loadImage(sku.trim()));
-            const imageElements = await Promise.all(promises);
-
-            const foundSkus = [];
+            const foundSkusLeft = [];
+            const foundSkusRight = [];
             const notFoundSkus = [];
-            imageElements.forEach((element, index) => {
-                if (element) {
-                    foundSkus.push(skus[index]);
-                    document.getElementById('imgContainer').appendChild(element);
-                } else {
-                    notFoundSkus.push(skus[index]);
-                }
-            });
 
-            $('#skuInputLeft').val(foundSkus.join('\n'));
+            if (mode === "vista") {
+                const promises = inputSkus.map(sku => loadImage(sku.trim()));
+                const results = await Promise.all(promises);
+
+                results.forEach((element, index) => {
+                    const originalSku = inputSkus[index].trim();
+                    if (element) {
+                        foundSkusLeft.push(originalSku);
+                        foundSkusRight.push(renameSkusInput[index] || '');
+                        document.getElementById('imgContainer').appendChild(element);
+                    } else {
+                        notFoundSkus.push(originalSku);
+                    }
+                });
+            } else if (mode === "sku") {
+                const suffixes = getSuffixes(activeLogic);
+                const searchPromises = [];
+
+                inputSkus.forEach((baseSku, baseIndex) => {
+                    suffixes.forEach(suffix => {
+                        searchPromises.push(loadImage(baseSku.trim(), suffix).then(element => ({
+                            element,
+                            originalBaseSku: baseSku.trim()
+                        })));
+                    });
+                });
+
+                const results = await Promise.all(searchPromises);
+                const foundBaseSkus = new Set();
+                const notFoundBaseSkus = new Set(inputSkus);
+
+                results.forEach(result => {
+                    if (result.element) {
+                        const originalFullSku = result.element.querySelector('img').alt;
+                        foundSkusLeft.push(originalFullSku);
+                        const newName = renameSkusInput[inputSkus.indexOf(result.originalBaseSku)] || '';
+                        foundSkusRight.push(newName);
+                        document.getElementById('imgContainer').appendChild(result.element);
+                        foundBaseSkus.add(result.originalBaseSku);
+                        notFoundBaseSkus.delete(result.originalBaseSku);
+                    }
+                });
+
+                notFoundBaseSkus.forEach(sku => notFoundSkus.push(sku));
+            }
+
+            $('#skuInputLeft').val(foundSkusLeft.join('\n'));
+            $('#skuInputRight').val(foundSkusRight.join('\n'));
             notFoundSkus.forEach(sku => logError(sku));
         });
 
+        // Función para descargar y renombrar
         $('#downloadAll').click(function() {
             var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
             var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
-
             const imageWrappers = $('#imgContainer .imgWrapper');
 
             if (imageWrappers.length === 0) {
@@ -592,7 +632,6 @@
             var zipFilename = getFormattedDate() + ".zip";
             let promises = [];
 
-            // Mapea los SKUs de la izquierda con los nombres de la derecha.
             const skuRenameMap = {};
             originalSkus.forEach((original, index) => {
                 skuRenameMap[original] = renameSkus[index];
@@ -602,10 +641,11 @@
                 const imgElement = $(this).find('img')[0];
                 const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
                 const fullSkuToDownload = imgElement.alt;
+                
+                const renameTo = skuRenameMap[fullSkuToDownload];
 
-                if (skuRenameMap[fullSkuToDownload]) {
-                    const finalName = skuRenameMap[fullSkuToDownload];
-
+                if (renameTo) {
+                    const finalName = renameTo;
                     const promise = new Promise((resolve, reject) => {
                         JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
                             if (err) {
