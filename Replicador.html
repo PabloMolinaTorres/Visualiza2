@@ -28,7 +28,6 @@
             background-color: #fff;
         }
 
-        /* Estilos para el sidebar colapsable */
         .sidebar {
             height: 100%;
             width: 0;
@@ -66,7 +65,6 @@
             color: #333;
         }
 
-        /* Estilos para el ícono de "hamburguesa" */
         .sidebar-toggle {
             position: absolute;
             top: 15px;
@@ -83,7 +81,6 @@
             object-fit: contain;
         }
 
-        /* Contenido principal */
         #main {
             transition: margin-left .5s, filter .5s;
             margin-left: 0;
@@ -296,7 +293,6 @@
             transform: translateX(26px);
         }
 
-        /* Títulos añadidos */
         .title {
             font-size: 18px;
             font-weight: bold;
@@ -305,7 +301,6 @@
             color: #333;
         }
 
-        /* Estilo para el log de errores */
         #errorLog {
             display: none;
             background-color: #ffe6e6;
@@ -390,7 +385,6 @@
             document.body.classList.remove("sidebar-open");
         }
 
-        var skuList = [];
         var mode = "vista";
         var country = "CL";
         var activeLogic = "falabella";
@@ -447,7 +441,8 @@
         $('#viewToggle').change(function() {
             mode = $(this).is(':checked') ? 'sku' : 'vista';
             $('#imgContainer').empty();
-            skuList = [];
+            $('#skuInputLeft').val('');
+            $('#skuInputRight').val('');
         });
 
         function setActiveCountry(countryCode) {
@@ -455,7 +450,8 @@
             $(`#link${countryCode}`).addClass('active');
             country = countryCode;
             $('#imgContainer').empty();
-            skuList = [];
+            $('#skuInputLeft').val('');
+            $('#skuInputRight').val('');
         }
 
         $('.country-link').click(function(e) {
@@ -514,7 +510,8 @@
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
             updateCountrySelector(["Chile", "Perú", "Colombia"]);
             $('#imgContainer').empty();
-            skuList = [];
+            $('#skuInputLeft').val('');
+            $('#skuInputRight').val('');
         });
 
         $('#sodimacIcon').click(function() {
@@ -526,7 +523,8 @@
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus-bn.png');
             updateCountrySelector(["Chile", "Argentina", "Colombia", "Perú", "Brasil", "México", "Uruguay"]);
             $('#imgContainer').empty();
-            skuList = [];
+            $('#skuInputLeft').val('');
+            $('#skuInputRight').val('');
         });
 
         $('#tottusIcon').click(function() {
@@ -538,7 +536,8 @@
             $('#tottusIcon').attr('src', 'https://raw.githubusercontent.com/PabloMolinaTorres/inpages/main/tottus.png');
             updateCountrySelector(["Chile", "Perú"]);
             $('#imgContainer').empty();
-            skuList = [];
+            $('#skuInputLeft').val('');
+            $('#skuInputRight').val('');
         });
 
         function logError(error) {
@@ -546,79 +545,99 @@
             $('#errorList').append('<li>' + error + '</li>');
         }
 
-        function removeNotFound(sku) {
-            var skus = $('#skuInputLeft').val().trim().split('\n');
-            skus = skus.filter(function(item) {
-                return item.trim() !== sku;
-            });
-            $('#skuInputLeft').val(skus.join('\n'));
-        }
-
         $('#buscar').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
             $('#errorList').empty();
 
-            skuList = [];
-            var skus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+            var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+            var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
 
-            if (skus.length > 0) {
-                for (const sku of skus) {
-                    if (mode === "vista") {
-                        const imageElement = await loadImage(sku.trim());
+            if (originalSkus.length === 0) {
+                alert('Por favor, ingrese SKUs.');
+                return;
+            }
+
+            if (renameSkus.length > 0 && originalSkus.length !== renameSkus.length) {
+                alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
+                return;
+            }
+
+            const promises = [];
+            const foundIndices = new Set();
+            const notFoundSkus = [];
+
+            if (mode === "vista") {
+                for (let i = 0; i < originalSkus.length; i++) {
+                    const sku = originalSkus[i];
+                    promises.push(loadImage(sku).then(imageElement => {
                         if (imageElement) {
-                            skuList.push(sku.trim());
-                            document.getElementById('imgContainer').appendChild(imageElement);
+                            foundIndices.add(i);
+                            return imageElement;
                         } else {
-                            logError(sku.trim());
-                            removeNotFound(sku.trim());
+                            notFoundSkus.push(sku);
+                            return null;
                         }
-                    } else if (mode === "sku") {
-                        const suffixes = getSuffixes(activeLogic);
-                        let found = false;
-                        for (const suffix of suffixes) {
-                            const imageElement = await loadImage(sku.trim(), suffix);
+                    }));
+                }
+            } else if (mode === "sku") {
+                const suffixes = getSuffixes(activeLogic);
+                for (let i = 0; i < originalSkus.length; i++) {
+                    const sku = originalSkus[i];
+                    let foundAnySuffix = false;
+                    for (const suffix of suffixes) {
+                        promises.push(loadImage(sku, suffix).then(imageElement => {
                             if (imageElement) {
-                                found = true;
-                                skuList.push(sku.trim() + suffix);
-                                document.getElementById('imgContainer').appendChild(imageElement);
+                                foundAnySuffix = true;
+                                foundIndices.add(i);
+                                return imageElement;
                             }
-                        }
-                        if (!found) {
-                            logError(sku.trim());
-                            removeNotFound(sku.trim());
-                        }
+                            return null;
+                        }));
+                    }
+                    if (!foundAnySuffix) {
+                        notFoundSkus.push(sku);
                     }
                 }
-            } else {
-                alert('Por favor, ingrese SKUs.');
             }
+
+            const imageElements = await Promise.all(promises);
+
+            const filteredImageElements = imageElements.filter(element => element !== null);
+            filteredImageElements.forEach(element => {
+                document.getElementById('imgContainer').appendChild(element);
+            });
+            
+            const newOriginalSkus = originalSkus.filter((_, i) => foundIndices.has(i));
+            const newRenameSkus = renameSkus.filter((_, i) => foundIndices.has(i));
+
+            $('#skuInputLeft').val(newOriginalSkus.join('\n'));
+            if (renameSkus.length > 0) {
+                $('#skuInputRight').val(newRenameSkus.join('\n'));
+            }
+
+            notFoundSkus.forEach(sku => {
+                logError(sku);
+            });
         });
 
         $('#downloadAll').click(function() {
             var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
             var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+            const imageWrappers = $('#imgContainer .imgWrapper');
 
-            if (renameSkus.length === 0 || originalSkus.length === 0) {
-                alert('Por favor, ingrese SKUs en ambos lados.');
+            if (imageWrappers.length === 0) {
+                alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
                 return;
             }
-
+            
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
             }
 
-            // Verificar si hay imágenes en el contenedor
-            const imageWrappers = $('#imgContainer .imgWrapper');
-            if (imageWrappers.length === 0) {
-                alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
-                return;
-            }
-
             var zip = new JSZip();
             var zipFilename = getFormattedDate() + ".zip";
-            var downloadedFiles = new Set();
             let promises = [];
 
             const skuRenameMap = {};
@@ -630,7 +649,7 @@
                 const imgElement = $(this).find('img')[0];
                 const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
                 const fullSku = imgElement.alt;
-
+                
                 const baseSku = fullSku.split('_')[0];
                 const suffix = fullSku.substring(baseSku.length);
 
@@ -638,22 +657,20 @@
                     const renamedBaseSku = skuRenameMap[baseSku];
                     const finalName = renamedBaseSku + suffix;
 
-                    const promise = new Promise((resolve) => {
+                    const promise = new Promise((resolve, reject) => {
                         JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
-                            if (!err) {
-                                if (!downloadedFiles.has(finalName)) {
-                                    zip.file(finalName + ".jpg", data, {
-                                        binary: true
-                                    });
-                                    downloadedFiles.add(finalName);
-                                }
-                            } else {
+                            if (err) {
                                 console.error(`Error al descargar ${originalUrl}:`, err);
+                                resolve();
+                                return;
                             }
+                            zip.file(finalName + ".jpg", data, { binary: true });
                             resolve();
                         });
                     });
                     promises.push(promise);
+                } else {
+                    console.warn(`SKU original ${baseSku} no encontrado en la lista de renombrar. Skipping.`);
                 }
             });
 
@@ -663,10 +680,8 @@
             }
 
             Promise.all(promises).then(() => {
-                if (downloadedFiles.size > 0) {
-                    zip.generateAsync({
-                        type: 'blob'
-                    }).then(function(content) {
+                if (Object.keys(zip.files).length > 0) {
+                    zip.generateAsync({ type: 'blob' }).then(function(content) {
                         saveAs(content, zipFilename);
                     }).catch(function(e) {
                         console.error("Error al generar el ZIP:", e);
