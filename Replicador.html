@@ -372,7 +372,6 @@
         </div>
     </div>
     <script>
-        // Funciones para abrir y cerrar el sidebar
         function openNav() {
             document.getElementById("mySidebar").style.width = "250px";
             document.getElementById("main").style.marginLeft = "250px";
@@ -426,10 +425,8 @@
 
                     img.onerror = function() {
                         if (!isFallback && fallbackBaseUrl) {
-                            console.log(`Error al cargar ${sku}${suffix} desde la URL principal. Intentando con la URL de respaldo: ${fallbackBaseUrl}`);
                             tryLoad(fallbackBaseUrl, true);
                         } else {
-                            console.log(`Error al cargar ${sku}${suffix} desde todas las URLs.`);
                             resolve(null);
                         }
                     };
@@ -550,87 +547,42 @@
             $('#errorLog').hide();
             $('#errorList').empty();
 
-            var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
-            var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
+            var skus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
 
-            if (originalSkus.length === 0) {
+            if (skus.length === 0) {
                 alert('Por favor, ingrese SKUs.');
                 return;
             }
 
-            if (renameSkus.length > 0 && originalSkus.length !== renameSkus.length) {
-                alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
-                return;
-            }
-
-            const promises = [];
-            const foundIndices = new Set();
-            const notFoundSkus = [];
-
-            if (mode === "vista") {
-                for (let i = 0; i < originalSkus.length; i++) {
-                    const sku = originalSkus[i];
-                    promises.push(loadImage(sku).then(imageElement => {
-                        if (imageElement) {
-                            foundIndices.add(i);
-                            return imageElement;
-                        } else {
-                            notFoundSkus.push(sku);
-                            return null;
-                        }
-                    }));
-                }
-            } else if (mode === "sku") {
-                const suffixes = getSuffixes(activeLogic);
-                for (let i = 0; i < originalSkus.length; i++) {
-                    const sku = originalSkus[i];
-                    let foundAnySuffix = false;
-                    for (const suffix of suffixes) {
-                        promises.push(loadImage(sku, suffix).then(imageElement => {
-                            if (imageElement) {
-                                foundAnySuffix = true;
-                                foundIndices.add(i);
-                                return imageElement;
-                            }
-                            return null;
-                        }));
-                    }
-                    if (!foundAnySuffix) {
-                        notFoundSkus.push(sku);
-                    }
-                }
-            }
-
+            const promises = skus.map(sku => loadImage(sku.trim()));
             const imageElements = await Promise.all(promises);
 
-            const filteredImageElements = imageElements.filter(element => element !== null);
-            filteredImageElements.forEach(element => {
-                document.getElementById('imgContainer').appendChild(element);
+            const foundSkus = [];
+            const notFoundSkus = [];
+            imageElements.forEach((element, index) => {
+                if (element) {
+                    foundSkus.push(skus[index]);
+                    document.getElementById('imgContainer').appendChild(element);
+                } else {
+                    notFoundSkus.push(skus[index]);
+                }
             });
-            
-            const newOriginalSkus = originalSkus.filter((_, i) => foundIndices.has(i));
-            const newRenameSkus = renameSkus.filter((_, i) => foundIndices.has(i));
 
-            $('#skuInputLeft').val(newOriginalSkus.join('\n'));
-            if (renameSkus.length > 0) {
-                $('#skuInputRight').val(newRenameSkus.join('\n'));
-            }
-
-            notFoundSkus.forEach(sku => {
-                logError(sku);
-            });
+            $('#skuInputLeft').val(foundSkus.join('\n'));
+            notFoundSkus.forEach(sku => logError(sku));
         });
 
         $('#downloadAll').click(function() {
             var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
             var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
+
             const imageWrappers = $('#imgContainer .imgWrapper');
 
             if (imageWrappers.length === 0) {
                 alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
                 return;
             }
-            
+
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
@@ -640,6 +592,7 @@
             var zipFilename = getFormattedDate() + ".zip";
             let promises = [];
 
+            // Mapea los SKUs de la izquierda con los nombres de la derecha.
             const skuRenameMap = {};
             originalSkus.forEach((original, index) => {
                 skuRenameMap[original] = renameSkus[index];
@@ -648,14 +601,10 @@
             imageWrappers.each(function() {
                 const imgElement = $(this).find('img')[0];
                 const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
-                const fullSku = imgElement.alt;
-                
-                const baseSku = fullSku.split('_')[0];
-                const suffix = fullSku.substring(baseSku.length);
+                const fullSkuToDownload = imgElement.alt;
 
-                if (skuRenameMap[baseSku]) {
-                    const renamedBaseSku = skuRenameMap[baseSku];
-                    const finalName = renamedBaseSku + suffix;
+                if (skuRenameMap[fullSkuToDownload]) {
+                    const finalName = skuRenameMap[fullSkuToDownload];
 
                     const promise = new Promise((resolve, reject) => {
                         JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
@@ -670,7 +619,7 @@
                     });
                     promises.push(promise);
                 } else {
-                    console.warn(`SKU original ${baseSku} no encontrado en la lista de renombrar. Skipping.`);
+                    console.warn(`SKU original ${fullSkuToDownload} no encontrado en la lista de renombrar. Skipping.`);
                 }
             });
 
@@ -714,7 +663,6 @@
             }
         }
 
-        // Inicialización
         $(document).ready(function() {
             updateCountrySelector(["Chile", "Perú", "Colombia"]);
             setActiveCountry("CL");
