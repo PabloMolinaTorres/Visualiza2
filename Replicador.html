@@ -32,42 +32,29 @@
         .sidebar {
             height: 100%;
             width: 0;
-            /* Ancho inicial: colapsado */
             position: fixed;
             z-index: 100;
-            /* Asegura que esté por encima de otros elementos */
             top: 0;
             left: 0;
-            /* Sale desde la izquierda */
             background-color: #ffffff;
-            /* FONDO BLANCO */
             overflow-x: hidden;
             transition: 0.5s;
-            /* Transición suave al abrir/cerrar */
             padding-top: 60px;
-            /* Espacio para el botón de cerrar */
             box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
-            /* Sombra hacia la derecha */
         }
 
-        /* ESTILO AJUSTADO PARA LOS ENLACES DEL SIDEBAR */
         .sidebar a {
             padding: 15px 8px 15px 32px;
-            /* Aumentado el padding vertical para más espacio */
             text-decoration: none;
             font-size: 20px;
-            /* Tamaño de fuente ligeramente más grande */
             color: #333;
-            /* Color de texto oscuro */
             display: block;
             transition: 0.3s;
         }
 
         .sidebar a:hover {
             color: #8fca00;
-            /* Color verde al pasar el ratón */
             background-color: #f1f1f1;
-            /* Fondo ligeramente gris al pasar el ratón */
         }
 
         .sidebar .closebtn {
@@ -86,11 +73,8 @@
             left: 15px;
             cursor: pointer;
             z-index: 101;
-            /* Para asegurar que esté sobre el contenido */
             width: 40px;
-            /* Tamaño del icono */
             height: 40px;
-            /* Tamaño del icono */
         }
 
         .sidebar-toggle img {
@@ -102,47 +86,35 @@
         /* Contenido principal */
         #main {
             transition: margin-left .5s, filter .5s;
-            /* Transición también para el filtro */
             margin-left: 0;
-            /* Sin margen inicial */
             height: 100%;
             display: flex;
             width: 100%;
         }
 
-        /* AJUSTES PARA EL OSCURECIMIENTO Y EL EMPUJE DEL CONTENIDO CUANDO EL SIDEBAR ESTÁ ABIERTO */
         body.sidebar-open #main {
             margin-left: 250px;
-            /* Ancho del sidebar ajustado para dar más espacio */
             filter: brightness(70%);
-            /* Oscurece el contenido */
             pointer-events: none;
-            /* Deshabilita clics en el contenido principal */
         }
 
-        /* Superposición para evitar clics en el contenido cuando el sidebar está abierto */
         .overlay {
             height: 100%;
             width: 100%;
             position: fixed;
             z-index: 99;
-            /* Por debajo del sidebar, pero por encima del contenido */
             top: 0;
             left: 0;
             background-color: rgba(0, 0, 0, 0.4);
-            /* Color gris semitransparente */
             overflow-x: hidden;
             transition: 0.5s;
             display: none;
-            /* Oculto por defecto */
         }
 
         body.sidebar-open .overlay {
             display: block;
-            /* Muestra el overlay cuando el sidebar está abierto */
         }
 
-        /* Tu CSS existente a continuación */
         .container {
             display: flex;
             flex-grow: 1;
@@ -418,10 +390,10 @@
             document.body.classList.remove("sidebar-open");
         }
 
-        var skuList = []; // Contiene los SKUs con sus sufijos (ej: "12345_01")
+        var skuList = [];
         var mode = "vista";
         var country = "CL";
-        var activeLogic = "falabella"; // 'falabella', 'sodimac', 'tottus'
+        var activeLogic = "falabella";
 
         function getImageBaseUrl(logic, countryCode) {
             return `https://media.falabella.com/${logic}${countryCode}/`;
@@ -446,7 +418,6 @@
                         var wrapper = document.createElement('div');
                         wrapper.classList.add('imgWrapper');
                         var link = document.createElement('a');
-                        // URL de descarga
                         link.href = `${currentBaseUrl}${sku}${suffix}/w=1500,h=1500,fit=pad`;
                         link.target = '_blank';
                         link.appendChild(img);
@@ -455,7 +426,6 @@
                         skuDiv.textContent = sku + suffix;
                         wrapper.appendChild(link);
                         wrapper.appendChild(skuDiv);
-                        // Añade un atributo para saber la URL de origen, útil para la descarga
                         wrapper.dataset.imageUrl = img.src;
                         resolve(wrapper);
                     };
@@ -597,7 +567,6 @@
                     if (mode === "vista") {
                         const imageElement = await loadImage(sku.trim());
                         if (imageElement) {
-                            // Almacenar solo el SKU base en modo "vista"
                             skuList.push(sku.trim());
                             document.getElementById('imgContainer').appendChild(imageElement);
                         } else {
@@ -611,7 +580,6 @@
                             const imageElement = await loadImage(sku.trim(), suffix);
                             if (imageElement) {
                                 found = true;
-                                // Almacenar el SKU con sufijo en modo "sku"
                                 skuList.push(sku.trim() + suffix);
                                 document.getElementById('imgContainer').appendChild(imageElement);
                             }
@@ -641,22 +609,27 @@
                 return;
             }
 
+            // Verificar si hay imágenes en el contenedor
+            const imageWrappers = $('#imgContainer .imgWrapper');
+            if (imageWrappers.length === 0) {
+                alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
+                return;
+            }
+
             var zip = new JSZip();
             var zipFilename = getFormattedDate() + ".zip";
             var downloadedFiles = new Set();
             let promises = [];
 
-            // Mapear los SKUs originales con sus nombres renombrados
             const skuRenameMap = {};
             originalSkus.forEach((original, index) => {
                 skuRenameMap[original] = renameSkus[index];
             });
 
-            // Iterar sobre las URLs de las imágenes cargadas en el DOM
-            $('#imgContainer .imgWrapper').each(function() {
+            imageWrappers.each(function() {
                 const imgElement = $(this).find('img')[0];
                 const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
-                const fullSku = imgElement.alt; // Obtener el SKU completo desde el alt
+                const fullSku = imgElement.alt;
 
                 const baseSku = fullSku.split('_')[0];
                 const suffix = fullSku.substring(baseSku.length);
@@ -677,7 +650,7 @@
                             } else {
                                 console.error(`Error al descargar ${originalUrl}:`, err);
                             }
-                            resolve(); // Resuelve la promesa, incluso si hay un error
+                            resolve();
                         });
                     });
                     promises.push(promise);
@@ -685,7 +658,7 @@
             });
 
             if (promises.length === 0) {
-                alert('No hay imágenes para descargar. Asegúrese de que las imágenes se hayan cargado correctamente y de que las listas coincidan.');
+                alert('No se encontraron imágenes válidas para descargar en el contenedor de previsualización.');
                 return;
             }
 
