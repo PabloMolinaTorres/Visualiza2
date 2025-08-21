@@ -392,7 +392,6 @@
             return `https://media.falabella.com/${logic}${countryCode}/`;
         }
         
-        // Función general para cargar imágenes, soporta base SKU + sufijo
         async function loadImage(sku, suffix = "") {
             return new Promise(function(resolve) {
                 let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
@@ -406,7 +405,7 @@
                     var imgUrl = `${currentBaseUrl}${sku}${suffix}/w=120,h=120,fit=pad`;
                     var img = new Image();
                     img.src = imgUrl;
-                    img.alt = sku + suffix; // Almacena el SKU completo con sufijo
+                    img.alt = sku + suffix;
 
                     img.onload = function() {
                         var wrapper = document.createElement('div');
@@ -543,7 +542,6 @@
             $('#errorList').append('<li>' + error + '</li>');
         }
 
-        // Función para buscar y sincronizar listas
         $('#buscar').click(async function() {
             $('#imgContainer').empty();
             $('#errorLog').hide();
@@ -555,6 +553,11 @@
             if (inputSkus.length === 0) {
                 alert('Por favor, ingrese SKUs.');
                 return;
+            }
+
+            if (renameSkusInput.length > 0 && inputSkus.length !== renameSkusInput.length && mode === 'vista') {
+                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
+                 return;
             }
 
             const foundSkusLeft = [];
@@ -612,7 +615,6 @@
             notFoundSkus.forEach(sku => logError(sku));
         });
 
-        // Función para descargar y renombrar
         $('#downloadAll').click(function() {
             var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
             var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
@@ -622,7 +624,7 @@
                 alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
                 return;
             }
-
+            
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
@@ -642,10 +644,24 @@
                 const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
                 const fullSkuToDownload = imgElement.alt;
                 
-                const renameTo = skuRenameMap[fullSkuToDownload];
+                let finalName;
 
-                if (renameTo) {
-                    const finalName = renameTo;
+                if (mode === "vista") {
+                    finalName = skuRenameMap[fullSkuToDownload];
+                } else if (mode === "sku") {
+                    const originalBaseSku = fullSkuToDownload.split('_')[0];
+                    const suffix = fullSkuToDownload.substring(originalBaseSku.length);
+                    const newBaseName = skuRenameMap[fullSkuToDownload];
+                    
+                    if (newBaseName) {
+                        finalName = newBaseName + suffix;
+                    } else {
+                         console.warn(`SKU original ${fullSkuToDownload} no encontrado en la lista de renombrar. Skipping.`);
+                         return;
+                    }
+                }
+                
+                if (finalName) {
                     const promise = new Promise((resolve, reject) => {
                         JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
                             if (err) {
@@ -658,8 +674,6 @@
                         });
                     });
                     promises.push(promise);
-                } else {
-                    console.warn(`SKU original ${fullSkuToDownload} no encontrado en la lista de renombrar. Skipping.`);
                 }
             });
 
