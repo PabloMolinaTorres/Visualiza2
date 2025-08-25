@@ -18,7 +18,6 @@
             box-sizing: border-box;
             font-family: 'Lato', sans-serif;
         }
-
         html,
         body {
             height: 100%;
@@ -391,7 +390,7 @@
         function getImageBaseUrl(logic, countryCode) {
             return `https://media.falabella.com/${logic}${countryCode}/`;
         }
-        
+
         async function loadImage(sku, suffix = "") {
             return new Promise(function(resolve) {
                 let primaryBaseUrl = getImageBaseUrl(activeLogic, country);
@@ -594,7 +593,7 @@
                 const results = await Promise.all(searchPromises);
                 const foundBaseSkus = new Set();
                 const notFoundBaseSkus = new Set(inputSkus);
-                
+                                
                 const foundImages = [];
                 results.forEach(result => {
                     if (result.element) {
@@ -633,7 +632,7 @@
                 alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
                 return;
             }
-            
+
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
@@ -642,47 +641,42 @@
             var zip = new JSZip();
             var zipFilename = getFormattedDate() + ".zip";
             let promises = [];
-
-            const skuRenameMap = {};
-            originalSkus.forEach((original, index) => {
-                skuRenameMap[original] = renameSkus[index];
+            
+            // Usamos un arreglo para mantener el orden y las asociaciones únicas.
+            const fileRenameList = originalSkus.map((original, index) => {
+                return {
+                    original: original,
+                    rename: renameSkus[index]
+                };
             });
 
-            imageWrappers.each(function() {
-                const imgElement = $(this).find('img')[0];
-                const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
-                const fullSkuToDownload = imgElement.alt;
-                
-                let finalName;
+            // Iteramos sobre la nueva lista de pares de nombres
+            fileRenameList.forEach(pair => {
+                // Buscamos el wrapper de imagen que coincida con el nombre original del par.
+                const wrapper = Array.from(imageWrappers).find(el => {
+                    const imgElement = $(el).find('img');
+                    return imgElement.length > 0 && imgElement.attr('alt') === pair.original;
+                });
 
-                if (mode === "vista") {
-                    finalName = skuRenameMap[fullSkuToDownload];
-                } else if (mode === "sku") {
-                    const originalBaseSku = fullSkuToDownload.split('_')[0];
-                    const suffix = fullSkuToDownload.substring(originalBaseSku.length);
-                    const newBaseName = skuRenameMap[originalBaseSku] || skuRenameMap[fullSkuToDownload];
-                    
-                    if (newBaseName) {
-                        finalName = newBaseName + suffix;
-                    } else {
-                         console.warn(`SKU original ${fullSkuToDownload} no encontrado en la lista de renombrar. Skipping.`);
-                         return;
-                    }
-                }
-                
-                if (finalName) {
-                    const promise = new Promise((resolve, reject) => {
-                        JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
-                            if (err) {
-                                console.error(`Error al descargar ${originalUrl}:`, err);
+                if (wrapper) {
+                    const imgElement = $(wrapper).find('img')[0];
+                    const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
+                    const finalName = pair.rename;
+
+                    if (finalName) {
+                        const promise = new Promise((resolve, reject) => {
+                            JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
+                                if (err) {
+                                    console.error(`Error al descargar ${originalUrl}:`, err);
+                                    resolve();
+                                    return;
+                                }
+                                zip.file(finalName + ".jpg", data, { binary: true });
                                 resolve();
-                                return;
-                            }
-                            zip.file(finalName + ".jpg", data, { binary: true });
-                            resolve();
+                            });
                         });
-                    });
-                    promises.push(promise);
+                        promises.push(promise);
+                    }
                 }
             });
 
@@ -693,7 +687,9 @@
 
             Promise.all(promises).then(() => {
                 if (Object.keys(zip.files).length > 0) {
-                    zip.generateAsync({ type: 'blob' }).then(function(content) {
+                    zip.generateAsync({
+                        type: 'blob'
+                    }).then(function(content) {
                         saveAs(content, zipFilename);
                     }).catch(function(e) {
                         console.error("Error al generar el ZIP:", e);
