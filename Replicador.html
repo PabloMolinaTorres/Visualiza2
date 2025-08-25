@@ -419,6 +419,8 @@
                         wrapper.appendChild(link);
                         wrapper.appendChild(skuDiv);
                         wrapper.dataset.imageUrl = img.src;
+                        // Añadimos el SKU original como un atributo de datos para la función de descarga
+                        wrapper.dataset.originalSku = sku + suffix;
                         resolve(wrapper);
                     };
 
@@ -554,70 +556,38 @@
                 return;
             }
 
-            if (renameSkusInput.length > 0 && inputSkus.length !== renameSkusInput.length && mode === 'vista') {
-                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
-                 return;
+            if (renameSkusInput.length > 0 && inputSkus.length !== renameSkusInput.length) {
+                alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
+                return;
             }
-
+            
             const foundSkusLeft = [];
             const foundSkusRight = [];
             const notFoundSkus = [];
+            
+            for (let i = 0; i < inputSkus.length; i++) {
+                const sku = inputSkus[i].trim();
+                let element = null;
 
-            if (mode === "vista") {
-                const promises = inputSkus.map(sku => loadImage(sku.trim()));
-                const results = await Promise.all(promises);
-
-                results.forEach((element, index) => {
-                    const originalSku = inputSkus[index].trim();
-                    if (element) {
-                        foundSkusLeft.push(originalSku);
-                        foundSkusRight.push(renameSkusInput[index] || '');
-                        document.getElementById('imgContainer').appendChild(element);
-                    } else {
-                        notFoundSkus.push(originalSku);
+                if (mode === "vista") {
+                    element = await loadImage(sku);
+                } else if (mode === "sku") {
+                    const suffixes = getSuffixes(activeLogic);
+                    for (const suffix of suffixes) {
+                        element = await loadImage(sku, suffix);
+                        if (element) break;
                     }
-                });
-            } else if (mode === "sku") {
-                const suffixes = getSuffixes(activeLogic);
-                const searchPromises = [];
+                }
 
-                inputSkus.forEach((baseSku, baseIndex) => {
-                    suffixes.forEach(suffix => {
-                        searchPromises.push(loadImage(baseSku.trim(), suffix).then(element => ({
-                            element,
-                            originalBaseSku: baseSku.trim()
-                        })));
-                    });
-                });
-
-                const results = await Promise.all(searchPromises);
-                const foundBaseSkus = new Set();
-                const notFoundBaseSkus = new Set(inputSkus);
-                                
-                const foundImages = [];
-                results.forEach(result => {
-                    if (result.element) {
-                        foundImages.push(result.element);
-                        foundBaseSkus.add(result.originalBaseSku);
-                        notFoundBaseSkus.delete(result.originalBaseSku);
-                    }
-                });
-
-                // Ordenar las imágenes encontradas por SKU completo
-                foundImages.sort((a, b) => a.querySelector('img').alt.localeCompare(b.querySelector('img').alt));
-
-                foundImages.forEach(element => {
-                    const originalFullSku = element.querySelector('img').alt;
-                    foundSkusLeft.push(originalFullSku);
-                    const baseSku = originalFullSku.split('_')[0];
-                    const newName = renameSkusInput[inputSkus.indexOf(baseSku)] || '';
-                    foundSkusRight.push(newName);
+                if (element) {
+                    foundSkusLeft.push(sku);
+                    foundSkusRight.push(renameSkusInput[i] || '');
                     document.getElementById('imgContainer').appendChild(element);
-                });
-
-                notFoundBaseSkus.forEach(sku => notFoundSkus.push(sku));
+                } else {
+                    notFoundSkus.push(sku);
+                }
             }
-
+            
             $('#skuInputLeft').val(foundSkusLeft.join('\n'));
             $('#skuInputRight').val(foundSkusRight.join('\n'));
             notFoundSkus.forEach(sku => logError(sku));
@@ -626,13 +596,11 @@
         $('#downloadAll').click(function() {
             var renameSkus = $('#skuInputRight').val().trim().split('\n').filter(s => s.trim() !== '');
             var originalSkus = $('#skuInputLeft').val().trim().split('\n').filter(s => s.trim() !== '');
-            const imageWrappers = $('#imgContainer .imgWrapper');
-
-            if (imageWrappers.length === 0) {
-                alert('No hay imágenes cargadas. Por favor, haga clic en "Buscar" primero para previsualizar las imágenes.');
-                return;
+            
+            if (originalSkus.length === 0) {
+                 alert('No hay SKUs cargados para descargar.');
+                 return;
             }
-
             if (renameSkus.length !== originalSkus.length) {
                 alert('La cantidad de SKUs en el lado izquierdo y derecho debe coincidir.');
                 return;
@@ -642,43 +610,33 @@
             var zipFilename = getFormattedDate() + ".zip";
             let promises = [];
             
-            // Usamos un arreglo para mantener el orden y las asociaciones únicas.
-            const fileRenameList = originalSkus.map((original, index) => {
-                return {
-                    original: original,
-                    rename: renameSkus[index]
-                };
-            });
-
-            // Iteramos sobre la nueva lista de pares de nombres
-            fileRenameList.forEach(pair => {
-                // Buscamos el wrapper de imagen que coincida con el nombre original del par.
-                const wrapper = Array.from(imageWrappers).find(el => {
-                    const imgElement = $(el).find('img');
-                    return imgElement.length > 0 && imgElement.attr('alt') === pair.original;
-                });
-
-                if (wrapper) {
-                    const imgElement = $(wrapper).find('img')[0];
-                    const originalUrl = imgElement.src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
-                    const finalName = pair.rename;
-
-                    if (finalName) {
-                        const promise = new Promise((resolve, reject) => {
-                            JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
-                                if (err) {
-                                    console.error(`Error al descargar ${originalUrl}:`, err);
-                                    resolve();
-                                    return;
-                                }
-                                zip.file(finalName + ".jpg", data, { binary: true });
+            // Iteramos sobre los SKUs de entrada, ya que representan cada imagen a descargar
+            for (let i = 0; i < originalSkus.length; i++) {
+                const originalSku = originalSkus[i];
+                const newName = renameSkus[i];
+                
+                // Buscamos la imagen en el DOM por su SKU original
+                // y la posición para manejar duplicados.
+                const imgElement = $(`#imgContainer .imgWrapper[data-original-sku="${originalSku}"]`).get(i);
+                
+                if (imgElement) {
+                    const originalUrl = $(imgElement).find('img')[0].src.replace('/w=120,h=120,fit=pad', '/w=1500,h=1500,fit=pad');
+                    const promise = new Promise((resolve, reject) => {
+                        JSZipUtils.getBinaryContent(originalUrl, (err, data) => {
+                            if (err) {
+                                console.error(`Error al descargar ${originalUrl}:`, err);
                                 resolve();
-                            });
+                                return;
+                            }
+                            if (newName) {
+                                zip.file(newName + ".jpg", data, { binary: true });
+                            }
+                            resolve();
                         });
-                        promises.push(promise);
-                    }
+                    });
+                    promises.push(promise);
                 }
-            });
+            }
 
             if (promises.length === 0) {
                 alert('No se encontraron imágenes válidas para descargar en el contenedor de previsualización.');
